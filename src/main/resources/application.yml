@@ -1,0 +1,15 @@
+spring:
+  config:
+    import: classpath:privacy.yml
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${db.host}:${db.port}/${db.databasename}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${db.username}
+    password: ${db.password}
+  jpa:
+    hibernate:
+      ddl-auto: create
+    properties:
+      hibernate:
+        format_sql: true
+#        show_sql: true
