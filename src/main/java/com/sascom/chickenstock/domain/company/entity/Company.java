@@ -26,6 +26,10 @@ public class Company extends BaseTimeEntity {
     @Column(name = "name")
     private String name;
 
+    @NotNull
+    @Column(name = "code")
+    private String code;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status")
     private CompanyStatus status;
@@ -36,8 +40,9 @@ public class Company extends BaseTimeEntity {
     @OneToMany(mappedBy = "company")
     private List<CompanyLike> companyLikes;
 
-    public Company(String name, List<History> histories, List<CompanyLike> companyLikes) {
+    public Company(String name, String code, List<History> histories, List<CompanyLike> companyLikes) {
         this.name = name;
+        this.code = code;
         this.histories = histories;
         this.companyLikes = companyLikes;
     }
