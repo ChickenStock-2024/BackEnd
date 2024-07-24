@@ -32,15 +32,13 @@ public class CompanyController {
         return ResponseEntity.ok(companyInfoList);
     }
 
-    @GetMapping
-    @RequestMapping("/search")
+    @GetMapping("/search")
     public ResponseEntity<List<CompanyInfoResponse>> getCompanyByName(@RequestParam("value") String stockName) {
         List<CompanyInfoResponse> companyInfoList = companyService.searchCompany(stockName);
         return ResponseEntity.ok(companyInfoList);
     }
 
-    @GetMapping
-    @RequestMapping("/{stockId}")
+    @GetMapping("/{stockId}")
     public ResponseEntity<CompanyInfoResponse> getCompanyById(@PathVariable("stockId") Long stockId) {
         CompanyInfoResponse companyInfo = companyService.getCompanyInfo(stockId);
         return ResponseEntity.ok(companyInfo);
