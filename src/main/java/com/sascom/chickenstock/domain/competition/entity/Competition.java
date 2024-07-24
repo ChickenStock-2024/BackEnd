@@ -7,10 +7,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.antlr.v4.runtime.misc.NotNull;
-import org.hibernate.dialect.function.TruncFunction;
-
-import java.sql.Timestamp;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -29,11 +26,12 @@ public class Competition  {
 
     @NotNull
     @Column(name = "start_at")
-    private Date startAt;
+    private LocalDateTime startAt;
 
     @NotNull
     @Column(name = "end_at")
-    private Date endAt;
+    private LocalDateTime endAt;
+
 
     @OneToMany(mappedBy = "competition")
     private List<Account> accounts;
@@ -41,7 +39,8 @@ public class Competition  {
     @Column(name = "total_people")
     private Integer total_people;
 
-    public Competition(String title, Date startAt, Date endAt) {
+
+    public Competition(String title, LocalDateTime startAt, LocalDateTime endAt) {
         this.title = title;
         this.startAt = startAt;
         this.endAt = endAt;

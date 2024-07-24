@@ -4,6 +4,7 @@ import com.sascom.chickenstock.domain.competition.dto.request.CompetitionPartici
 import com.sascom.chickenstock.domain.competition.service.CompetitionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -16,7 +17,7 @@ public class CompetitionController {
     private AccountService accountService;
 
     @PostMapping
-    public void participateCompetition(CompetitionParticipationRequest request){
+    public void participateCompetition(@RequestBody CompetitionParticipationRequest request){
         accountService.createAccount(request);
     }
 }

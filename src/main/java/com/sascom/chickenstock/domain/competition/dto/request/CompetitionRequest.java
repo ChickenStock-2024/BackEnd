@@ -1,8 +1,9 @@
 package com.sascom.chickenstock.domain.competition.dto.request;
+import java.time.LocalDateTime;
 import java.util.Date;
 
 public record CompetitionRequest(
         String title,
-        Date startAt,
-        Date endAt
+        LocalDateTime startAt,
+        LocalDateTime endAt
 ) { }
