@@ -1,6 +1,8 @@
 package com.sascom.chickenstock.domain.member.service;
 
 import com.sascom.chickenstock.domain.account.entity.Account;
+import com.sascom.chickenstock.domain.account.repository.AccountRepository;
+import com.sascom.chickenstock.domain.competition.repository.CompetitionRepository;
 import com.sascom.chickenstock.domain.member.dto.request.ChangeInfoRequest;
 import com.sascom.chickenstock.domain.member.dto.response.ChangeInfoResponse;
 import com.sascom.chickenstock.domain.member.dto.response.MemberInfoResponse;
