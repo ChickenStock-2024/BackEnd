@@ -9,6 +9,7 @@ import lombok.NoArgsConstructor;
 import org.antlr.v4.runtime.misc.NotNull;
 
 import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
@@ -27,11 +28,11 @@ public class Competition  {
 
     @NotNull
     @Column(name = "start_at")
-    private Timestamp startAt;
+    private LocalDateTime startAt;
 
     @NotNull
     @Column(name = "end_at")
-    private Timestamp endAt;
+    private LocalDateTime endAt;
 
     @OneToMany(mappedBy = "competition")
     private List<Account> accounts;
