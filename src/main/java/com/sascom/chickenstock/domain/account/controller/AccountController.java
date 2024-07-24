@@ -19,7 +19,7 @@ public class AccountController {
     private AccountService accountService;
 
     public Long createAccount(@RequestBody AccountCreateRequest request) {
-        Long accountId = accountService.createAccount(request);
+        Long accountId = accountService.createAccount(request.memberId(), request.competitionId());
         return accountId;
     }
 }

@@ -1,5 +1,6 @@
 package com.sascom.chickenstock.domain.competition.controller;
 
+import com.sascom.chickenstock.domain.account.service.AccountService;
 import com.sascom.chickenstock.domain.competition.dto.request.CompetitionParticipationRequest;
 import com.sascom.chickenstock.domain.competition.service.CompetitionService;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,6 @@ public class CompetitionController {
 
     @PostMapping
     public void participateCompetition(@RequestBody CompetitionParticipationRequest request){
-        accountService.createAccount(request);
+        accountService.createAccount(request.memberId(), request.competitionId());
     }
 }
