@@ -73,4 +73,8 @@ public class Member extends BaseTimeEntity {
         }
         return this.point = newPoint;
     }
+
+    public String updatePassword(String password) {
+        return this.password = password;
+    }
 }

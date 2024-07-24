@@ -7,6 +7,9 @@ import org.apache.catalina.Host;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import org.springframework.transaction.annotation.Transactional;
+
+@Transactional(readOnly = true)
 @Service
 public class HistoryService {
 
@@ -17,7 +20,8 @@ public class HistoryService {
         this.historyRepository = historyRepository;
     }
 
-    // 거래가 체결될때마다 실행되는 메서드 // 체결됐을 때 생기는 이벤트가 아래와 같은 내용을 전달해줘야함
+
+    @Transactional
     public void save(History request){
         History history = new History(
                 request.getAccount(),
@@ -26,5 +30,6 @@ public class HistoryService {
                 request.getPrice(),
                 request.getStatus() //이렇게 해도 되나..
         );
+        historyRepository.save(history);
     }
 }
