@@ -2,7 +2,7 @@ package com.sascom.chickenstock.domain.company.dto.response;
 
 import com.sascom.chickenstock.domain.company.entity.CompanyStatus;
 import com.sascom.chickenstock.domain.company.error.code.CompanyErrorCode;
-import com.sascom.chickenstock.domain.company.error.exception.CompanyException;
+import com.sascom.chickenstock.domain.company.error.exception.CompanyNotFoundException;
 import lombok.Builder;
 
 public record CompanyInfoResponse(
@@ -14,10 +14,10 @@ public record CompanyInfoResponse(
     @Builder
     public CompanyInfoResponse {
         if (id <= 0L) {
-            throw CompanyException.of(CompanyErrorCode.INVALID_VALUE);
+            throw CompanyNotFoundException.of(CompanyErrorCode.INVALID_VALUE);
         }
         if (name == null || name.isBlank()) {
-            throw CompanyException.of(CompanyErrorCode.INVALID_VALUE);
+            throw CompanyNotFoundException.of(CompanyErrorCode.INVALID_VALUE);
         }
     }
 }
