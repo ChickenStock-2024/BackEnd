@@ -50,11 +50,9 @@ public class Account extends BaseTimeEntity {
 
 
 
-    public Account(Member member, Competition competition, List<History> histories, Rating rating) {
+    public Account(Member member, Competition competition) {
         this.member = member;
         this.competition = competition;
         this.balance = 50_000_000L;
-        this.histories = histories;
-        this.rating = rating;
     }
 }
