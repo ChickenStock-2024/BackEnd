@@ -7,8 +7,6 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.antlr.v4.runtime.misc.NotNull;
-
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -34,17 +32,18 @@ public class Competition  {
     @Column(name = "end_at")
     private LocalDateTime endAt;
 
+
     @OneToMany(mappedBy = "competition")
     private List<Account> accounts;
 
     @Column(name = "total_people")
     private Integer total_people;
 
-    public Competition(String title, LocalDateTime startAt, LocalDateTime endAt, List<Account> accounts) {
+
+    public Competition(String title, LocalDateTime startAt, LocalDateTime endAt) {
         this.title = title;
         this.startAt = startAt;
         this.endAt = endAt;
-        this.accounts = accounts;
         this.total_people = 0;
     }
 
