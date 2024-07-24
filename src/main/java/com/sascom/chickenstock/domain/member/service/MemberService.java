@@ -12,22 +12,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class MemberService {
     private final MemberRepository memberRepository;
-//    private final AccountRepository accountRepository;
-//    private final CompetitionRepository competitionRepository;
+    private final AccountRepository accountRepository;
+    private final CompetitionRepository competitionRepository;
 
     @Autowired
-    public MemberService(MemberRepository memberRepository/*,
+    public MemberService(MemberRepository memberRepository,
                          AccountRepository accountRepository,
-                         CompetitionRepository competitionRepository */) {
+                         CompetitionRepository competitionRepository) {
         this.memberRepository = memberRepository;
-//        this.accountRepository = accountRepository;
-//        this.competitionRepository = competitionRepository;
+        this.accountRepository = accountRepository;
+        this.competitionRepository = competitionRepository;
     }
 
     public MemberInfoResponse lookUpMemberInfo(Long userId) {
@@ -45,20 +45,20 @@ public class MemberService {
                 .orElseThrow(() -> new IllegalStateException("invalid userId"));
         // hash given password or use spring security
 
-        if(!changeInfoRequest.getOldPassword().equals(member.getPassword())) {
+        if(!changeInfoRequest.oldPassword().equals(member.getPassword())) {
             throw new IllegalStateException("incorrect Old Password");
         }
-        if(changeInfoRequest.getNewPassword() == null ||
-                !changeInfoRequest.getNewPassword().equals(
-                changeInfoRequest.getNewPasswordCheck())) {
+        if(changeInfoRequest.newPassword() == null ||
+                !changeInfoRequest.newPassword().equals(
+                changeInfoRequest.newPasswordCheck())) {
             throw new IllegalStateException("New Password and New Password Check are not equal");
         }
-        if(!isSafePassword(changeInfoRequest.getNewPassword())){
+        if(!isSafePassword(changeInfoRequest.newPassword())){
             throw new IllegalStateException("New Password is not safe.");
         }
 
         // hash new password, also. need to edit below code.
-        String hashedNewPassword = changeInfoRequest.getNewPassword();
+        String hashedNewPassword = changeInfoRequest.newPassword();
         member.updatePassword(hashedNewPassword);
         Member savedMember = memberRepository.save(member);
         return new ChangeInfoResponse(savedMember.getNickname());
@@ -67,12 +67,11 @@ public class MemberService {
     public PrefixNicknameInfosResponse searchPrefixNicknameMemberInfos(String prefix) {
         List<Member> memberList = memberRepository.findFirst10ByNicknameStartingWithOrderByNickname(prefix);
 
-        List<MemberInfoResponse> result = new ArrayList<>(memberList.size());
-        memberList.forEach((member) -> result.add(toMemberInfoResponse(member)));
+        List<MemberInfoResponse> result = memberList.stream()
+                .map(this::toMemberInfoResponse)
+                .collect(Collectors.toList());
 
-        return PrefixNicknameInfosResponse.builder()
-                .memberList(result)
-                .build();
+        return new PrefixNicknameInfosResponse(result);
     }
 
     // Member -> MemberInfoResponse
@@ -89,12 +88,11 @@ public class MemberService {
             }
         }
 
-        return MemberInfoResponse.builder()
-                .memberId(member.getId())
-                .point(member.getPoint())
-                .nickname(member.getNickname())
-                .rating(ratestRating)
-                .build();
+        return new MemberInfoResponse(
+                member.getId(),
+                member.getNickname(),
+                ratestRating,
+                member.getPoint());
     }
 
     // check that given new password is fit to safe password standard.

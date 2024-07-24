@@ -5,12 +5,4 @@ import lombok.Getter;
 
 import java.util.List;
 
-@Getter
-public class PrefixNicknameInfosResponse {
-    private final List<MemberInfoResponse> memberList;
-
-    @Builder
-    public PrefixNicknameInfosResponse(List<MemberInfoResponse> memberList) {
-        this.memberList = memberList;
-    }
-}
+public record PrefixNicknameInfosResponse(List<MemberInfoResponse> memberList) { }
