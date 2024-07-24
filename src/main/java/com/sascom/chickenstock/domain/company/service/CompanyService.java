@@ -3,7 +3,7 @@ package com.sascom.chickenstock.domain.company.service;
 import com.sascom.chickenstock.domain.company.dto.response.CompanyInfoResponse;
 import com.sascom.chickenstock.domain.company.entity.Company;
 import com.sascom.chickenstock.domain.company.error.code.CompanyErrorCode;
-import com.sascom.chickenstock.domain.company.error.exception.CompanyException;
+import com.sascom.chickenstock.domain.company.error.exception.CompanyNotFoundException;
 import com.sascom.chickenstock.domain.company.repository.CompanyRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -22,7 +22,7 @@ public class CompanyService {
 
     public CompanyInfoResponse getCompanyInfo(Long companyId) {
         Company company = companyRepository.findById(companyId)
-                .orElseThrow(() -> CompanyException.of(CompanyErrorCode.NOT_FOUND));
+                .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
         return CompanyInfoResponse.builder()
                 .id(company.getId())
                 .code(company.getCode())
@@ -32,7 +32,7 @@ public class CompanyService {
     }
 
     public List<CompanyInfoResponse> searchCompany(String stockName) {
-        List<Company> companyList = companyRepository.findByNameLike(stockName);
+        List<Company> companyList = companyRepository.findByNameContains(stockName);
         return collectToCompanyInfoResponse(companyList);
     }
 
@@ -48,5 +48,4 @@ public class CompanyService {
                                 .name(company.getName()).status(company.getStatus()).build())
                 .toList();
     }
-
 }

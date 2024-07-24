@@ -10,5 +10,5 @@ import java.util.Optional;
 @Repository
 public interface CompanyRepository extends JpaRepository<Company, Long> {
     Optional<Company> findByCode(String code);
-    List<Company> findByNameLike(String name);
+    List<Company> findByNameContains(String name);
 }

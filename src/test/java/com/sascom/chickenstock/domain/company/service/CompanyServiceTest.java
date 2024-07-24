@@ -3,7 +3,7 @@ package com.sascom.chickenstock.domain.company.service;
 import com.sascom.chickenstock.domain.company.dto.response.CompanyInfoResponse;
 import com.sascom.chickenstock.domain.company.entity.Company;
 import com.sascom.chickenstock.domain.company.error.code.CompanyErrorCode;
-import com.sascom.chickenstock.domain.company.error.exception.CompanyException;
+import com.sascom.chickenstock.domain.company.error.exception.CompanyNotFoundException;
 import com.sascom.chickenstock.domain.company.repository.CompanyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -63,7 +63,7 @@ class CompanyServiceTest {
 
         // then
         Assertions.assertThat(thrown)
-                .isInstanceOf(CompanyException.class)
+                .isInstanceOf(CompanyNotFoundException.class)
                 .hasFieldOrPropertyWithValue("errorCode", CompanyErrorCode.NOT_FOUND);
 
         verify(companyRepository, times(1)).findById(anyLong());
