@@ -4,6 +4,7 @@ import com.sascom.chickenstock.domain.account.entity.Account;
 import com.sascom.chickenstock.domain.member.dto.request.ChangeInfoRequest;
 import com.sascom.chickenstock.domain.member.dto.response.ChangeInfoResponse;
 import com.sascom.chickenstock.domain.member.dto.response.MemberInfoResponse;
+import com.sascom.chickenstock.domain.member.dto.response.PrefixNicknameInfosResponse;
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import jakarta.transaction.Transactional;
@@ -11,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class MemberService {
@@ -27,28 +30,11 @@ public class MemberService {
 //        this.competitionRepository = competitionRepository;
     }
 
-    public MemberInfoResponse getMemberInfo(Long userId) {
+    public MemberInfoResponse lookUpMemberInfo(Long userId) {
         Member member = memberRepository.findById(userId)
                 .orElseThrow(() -> new IllegalStateException("invalid userId"));
 
-        // find latest competition and latest rating from account.
-        // this implementation may occur 1 + N problem.
-        int ratestRating = 1500;
-        LocalDateTime latestDate = LocalDateTime.MIN;
-        for(Account account : member.getAccounts()){
-            LocalDateTime competitionEndAt = account.getCompetition().getEndAt();
-            if(competitionEndAt.isAfter(latestDate)){
-                latestDate = competitionEndAt;
-                ratestRating = account.getRating().getLatestRating();
-            }
-        }
-
-        return MemberInfoResponse.builder()
-                .memberId(member.getId())
-                .point(member.getPoint())
-                .nickname(member.getNickname())
-                .rating(ratestRating)
-                .build();
+        return toMemberInfoResponse(member);
     }
 
     @Transactional
@@ -78,8 +64,41 @@ public class MemberService {
         return new ChangeInfoResponse(savedMember.getNickname());
     }
 
+    public PrefixNicknameInfosResponse searchPrefixNicknameMemberInfos(String prefix) {
+        List<Member> memberList = memberRepository.findFirst10ByNicknameStartingWithOrderByNickname(prefix);
+
+        List<MemberInfoResponse> result = new ArrayList<>(memberList.size());
+        memberList.forEach((member) -> result.add(toMemberInfoResponse(member)));
+
+        return PrefixNicknameInfosResponse.builder()
+                .memberList(result)
+                .build();
+    }
+
+    // Member -> MemberInfoResponse
+    private MemberInfoResponse toMemberInfoResponse(Member member) {
+        // find latest competition and latest rating from account.
+        // this implementation may occur 1 + N problem.
+        int ratestRating = 1500;
+        LocalDateTime latestDate = LocalDateTime.MIN;
+        for(Account account : member.getAccounts()){
+            LocalDateTime competitionEndAt = account.getCompetition().getEndAt();
+            if(competitionEndAt.isAfter(latestDate)){
+                latestDate = competitionEndAt;
+                ratestRating = account.getRating().getLatestRating();
+            }
+        }
+
+        return MemberInfoResponse.builder()
+                .memberId(member.getId())
+                .point(member.getPoint())
+                .nickname(member.getNickname())
+                .rating(ratestRating)
+                .build();
+    }
+
     // check that given new password is fit to safe password standard.
-    // eg) contains at least 3 alphabets, at least one of special symbols as !, @, #, $, ...
+    // eg) contains at least 3 alphabets, at least one of special symbols as !, @, #, $, ... .
     private boolean isSafePassword(String password) {
         // TODO: implementation
         return true;
