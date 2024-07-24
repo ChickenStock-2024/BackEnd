@@ -24,13 +24,10 @@ public class CompetitionService {
 
     @Transactional
     public void save(CompetitionRequest competitionRequest){
-        // 대회 생성이니까 계좌가 아직 없을 거니까 account는 빈 리스트로
-        List<Account> accounts = new ArrayList<>();
         Competition competition = new Competition(
-                competitionRequest.getTitle(),
-                competitionRequest.getStartAt(),
-                competitionRequest.getEndAt(),
-                accounts
+                competitionRequest.title(),
+                competitionRequest.startAt(),
+                competitionRequest.endAt()
         );
         competitionRepository.save(competition);
     }

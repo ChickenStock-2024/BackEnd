@@ -41,11 +41,10 @@ public class Competition  {
     @Column(name = "total_people")
     private Integer total_people;
 
-    public Competition(String title, Date startAt, Date endAt, List<Account> accounts) {
+    public Competition(String title, Date startAt, Date endAt) {
         this.title = title;
         this.startAt = startAt;
         this.endAt = endAt;
-        this.accounts = accounts;
         this.total_people = 0;
     }
 
