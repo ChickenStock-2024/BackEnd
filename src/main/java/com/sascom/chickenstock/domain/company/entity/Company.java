@@ -40,11 +40,9 @@ public class Company extends BaseTimeEntity {
     @OneToMany(mappedBy = "company")
     private List<CompanyLike> companyLikes;
 
-    public Company(String name, String code, List<History> histories, List<CompanyLike> companyLikes) {
+    public Company(String name, String code) {
         this.name = name;
         this.code = code;
-        this.histories = histories;
-        this.companyLikes = companyLikes;
     }
 
     @PrePersist

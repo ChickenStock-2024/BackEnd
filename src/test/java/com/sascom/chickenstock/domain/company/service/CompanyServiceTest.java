@@ -31,7 +31,7 @@ class CompanyServiceTest {
 
     @BeforeEach
     void setUp() {
-        company = Mockito.spy(new Company("test company", "123456", null, null));
+        company = Mockito.spy(new Company("test company", "123456"));
     }
 
     @Test

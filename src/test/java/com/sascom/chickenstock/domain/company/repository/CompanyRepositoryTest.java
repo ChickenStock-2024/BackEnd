@@ -22,7 +22,7 @@ class CompanyRepositoryTest {
 
     @BeforeEach
     void setUp() {
-        company = new Company("test company", "123456", null, null);
+        company = new Company("test company", "123456");
     }
 
     @Test

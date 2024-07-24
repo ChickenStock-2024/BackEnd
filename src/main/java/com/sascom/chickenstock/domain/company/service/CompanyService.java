@@ -21,9 +21,14 @@ public class CompanyService {
     }
 
     public CompanyInfoResponse getCompanyInfo(Long companyId) {
-        Company company = companyRepository.findById(companyId).orElseThrow(() -> CompanyException.of(CompanyErrorCode.NOT_FOUND));
-
-        return CompanyInfoResponse.builder().id(company.getId()).code(company.getCode()).name(company.getName()).status(company.getStatus()).build();
+        Company company = companyRepository.findById(companyId)
+                .orElseThrow(() -> CompanyException.of(CompanyErrorCode.NOT_FOUND));
+        return CompanyInfoResponse.builder()
+                .id(company.getId())
+                .code(company.getCode())
+                .name(company.getName())
+                .status(company.getStatus())
+                .build();
     }
 
     public List<CompanyInfoResponse> searchCompany(String stockName) {
