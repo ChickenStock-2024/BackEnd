@@ -27,7 +27,7 @@ public class Company extends BaseTimeEntity {
     private String name;
 
     @NotNull
-    @Column(name = "code")
+    @Column(name = "code", unique = true)
     private String code;
 
     @Enumerated(EnumType.STRING)
