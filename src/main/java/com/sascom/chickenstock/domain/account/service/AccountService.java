@@ -23,12 +23,12 @@ public class AccountService {
     private MemberRepository memberRepository;
     private CompetitionRepository competitionRepository;
 
-    public Long createAccount(AccountCreateRequest request){
+    public Long createAccount(Long memberId, Long competitionId){
 
         // TODO: 커스텀 에러로 수정 필요
-        Member member = memberRepository.findById(request.memberId())
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(EntityNotFoundException::new);
-        Competition competition = competitionRepository.findById(request.competitionId())
+        Competition competition = competitionRepository.findById(competitionId)
                 .orElseThrow(EntityNotFoundException::new);
         Account account = new Account(
             member,
