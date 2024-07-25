@@ -48,11 +48,15 @@ public class Account extends BaseTimeEntity {
     @Column(name = "ranking")
     private Integer ranking;
 
+    @Column(name = "rating_change")
+    private Integer ratingChange;
+
 
 
     public Account(Member member, Competition competition) {
         this.member = member;
         this.competition = competition;
         this.balance = 50_000_000L;
+        this.ranking = 0;
     }
 }
