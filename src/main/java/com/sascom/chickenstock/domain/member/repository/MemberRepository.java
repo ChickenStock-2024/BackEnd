@@ -1,11 +1,26 @@
 package com.sascom.chickenstock.domain.member.repository;
 
 import com.sascom.chickenstock.domain.member.entity.Member;
+import com.sascom.chickenstock.domain.ranking.dto.MemberRankingDto;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
     List<Member> findFirst10ByNicknameStartingWithOrderByNickname(String prefix);
+
+    @Query(value = "SELECT " +
+            "member.member_id AS member_id, " +
+            "member.nickname AS nickname, " +
+            "SUM(account.balance) AS profit, " +
+            "SUM(account.rating_change) AS rating, " +
+            "COUNT(account.account_id) AS competition_count," +
+            "RANK() OVER (ORDER BY SUM(account.rating_change) DESC) AS ranking " +
+            "FROM member " +
+            "JOIN account ON member.member_id = account.member_id " +
+            "LIMIT :offset, 10",
+            nativeQuery = true)
+    List<MemberRankingDto> test(@Param("offset") int offset);
 }
