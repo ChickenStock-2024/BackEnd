@@ -1,20 +1,20 @@
-package com.sascom.chickenstock.domain.company.repository;
+package com.sascom.chickenstock.domain.companylike.repository;
 
 import com.sascom.chickenstock.domain.company.entity.Company;
+import com.sascom.chickenstock.domain.company.repository.CompanyRepository;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
-import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase.Replace;
-import org.assertj.core.api.Assertions;
+import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+
 import java.util.List;
 import java.util.Optional;
 
 @DataJpaTest
-@AutoConfigureTestDatabase(replace = Replace.NONE)
-class CompanyRepositoryTest {
-
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
+public class CompanyLikeRepositoryTest {
     @Autowired
     private CompanyRepository companyRepository;
 
