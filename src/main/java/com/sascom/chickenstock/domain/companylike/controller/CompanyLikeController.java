@@ -18,13 +18,13 @@ public class CompanyLikeController {
     }
 
     @GetMapping
-    public ResponseEntity<CompanyLikeResponse> makeLikeRelationship(@RequestParam Long companyId, Long memberId) {
+    public ResponseEntity<CompanyLikeResponse> makeLikeRelationship(@PathVariable Long companyId, Long memberId) {
         CompanyLikeResponse response = companyLikeService.makeLikeRelationship(companyId, memberId);
         return ResponseEntity.ok().body(response);
     }
 
     @DeleteMapping
-    public ResponseEntity<CompanyLikeResponse> removeLikeRelationship(@RequestParam Long companyId, Long memberId) {
+    public ResponseEntity<CompanyLikeResponse> removeLikeRelationship(@PathVariable Long companyId, Long memberId) {
         CompanyLikeResponse response = companyLikeService.removeLikeRelationship(companyId, memberId);
         return ResponseEntity.ok().body(response);
     }
