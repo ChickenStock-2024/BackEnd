@@ -1,6 +1,8 @@
 package com.sascom.chickenstock.domain.companylike.service;
 
 import com.sascom.chickenstock.domain.company.entity.Company;
+import com.sascom.chickenstock.domain.company.error.code.CompanyErrorCode;
+import com.sascom.chickenstock.domain.company.error.exception.CompanyNotFoundException;
 import com.sascom.chickenstock.domain.company.repository.CompanyRepository;
 import com.sascom.chickenstock.domain.companylike.dto.response.CompanyLikeResponse;
 import com.sascom.chickenstock.domain.companylike.entity.CompanyLike;
@@ -26,7 +28,7 @@ public class CompanyLikeService {
 
     public CompanyLikeResponse makeLikeRelationship(Long companyId) {
         Company company = companyRepository.findById(companyId)
-                .orElseThrow(() -> new IllegalStateException("invalid companyId"));
+                .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
         Member member = memberRepository.findById(1L)
                 .orElseThrow(() -> new IllegalStateException("invalid userId"));
 
@@ -43,7 +45,7 @@ public class CompanyLikeService {
 
     public CompanyLikeResponse removeLikeRelationship(Long companyId) {
         Company company = companyRepository.findById(companyId)
-                .orElseThrow(() -> new IllegalStateException("invalid companyId"));
+                .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
         Member member = memberRepository.findById(1L)
                 .orElseThrow(() -> new IllegalStateException("invalid userId"));
 
