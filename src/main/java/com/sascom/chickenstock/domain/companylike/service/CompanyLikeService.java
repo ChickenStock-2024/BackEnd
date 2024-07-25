@@ -6,6 +6,8 @@ import com.sascom.chickenstock.domain.company.error.exception.CompanyNotFoundExc
 import com.sascom.chickenstock.domain.company.repository.CompanyRepository;
 import com.sascom.chickenstock.domain.companylike.dto.response.CompanyLikeResponse;
 import com.sascom.chickenstock.domain.companylike.entity.CompanyLike;
+import com.sascom.chickenstock.domain.companylike.error.code.CompanyLikeErrorCode;
+import com.sascom.chickenstock.domain.companylike.error.exception.CompanyLikeNotFoundException;
 import com.sascom.chickenstock.domain.companylike.repository.CompanyLikeRepository;
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.error.code.MemberErrorCode;
@@ -51,7 +53,8 @@ public class CompanyLikeService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
 
-        CompanyLike companyLike = companyLikeRepository.findByCompanyIdAndMemberId(companyId, 1L);
+        CompanyLike companyLike = companyLikeRepository.findByCompanyIdAndMemberId(companyId, 1L)
+                .orElseThrow(() -> CompanyLikeNotFoundException.of(CompanyLikeErrorCode.NOT_FOUND));
         companyLikeRepository.delete(companyLike);
 
         return CompanyLikeResponse.builder()

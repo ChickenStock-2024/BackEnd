@@ -23,7 +23,7 @@ public class CompanyLikeController {
         return ResponseEntity.ok().body(response);
     }
 
-    @DeleteMapping("/companyId}")
+    @DeleteMapping("/{companyId}")
     public ResponseEntity<CompanyLikeResponse> removeLikeRelationship(@PathVariable Long companyId, Long memberId) {
         CompanyLikeResponse response = companyLikeService.removeLikeRelationship(companyId, memberId);
         return ResponseEntity.ok().body(response);
