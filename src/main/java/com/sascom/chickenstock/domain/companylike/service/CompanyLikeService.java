@@ -19,6 +19,9 @@ import org.springframework.stereotype.Service;
 @Service
 public class CompanyLikeService {
 
+    private static final String SUCCESS = "좋아요 성공";
+    private static final String FAIL = "좋아요 실패";
+
     private final CompanyLikeRepository companyLikeRepository;
     private final CompanyRepository companyRepository;
     private final MemberRepository memberRepository;
@@ -43,7 +46,7 @@ public class CompanyLikeService {
                 .companyId(company.getId())
                 .companyName(company.getName())
                 .memberName(member.getNickname())
-                .message("좋아요 추가")
+                .message(SUCCESS)
                 .build();
     }
 
@@ -61,7 +64,7 @@ public class CompanyLikeService {
                 .companyId(company.getId())
                 .companyName(company.getName())
                 .memberName(member.getNickname())
-                .message("좋아요 삭제")
+                .message(FAIL)
                 .build();
     }
 

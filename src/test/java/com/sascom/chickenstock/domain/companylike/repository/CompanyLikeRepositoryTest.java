@@ -3,6 +3,8 @@ package com.sascom.chickenstock.domain.companylike.repository;
 import com.sascom.chickenstock.domain.company.entity.Company;
 import com.sascom.chickenstock.domain.company.repository.CompanyRepository;
 import com.sascom.chickenstock.domain.companylike.entity.CompanyLike;
+import com.sascom.chickenstock.domain.companylike.error.code.CompanyLikeErrorCode;
+import com.sascom.chickenstock.domain.companylike.error.exception.CompanyLikeNotFoundException;
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import org.assertj.core.api.Assertions;
@@ -44,7 +46,8 @@ public class CompanyLikeRepositoryTest {
         companyLikeRepository.save(companyLike);
 
         // when
-        CompanyLike companyLike1 = companyLikeRepository.findByCompanyIdAndMemberId(company.getId(), member.getId());
+        CompanyLike companyLike1 = companyLikeRepository.findByCompanyIdAndMemberId(company.getId(), member.getId())
+                .orElseThrow(() -> CompanyLikeNotFoundException.of(CompanyLikeErrorCode.NOT_FOUND));
 
         // then
         Assertions.assertThat(companyLike1.getCompany().getId()).isEqualTo(company.getId());
