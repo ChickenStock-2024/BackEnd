@@ -2,6 +2,9 @@ package com.sascom.chickenstock.domain.companylike.repository;
 
 import com.sascom.chickenstock.domain.company.entity.Company;
 import com.sascom.chickenstock.domain.company.repository.CompanyRepository;
+import com.sascom.chickenstock.domain.companylike.entity.CompanyLike;
+import com.sascom.chickenstock.domain.member.entity.Member;
+import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,60 +20,34 @@ import java.util.Optional;
 public class CompanyLikeRepositoryTest {
     @Autowired
     private CompanyRepository companyRepository;
+    @Autowired
+    private CompanyLikeRepository companyLikeRepository;
+    @Autowired
+    private MemberRepository memberRepository;
 
     private Company company;
+    private Member member;
+    private CompanyLike companyLike;
 
     @BeforeEach
     void setUp() {
+        member = new Member("nickname", "ddd@sss.com", "password");
         company = new Company("test company", "123456");
+        companyLike = new CompanyLike(member, company);
     }
 
     @Test
     void testFindById() {
         //given
         companyRepository.save(company);
+        memberRepository.save(member);
+        companyLikeRepository.save(companyLike);
 
         // when
-        Optional<Company> foundCompany = companyRepository.findById(company.getId());
+        CompanyLike companyLike1 = companyLikeRepository.findByCompanyIdAndMemberId(company.getId(), member.getId());
 
         // then
-        Assertions.assertThat(foundCompany).isPresent();
-        Assertions.assertThat(foundCompany.get().getId()).isEqualTo(company.getId());
-        Assertions.assertThat(foundCompany.get().getCode()).isEqualTo(company.getCode());
-        Assertions.assertThat(foundCompany.get().getName()).isEqualTo(company.getName());
-        Assertions.assertThat(foundCompany.get().getStatus()).isEqualTo(company.getStatus());
-    }
-
-    @Test
-    void testFindByCode() {
-        //given
-        companyRepository.save(company);
-
-        // when
-        Optional<Company> foundCompany = companyRepository.findByCode(company.getCode());
-
-        // then
-        Assertions.assertThat(foundCompany).isPresent();
-        Assertions.assertThat(foundCompany.get().getId()).isEqualTo(company.getId());
-        Assertions.assertThat(foundCompany.get().getCode()).isEqualTo(company.getCode());
-        Assertions.assertThat(foundCompany.get().getName()).isEqualTo(company.getName());
-        Assertions.assertThat(foundCompany.get().getStatus()).isEqualTo(company.getStatus());
-    }
-
-    @Test
-    void testFindByNameLike() {
-        // given
-        companyRepository.save(company);
-
-        // when
-        List<Company> companyList = companyRepository.findByNameContains("Test");
-
-        // then
-        Assertions.assertThat(companyList).isNotEmpty();
-        Assertions.assertThat(companyList).hasSize(1);
-        Assertions.assertThat(companyList.get(0).getId()).isEqualTo(company.getId());
-        Assertions.assertThat(companyList.get(0).getCode()).isEqualTo(company.getCode());
-        Assertions.assertThat(companyList.get(0).getName()).isEqualTo(company.getName());
-        Assertions.assertThat(companyList.get(0).getStatus()).isEqualTo(company.getStatus());
+        Assertions.assertThat(companyLike1.getCompany().getId()).isEqualTo(company.getId());
+        Assertions.assertThat(companyLike1.getMember().getId()).isEqualTo(member.getId());
     }
 }

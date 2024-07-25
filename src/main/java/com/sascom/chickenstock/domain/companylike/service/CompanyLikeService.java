@@ -28,10 +28,10 @@ public class CompanyLikeService {
         this.memberRepository = memberRepository;
     }
 
-    public CompanyLikeResponse makeLikeRelationship(Long companyId) {
+    public CompanyLikeResponse makeLikeRelationship(Long companyId, Long memberId) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
-        Member member = memberRepository.findById(1L)
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
 
         CompanyLike companyLike = new CompanyLike(member, company);
@@ -45,10 +45,10 @@ public class CompanyLikeService {
                 .build();
     }
 
-    public CompanyLikeResponse removeLikeRelationship(Long companyId) {
+    public CompanyLikeResponse removeLikeRelationship(Long companyId, Long memberId) {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
-        Member member = memberRepository.findById(1L)
+        Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
 
         CompanyLike companyLike = companyLikeRepository.findByCompanyIdAndMemberId(companyId, 1L);
