@@ -78,23 +78,23 @@ public class MemberService {
 
     // Member -> MemberInfoResponse
     private MemberInfoResponse toMemberInfoResponse(Member member) {
-        // find latest competition and latest rating from account.
-        // this implementation may occur 1 + N problem.
-        int ratestRating = 1500;
-        LocalDateTime latestDate = LocalDateTime.MIN;
-        for(Account account : member.getAccounts()){
-            LocalDateTime competitionEndAt = account.getCompetition().getEndAt();
-            if(competitionEndAt.isAfter(latestDate)){
-                latestDate = competitionEndAt;
-                ratestRating = account.getRating().getLatestRating();
-            }
-        }
-
         return new MemberInfoResponse(
                 member.getId(),
                 member.getNickname(),
-                ratestRating,
+                calculateLatestRating(member),
                 member.getPoint());
+    }
+
+    private int calculateLatestRating(Member member) {
+        // find latest competition and latest rating from account.
+        // this implementation may occur 1 + N problem.
+        int latestRating = 0;
+        for(Account account : member.getAccounts()) {
+            if(account.getRatingChange() != null) {
+                latestRating += account.getRatingChange();
+            }
+        }
+        return latestRating;
     }
 
     // check that given new password is fit to safe password standard.

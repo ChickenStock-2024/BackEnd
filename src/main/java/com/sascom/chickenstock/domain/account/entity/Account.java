@@ -4,7 +4,6 @@ package com.sascom.chickenstock.domain.account.entity;
 import com.sascom.chickenstock.domain.competition.entity.Competition;
 import com.sascom.chickenstock.domain.history.entity.History;
 import com.sascom.chickenstock.domain.member.entity.Member;
-import com.sascom.chickenstock.domain.rating.entity.Rating;
 import com.sascom.chickenstock.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
@@ -41,12 +40,11 @@ public class Account extends BaseTimeEntity {
     private List<History> histories;
 
     @NotNull
-    @OneToOne(mappedBy = "account")
-    private Rating rating;
-
-    @NotNull
     @Column(name = "ranking")
     private Integer ranking;
+
+    @Column(name = "rating_change")
+    private Integer ratingChange;
 
 
 
@@ -54,5 +52,6 @@ public class Account extends BaseTimeEntity {
         this.member = member;
         this.competition = competition;
         this.balance = 50_000_000L;
+        this.ranking = 0;
     }
 }
