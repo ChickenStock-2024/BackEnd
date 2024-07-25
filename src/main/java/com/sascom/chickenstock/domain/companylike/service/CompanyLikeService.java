@@ -8,6 +8,8 @@ import com.sascom.chickenstock.domain.companylike.dto.response.CompanyLikeRespon
 import com.sascom.chickenstock.domain.companylike.entity.CompanyLike;
 import com.sascom.chickenstock.domain.companylike.repository.CompanyLikeRepository;
 import com.sascom.chickenstock.domain.member.entity.Member;
+import com.sascom.chickenstock.domain.member.error.code.MemberErrorCode;
+import com.sascom.chickenstock.domain.member.error.exception.MemberNotFoundException;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -30,7 +32,7 @@ public class CompanyLikeService {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
         Member member = memberRepository.findById(1L)
-                .orElseThrow(() -> new IllegalStateException("invalid userId"));
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
 
         CompanyLike companyLike = new CompanyLike(member, company);
         companyLikeRepository.save(companyLike);
@@ -47,7 +49,7 @@ public class CompanyLikeService {
         Company company = companyRepository.findById(companyId)
                 .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
         Member member = memberRepository.findById(1L)
-                .orElseThrow(() -> new IllegalStateException("invalid userId"));
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
 
         CompanyLike companyLike = companyLikeRepository.findByCompanyIdAndMemberId(companyId, 1L);
         companyLikeRepository.delete(companyLike);
