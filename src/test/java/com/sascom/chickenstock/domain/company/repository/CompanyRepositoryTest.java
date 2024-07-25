@@ -63,7 +63,7 @@ class CompanyRepositoryTest {
         companyRepository.save(company);
 
         // when
-        List<Company> companyList = companyRepository.findByNameLike("%Test%");
+        List<Company> companyList = companyRepository.findByNameContains("Test");
 
         // then
         Assertions.assertThat(companyList).isNotEmpty();

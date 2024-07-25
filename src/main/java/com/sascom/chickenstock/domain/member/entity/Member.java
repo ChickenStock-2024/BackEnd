@@ -56,15 +56,10 @@ public class Member extends BaseTimeEntity {
     @OneToMany(mappedBy = "member")
     private List<CompanyLike> companyLikes;
 
-    public Member(String nickName, String email, String password, List<Account> accounts, List<Rival> rivals, List<Rival> enemies, List<MemberItem> inventory, List<CompanyLike> companyLikes) {
+    public Member(String nickName, String email, String password) {
         this.nickname = nickName;
         this.email = email;
         this.password = password;
-        this.accounts = accounts;
-        this.rivals = rivals;
-        this.enemies = enemies;
-        this.inventory = inventory;
-        this.companyLikes = companyLikes;
     }
 
     public int updatePoint(int newPoint) {
