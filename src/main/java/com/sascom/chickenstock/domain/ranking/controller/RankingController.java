@@ -27,7 +27,7 @@ public class RankingController {
         if(offset == null) {
             offset = 1;
         }
-        if(isValidOffset(offset)) {
+        if(!isValidOffset(offset)) {
             // TODO: IllegalArgumentException -> Custom Exception
             throw new IllegalArgumentException("offset must be greater than zero");
         }
@@ -42,7 +42,7 @@ public class RankingController {
         if(offset == null) {
             offset = 0;
         }
-        if(isValidOffset(offset)) {
+        if(!isValidOffset(offset)) {
             // TODO: IllegalArgumentException -> Custom Exception
             throw new IllegalArgumentException("offset must be greater than zero");
         }

@@ -12,11 +12,11 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     List<Member> findFirst10ByNicknameStartingWithOrderByNickname(String prefix);
 
     @Query(value = "SELECT " +
-            "member.member_id AS member_id, " +
+            "member.member_id AS memberId, " +
             "member.nickname AS nickname, " +
             "SUM(account.balance) AS profit, " +
             "SUM(account.rating_change) AS rating, " +
-            "COUNT(account.account_id) AS competition_count," +
+            "COUNT(account.account_id) AS competitionCount," +
             "RANK() OVER (ORDER BY SUM(account.rating_change) DESC) AS ranking " +
             "FROM member " +
             "JOIN account ON member.member_id = account.member_id " +
