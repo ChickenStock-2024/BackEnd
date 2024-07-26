@@ -82,29 +82,24 @@ public class RedisService {
     }
 
     public Map<String, Map<String, String>> getStockInfo(Long accountId) {
-        // Create the pattern for the keys
         String pattern = "accountId:" + accountId + ":companyTitle:*";
-
-        // Use the RedisTemplate to find keys matching the pattern
         Set<String> keys = redisTemplate.keys(pattern);
 
-        // Prepare a map to hold all the stock information
-        Map<String, Map<String, String>> allStockInfo = new HashMap<>();
+        Map<String, Map<String, String>> StockInfo = new HashMap<>();
 
         if (keys != null && !keys.isEmpty()) {
             HashOperations<String, Object, Object> hashOps = redisTemplate.opsForHash();
 
-            // Iterate over all keys to fetch stock info
             for (String key : keys) {
                 Map<Object, Object> entries = hashOps.entries(key);
                 Map<String, String> stockData = new HashMap<>();
                 for (Map.Entry<Object, Object> entry : entries.entrySet()) {
                     stockData.put(entry.getKey().toString(), entry.getValue().toString());
                 }
-                allStockInfo.put(key, stockData);
+                StockInfo.put(key, stockData);
             }
         }
-        return allStockInfo;
+        return StockInfo;
     }
 
 }
