@@ -15,6 +15,8 @@ import java.util.List;
 @Service
 public class RankingService {
     // 분명 rival 랭킹과 전체 랭킹을 한 번에 처리할 수 있게 짤 수 있을 거 같다...
+    // + 전체 유저가 적은데 저걸 매번 DB에서 복잡한 쿼리를 날려서 받아올게 아니라 여기에 List 형태로
+    //   memoryRepository로 저장해두고 대회 끝날 때 마다 레이팅 계산하고 update 하면 되지 않나...?
     private final MemberRepository memberRepository;
 
     @Autowired

@@ -13,7 +13,7 @@ public class RatingCalculatorV1 {
     private final int RATING_LOWER_BOUND = 0;
     private final int RATING_UPPER_BOUND = 5000;
 
-    public int calculateRating(List<Account> accounts) {
+    public static int calculateRating(List<Account> accounts) {
         if(accounts == null || accounts.isEmpty()){
             return INITIAL_RATING;
         }
@@ -37,7 +37,6 @@ public class RatingCalculatorV1 {
         // calculate rank of competition.
         // time complexity: O(N log N)
         Collections.sort(participants, (lhs, rhs) -> Long.compare(rhs.account.getBalance(), lhs.account.getBalance()));
-        participants.get(0).ranking = 1;
         for(int i = 0, j = 0; i < participants.size(); i = j) {
             while(j < participants.size() && participants.get(j).ranking == participants.get(i).ranking) {
                 participants.get(j).expectedRanking = 1.0;
@@ -78,7 +77,7 @@ public class RatingCalculatorV1 {
         return resultList;
     }
 
-    // find the performanceRating to receive the expectedRanking in this competition
+    // find the performanceRating to receive the expectedRanking in this competition.
     // time complexity: O(N log (RATING_UPPER_BOUND - RATING_LOWER_BOUND))
     private int getPerformanceRating(Participant participant, List<Participant> participants) {
         int left = RATING_LOWER_BOUND, right = RATING_UPPER_BOUND;
