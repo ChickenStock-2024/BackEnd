@@ -46,7 +46,14 @@ public class Account extends BaseTimeEntity {
     @Column(name = "rating_change")
     private Integer ratingChange;
 
-
+    public void updateRankingAndRatingChange(int ranking, int ratingChange) {
+        if(ranking <= 0) {
+            throw new IllegalArgumentException("ranking should be greater than 0");
+        }
+        this.ranking = ranking;
+        this.ratingChange = ratingChange;
+        return;
+    }
 
     public Account(Member member, Competition competition) {
         this.member = member;
