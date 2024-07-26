@@ -1,25 +1,33 @@
 package com.sascom.chickenstock.domain.account.controller;
 
 import com.sascom.chickenstock.domain.account.dto.request.AccountCreateRequest;
+import com.sascom.chickenstock.domain.account.dto.response.AccountInfoResponse;
+import com.sascom.chickenstock.domain.account.dto.response.StockInfo;
 import com.sascom.chickenstock.domain.account.service.AccountService;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.annotation.Validated;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RequiredArgsConstructor
 @RestController
 @RequestMapping("/account")
 public class AccountController {
 
-    private AccountService accountService;
+    private final AccountService accountService;
 
+    @PostMapping
     public Long createAccount(@RequestBody AccountCreateRequest request) {
         Long accountId = accountService.createAccount(request.memberId(), request.competitionId());
         return accountId;
+    }
+
+    @PostMapping("/{accountId}")
+    public AccountInfoResponse accountInfoResponse(@PathVariable("accountId") Long accountId){
+        return accountService.getAccountInfo(accountId);
     }
 }
