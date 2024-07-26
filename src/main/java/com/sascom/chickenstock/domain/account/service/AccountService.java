@@ -1,11 +1,14 @@
 package com.sascom.chickenstock.domain.account.service;
 
 import com.sascom.chickenstock.domain.account.dto.response.AccountInfoResponse;
+import com.sascom.chickenstock.domain.account.dto.response.ExecutionContentResponse;
+import com.sascom.chickenstock.domain.account.dto.response.HistoryInfo;
 import com.sascom.chickenstock.domain.account.dto.response.StockInfo;
 import com.sascom.chickenstock.domain.account.entity.Account;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
 import com.sascom.chickenstock.domain.competition.entity.Competition;
 import com.sascom.chickenstock.domain.competition.repository.CompetitionRepository;
+import com.sascom.chickenstock.domain.history.repository.HistoryRepository;
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -23,6 +26,7 @@ import java.util.StringTokenizer;
 public class AccountService {
 
     private final AccountRepository accountRepository;
+    private final HistoryRepository historyRepository;
     private final MemberRepository memberRepository;
     private final CompetitionRepository competitionRepository;
     private final RedisService redisService;
@@ -70,5 +74,10 @@ public class AccountService {
         );
 
         return accountInfoResponse;
+    }
+
+    public ExecutionContentResponse getExecutionContent(Long accountId){
+        List<HistoryInfo> content = historyRepository.findExecutionContent(accountId);
+
     }
 }
