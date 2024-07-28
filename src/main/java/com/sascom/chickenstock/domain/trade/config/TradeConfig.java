@@ -17,6 +17,7 @@ public class TradeConfig {
         Map<String, PriorityBlockingQueue<BuyTradeRequest>> buyQueues = new HashMap<>();
         buyQueues.put("Samsung", new PriorityBlockingQueue<>());
         buyQueues.put("LG", new PriorityBlockingQueue<>());
+        buyQueues.put("Chicken Delight", new PriorityBlockingQueue<>());
         return buyQueues;
     }
 
@@ -25,6 +26,7 @@ public class TradeConfig {
         Map<String, PriorityBlockingQueue<SellTradeRequest>> sellQueues = new HashMap<>();
         sellQueues.put("Samsung", new PriorityBlockingQueue<>());
         sellQueues.put("LG", new PriorityBlockingQueue<>());
+        sellQueues.put("Chicken Delight", new PriorityBlockingQueue<>());
         return sellQueues;
     }
 
