@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class AccountExceptionHandler extends BaseExceptionHandler {
-    
+
     @ExceptionHandler(AccountNotFoundException.class)
     protected ResponseEntity<?> handleAccountNotFoundException(AccountNotFoundException e) {
         log.error(e.getMessage());

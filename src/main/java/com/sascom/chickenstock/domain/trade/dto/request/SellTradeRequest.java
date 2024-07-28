@@ -1,15 +1,12 @@
 package com.sascom.chickenstock.domain.trade.dto.request;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 
 @Getter
 @Builder
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class SellTradeRequest implements Comparable<SellTradeRequest>{
     private final Long accountId;
     private final Long memberId;
@@ -17,8 +14,7 @@ public class SellTradeRequest implements Comparable<SellTradeRequest>{
     private final Long competitionId;
     private final String companyName;
     private final Integer unitCost;
-    @Setter
-    private Integer amount;
+    @Setter private Integer amount;
     private final LocalDateTime orderTime;
 
     @Override
