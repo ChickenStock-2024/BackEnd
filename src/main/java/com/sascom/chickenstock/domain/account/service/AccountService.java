@@ -4,8 +4,12 @@ import com.sascom.chickenstock.domain.account.dto.request.BuyStockRequest;
 import com.sascom.chickenstock.domain.account.dto.response.AccountInfoResponse;
 import com.sascom.chickenstock.domain.account.dto.response.StockInfo;
 import com.sascom.chickenstock.domain.account.entity.Account;
+import com.sascom.chickenstock.domain.account.error.code.AccountErrorCode;
+import com.sascom.chickenstock.domain.account.error.exception.AccountNotFoundException;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
 import com.sascom.chickenstock.domain.company.entity.Company;
+import com.sascom.chickenstock.domain.company.error.code.CompanyErrorCode;
+import com.sascom.chickenstock.domain.company.error.exception.CompanyNotFoundException;
 import com.sascom.chickenstock.domain.company.repository.CompanyRepository;
 import com.sascom.chickenstock.domain.competition.entity.Competition;
 import com.sascom.chickenstock.domain.competition.repository.CompetitionRepository;
@@ -13,6 +17,8 @@ import com.sascom.chickenstock.domain.history.entity.History;
 import com.sascom.chickenstock.domain.history.entity.HistoryStatus;
 import com.sascom.chickenstock.domain.history.repository.HistoryRepository;
 import com.sascom.chickenstock.domain.member.entity.Member;
+import com.sascom.chickenstock.domain.member.error.code.MemberErrorCode;
+import com.sascom.chickenstock.domain.member.error.exception.MemberNotFoundException;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
 import com.sascom.chickenstock.domain.trade.service.TradeService;
@@ -87,11 +93,11 @@ public class AccountService {
 
         // Member 유효성 체크
         Member member = memberRepository.findById(buyStockRequest.memberId())
-                .orElseThrow(EntityNotFoundException::new);
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
 
         // Account 유효성 체크
         Account account = accountRepository.findById(buyStockRequest.accountId())
-                .orElseThrow(EntityNotFoundException::new);
+                .orElseThrow(() -> AccountNotFoundException.of(AccountErrorCode.NOT_FOUND));
 
         // 계좌에 구매가능 잔고 있는지 확인
         if(account.getBalance() < (long) buyStockRequest.amount() * buyStockRequest.unitCost()) {
@@ -100,11 +106,11 @@ public class AccountService {
 
         // Company 유효성 체크
         Company company = companyRepository.findById(buyStockRequest.companyId())
-                .orElseThrow(EntityNotFoundException::new);
+                .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
 
         // Competition 유효성 체크
         Competition competition = competitionRepository.findById(buyStockRequest.companyId())
-                .orElseThrow(EntityNotFoundException::new);
+                .orElseThrow();
 
         // 계좌에서 해당 금액만큼 임시구매처리 (미완)
 
