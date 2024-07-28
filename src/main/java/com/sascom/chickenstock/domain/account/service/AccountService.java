@@ -1,13 +1,21 @@
 package com.sascom.chickenstock.domain.account.service;
 
+import com.sascom.chickenstock.domain.account.dto.request.BuyStockRequest;
 import com.sascom.chickenstock.domain.account.dto.response.AccountInfoResponse;
 import com.sascom.chickenstock.domain.account.dto.response.StockInfo;
 import com.sascom.chickenstock.domain.account.entity.Account;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
+import com.sascom.chickenstock.domain.company.entity.Company;
+import com.sascom.chickenstock.domain.company.repository.CompanyRepository;
 import com.sascom.chickenstock.domain.competition.entity.Competition;
 import com.sascom.chickenstock.domain.competition.repository.CompetitionRepository;
+import com.sascom.chickenstock.domain.history.entity.History;
+import com.sascom.chickenstock.domain.history.entity.HistoryStatus;
+import com.sascom.chickenstock.domain.history.repository.HistoryRepository;
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
+import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
+import com.sascom.chickenstock.domain.trade.service.TradeService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -25,7 +33,10 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final MemberRepository memberRepository;
     private final CompetitionRepository competitionRepository;
+    private final CompanyRepository companyRepository;
+    private final HistoryRepository historyRepository;
     private final RedisService redisService;
+    private final TradeService tradeService;
 
     public Long createAccount(Long memberId, Long competitionId){
 
@@ -70,5 +81,56 @@ public class AccountService {
         );
 
         return accountInfoResponse;
+    }
+
+    public void buyStocks(BuyStockRequest buyStockRequest) {
+
+        // Member 유효성 체크
+        Member member = memberRepository.findById(buyStockRequest.memberId())
+                .orElseThrow(EntityNotFoundException::new);
+
+        // Account 유효성 체크
+        Account account = accountRepository.findById(buyStockRequest.accountId())
+                .orElseThrow(EntityNotFoundException::new);
+
+        // 계좌에 구매가능 잔고 있는지 확인
+        if(account.getBalance() < (long) buyStockRequest.amount() * buyStockRequest.unitCost()) {
+            throw new EntityNotFoundException();
+        }
+
+        // Company 유효성 체크
+        Company company = companyRepository.findById(buyStockRequest.companyId())
+                .orElseThrow(EntityNotFoundException::new);
+
+        // Competition 유효성 체크
+        Competition competition = competitionRepository.findById(buyStockRequest.companyId())
+                .orElseThrow(EntityNotFoundException::new);
+
+        // 계좌에서 해당 금액만큼 임시구매처리 (미완)
+
+        // History Table에 기록 Write
+        historyRepository.save(History.builder()
+                .account(account)
+                .price(buyStockRequest.unitCost())
+                .company(company)
+                .volume(buyStockRequest.amount())
+                .status(HistoryStatus.매수요청)
+                .build());
+
+        // 구매요청
+        tradeService.addBuyRequest(
+                BuyTradeRequest.builder()
+                        .accountId(buyStockRequest.accountId())
+                        .memberId(buyStockRequest.memberId())
+                        .companyId(buyStockRequest.companyId())
+                        .competitionId(buyStockRequest.competitionId())
+                        .unitCost(buyStockRequest.unitCost())
+                        .amount(buyStockRequest.amount())
+                        .orderTime(buyStockRequest.orderTime())
+                        .build());
+
+    }
+
+    public void sellStocks(BuyStockRequest sellStockRequest) {
     }
 }

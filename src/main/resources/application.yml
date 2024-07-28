@@ -13,3 +13,9 @@ spring:
       hibernate:
         format_sql: true
 #        show_sql: true
+
+redis:
+  config:
+    import: classpath:privacy.yml
+  host: ${redis.host}
+  port: ${redis.port}
