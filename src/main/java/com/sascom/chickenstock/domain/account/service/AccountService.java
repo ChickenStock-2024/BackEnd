@@ -5,6 +5,7 @@ import com.sascom.chickenstock.domain.account.dto.response.AccountInfoResponse;
 import com.sascom.chickenstock.domain.account.dto.response.StockInfo;
 import com.sascom.chickenstock.domain.account.entity.Account;
 import com.sascom.chickenstock.domain.account.error.code.AccountErrorCode;
+import com.sascom.chickenstock.domain.account.error.exception.AccountNotEnoughException;
 import com.sascom.chickenstock.domain.account.error.exception.AccountNotFoundException;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
 import com.sascom.chickenstock.domain.company.entity.Company;
@@ -101,7 +102,7 @@ public class AccountService {
 
         // 계좌에 구매가능 잔고 있는지 확인
         if(account.getBalance() < (long) buyStockRequest.amount() * buyStockRequest.unitCost()) {
-            throw new EntityNotFoundException();
+            throw AccountNotEnoughException.of(AccountErrorCode.NOT_ENOUGH_BALANCE);
         }
 
         // Company 유효성 체크
@@ -121,7 +122,8 @@ public class AccountService {
                 .company(company)
                 .volume(buyStockRequest.amount())
                 .status(HistoryStatus.매수요청)
-                .build());
+                .build()
+        );
 
         // 구매요청
         tradeService.addBuyRequest(
@@ -133,7 +135,8 @@ public class AccountService {
                         .unitCost(buyStockRequest.unitCost())
                         .amount(buyStockRequest.amount())
                         .orderTime(buyStockRequest.orderTime())
-                        .build());
+                        .build()
+        );
 
     }
 
