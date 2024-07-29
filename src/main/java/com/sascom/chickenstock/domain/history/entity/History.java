@@ -6,6 +6,7 @@ import com.sascom.chickenstock.domain.company.entity.Company;
 import com.sascom.chickenstock.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.antlr.v4.runtime.misc.NotNull;
@@ -42,6 +43,7 @@ public class History extends BaseTimeEntity {
     @Column(name = "status")
     private HistoryStatus status;
 
+    @Builder
     public History(Account account, Company company, Integer price, Integer volume, HistoryStatus status) {
         this.account = account;
         this.company = company;
