@@ -25,8 +25,7 @@ import com.sascom.chickenstock.domain.member.error.exception.MemberNotFoundExcep
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.SellTradeRequest;
-import com.sascom.chickenstock.domain.trade.dto.response.BuyTradeResponse;
-import com.sascom.chickenstock.domain.trade.dto.response.SellTradeResponse;
+import com.sascom.chickenstock.domain.trade.dto.response.TradeResponse;
 import com.sascom.chickenstock.domain.trade.service.TradeService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -94,7 +93,7 @@ public class AccountService {
         return accountInfoResponse;
     }
 
-    public BuyTradeResponse buyStocks(StockOrderRequest stockOrderRequest) {
+    public TradeResponse buyStocks(StockOrderRequest stockOrderRequest) {
 
         // Member 유효성 체크
         Member member = memberRepository.findById(stockOrderRequest.memberId())
@@ -145,7 +144,7 @@ public class AccountService {
 
     }
 
-    public SellTradeResponse sellStocks(StockOrderRequest stockOrderRequest) {
+    public TradeResponse sellStocks(StockOrderRequest stockOrderRequest) {
         // Member 유효성 체크
         Member member = memberRepository.findById(stockOrderRequest.memberId())
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
