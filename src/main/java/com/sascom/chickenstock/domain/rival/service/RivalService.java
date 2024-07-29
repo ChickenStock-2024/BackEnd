@@ -4,6 +4,7 @@ import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.error.code.MemberErrorCode;
 import com.sascom.chickenstock.domain.member.error.exception.MemberNotFoundException;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
+import com.sascom.chickenstock.domain.ranking.dto.MemberRankingDto;
 import com.sascom.chickenstock.domain.rival.dto.request.RequestEnrollRivalDTO;
 import com.sascom.chickenstock.domain.rival.dto.response.ResponseEnrollRivalDTO;
 import com.sascom.chickenstock.domain.rival.entity.Rival;
@@ -56,13 +57,21 @@ public class RivalService {
     }
 
     public List<ResponseEnrollRivalDTO> getRivalList() {
-        // 나와 연관된 모든 라이벌들 리스트로 반환
+        Member member = getMemberFromContextHolder()
+                .orElseThrow(() -> new IllegalStateException("Authorization Error"));
+        List<Rival> rivals = rivalRepository.findByMember(member);
+        // TODO: MemberService, Repository를 손 보고 MemberRankingDto로 잘 변환해서 return...
         return null;
     }
 
-    public boolean check(Long id) {
-        // 나와 해당 id와 라이벌인지 체크
-        return true;
+    public boolean check(Long rivalId) {
+        Member member = getMemberFromContextHolder()
+                .orElseThrow(() -> new IllegalStateException("Authorization Error"));
+        Member enemy = memberRepository.findById(rivalId)
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+        Rival rival = rivalRepository.findByMemberAndEnemy(member, enemy)
+                .orElse(null);
+        return rival != null;
     }
 
     private Optional<Member> getMemberFromContextHolder() {

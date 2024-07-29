@@ -38,8 +38,8 @@ public class RivalController {
     }
 
     @GetMapping("/{rivalId}")
-    public ResponseEntity<Map<String, Boolean>> check(@PathVariable(name = "rivalId") Long id) {
-        boolean result = rivalService.check(id);
+    public ResponseEntity<Map<String, Boolean>> check(@PathVariable(name = "rivalId") Long rivalId) {
+        boolean result = rivalService.check(rivalId);
 
         return ResponseEntity.ok().body(Map.of("is_rival", result));
     }
