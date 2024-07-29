@@ -8,6 +8,7 @@ import com.sascom.chickenstock.domain.account.entity.Account;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
 import com.sascom.chickenstock.domain.competition.entity.Competition;
 import com.sascom.chickenstock.domain.competition.repository.CompetitionRepository;
+import com.sascom.chickenstock.domain.history.entity.History;
 import com.sascom.chickenstock.domain.history.repository.HistoryRepository;
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
@@ -76,8 +78,16 @@ public class AccountService {
         return accountInfoResponse;
     }
 
-    public ExecutionContentResponse getExecutionContent(Long accountId){
-        List<HistoryInfo> content = historyRepository.findExecutionContent(accountId);
-
+    public List<HistoryInfo> getExecutionContent(Long accountId){
+        List<History> histories = historyRepository.findExecutionContent(accountId);
+        List<HistoryInfo> result = histories.stream()
+                .map(h -> new HistoryInfo(h.getCompany().getName(),
+                        h.getPrice(),
+                        h.getVolume(),
+                        h.getStatus(),
+                        h.getCreatedAt()
+                        ))
+                .collect(Collectors.toList());
+        return result;
     }
 }

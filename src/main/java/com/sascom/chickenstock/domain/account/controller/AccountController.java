@@ -3,6 +3,7 @@ package com.sascom.chickenstock.domain.account.controller;
 import com.sascom.chickenstock.domain.account.dto.request.AccountCreateRequest;
 import com.sascom.chickenstock.domain.account.dto.response.AccountInfoResponse;
 import com.sascom.chickenstock.domain.account.dto.response.ExecutionContentResponse;
+import com.sascom.chickenstock.domain.account.dto.response.HistoryInfo;
 import com.sascom.chickenstock.domain.account.dto.response.StockInfo;
 import com.sascom.chickenstock.domain.account.service.AccountService;
 import lombok.NoArgsConstructor;
@@ -33,7 +34,7 @@ public class AccountController {
     }
 
     @GetMapping("/{accountId}/execution")
-    public ExecutionContentResponse getExecutionContent(@PathVariable("accountId") Long accountId){
+    public List<HistoryInfo> getExecutionContent(@PathVariable("accountId") Long accountId){
         return accountService.getExecutionContent(accountId);
     }
 }

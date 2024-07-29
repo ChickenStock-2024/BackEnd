@@ -11,7 +11,7 @@ import java.util.List;
 public interface HistoryRepository extends JpaRepository<History, Long> {
 
 
-    @Query("SELECT new com.sascom.chickenstock.domain.account.dto.response.HistoryInfo(h.account.id, h.company.id, h.price, h.volume, h.status, h.createdAt) " +
-            "FROM History h WHERE h.account.id = :accountId AND (h.status = '매수체결' OR h.status = '매도체결')")
-    List<HistoryInfo> findExecutionContent(@Param("accountId") Long accountId);
+    @Query("SELECT h FROM History h WHERE h.account.id = :accountId AND (h.status = '매수체결' OR h.status = '매도체결')")
+    List<History> findExecutionContent(@Param("accountId") Long accountId);
+
 }
