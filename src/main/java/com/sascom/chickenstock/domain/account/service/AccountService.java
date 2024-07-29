@@ -99,7 +99,8 @@ public class AccountService {
         return accountInfoResponse;
     }
 
-    public ExecutionContentResponse getExecutionContent(Long accountId) {
+
+    public ExecutionContentResponse getExecutionContent(Long accountId){
         List<History> histories = historyRepository.findExecutionContent(accountId);
         List<HistoryInfo> result = histories.stream()
                 .map(h -> new HistoryInfo(h.getCompany().getName(),
@@ -111,6 +112,7 @@ public class AccountService {
                 .collect(Collectors.toList());
         return new ExecutionContentResponse(result);
     }
+
 
     public BuyTradeResponse buyStocks(BuyStockRequest buyStockRequest) {
 
