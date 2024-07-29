@@ -26,7 +26,6 @@ public class RivalController {
     @DeleteMapping("/{rivalId}")
     public ResponseEntity<ResponseEnrollRivalDTO> deleteRival(@PathVariable(name = "rivalId") Long rivalId) {
         rivalService.removeRivalByRivalId(rivalId);
-
         return ResponseEntity.ok().build();
     }
 

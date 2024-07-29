@@ -22,8 +22,8 @@ public class RivalService {
     private final RivalRepository rivalRepository;
 
     public void addRivalByRivalId(Long rivalId) {
-        // 나의 memberID를 받았다고 친다.
-        // 아래 member 부분은 나중에 spring security 관련 util을 만들어서 거기서 처리하면 좋을 거 같습니다.
+        // 나의 memberID를 받았다고 친다. 임시로 만들어 둠
+        // TODO: 아래 member 부분은 나중에 spring security 관련 util을 만들어서 거기서 처리하면 좋을 거 같습니다.
         Member member = getMemberFromContextHolder()
                 .orElseThrow(() -> new IllegalStateException("Authorization Error"));
         Member enemy = memberRepository.findById(rivalId)
@@ -40,7 +40,19 @@ public class RivalService {
     }
 
     public void removeRivalByRivalId(Long rivalId) {
-        // 내 id와 라이벌 id가 매핑된 행을 지운다.
+        // TODO: addRivalByRivalId와 마찬가지
+        Member member = getMemberFromContextHolder()
+                .orElseThrow(() -> new IllegalStateException("Authorization Error"));
+        Member enemy = memberRepository.findById(rivalId)
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+
+        // validation
+        if(member.equals(enemy)) {
+            // TODO: IllegalStateException -> RivalException
+            throw new IllegalStateException("self rival");
+        }
+        rivalRepository.findByMemberAndEnemy(member, enemy)
+                .ifPresent(rivalRepository::delete);
     }
 
     public List<ResponseEnrollRivalDTO> getRivalList() {
