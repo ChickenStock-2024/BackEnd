@@ -34,7 +34,7 @@ public class AccountController {
     }
 
     @GetMapping("/{accountId}/execution")
-    public List<HistoryInfo> getExecutionContent(@PathVariable("accountId") Long accountId){
+    public ExecutionContentResponse getExecutionContent(@PathVariable("accountId") Long accountId){
         return accountService.getExecutionContent(accountId);
     }
 }

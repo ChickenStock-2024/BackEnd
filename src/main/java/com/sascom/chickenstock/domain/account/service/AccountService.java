@@ -78,7 +78,7 @@ public class AccountService {
         return accountInfoResponse;
     }
 
-    public List<HistoryInfo> getExecutionContent(Long accountId){
+    public ExecutionContentResponse getExecutionContent(Long accountId){
         List<History> histories = historyRepository.findExecutionContent(accountId);
         List<HistoryInfo> result = histories.stream()
                 .map(h -> new HistoryInfo(h.getCompany().getName(),
@@ -88,6 +88,6 @@ public class AccountService {
                         h.getCreatedAt()
                         ))
                 .collect(Collectors.toList());
-        return result;
+        return new ExecutionContentResponse(result);
     }
 }
