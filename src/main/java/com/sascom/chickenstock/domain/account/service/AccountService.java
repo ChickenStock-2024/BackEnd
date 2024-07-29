@@ -1,7 +1,5 @@
 package com.sascom.chickenstock.domain.account.service;
 
-import com.sascom.chickenstock.domain.account.dto.request.BuyStockRequest;
-import com.sascom.chickenstock.domain.account.dto.request.SellStockRequest;
 import com.sascom.chickenstock.domain.account.dto.request.StockOrderRequest;
 import com.sascom.chickenstock.domain.account.dto.response.AccountInfoResponse;
 import com.sascom.chickenstock.domain.account.dto.response.StockInfo;
@@ -34,7 +32,6 @@ import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import javax.lang.model.SourceVersion;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;

@@ -1,8 +1,6 @@
 package com.sascom.chickenstock.domain.account.controller;
 
 import com.sascom.chickenstock.domain.account.dto.request.AccountCreateRequest;
-import com.sascom.chickenstock.domain.account.dto.request.BuyStockRequest;
-import com.sascom.chickenstock.domain.account.dto.request.SellStockRequest;
 import com.sascom.chickenstock.domain.account.dto.request.StockOrderRequest;
 import com.sascom.chickenstock.domain.account.dto.response.AccountInfoResponse;
 import com.sascom.chickenstock.domain.account.service.AccountService;
@@ -11,8 +9,6 @@ import com.sascom.chickenstock.domain.trade.dto.response.SellTradeResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/account")
