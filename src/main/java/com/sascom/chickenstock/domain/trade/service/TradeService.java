@@ -14,54 +14,60 @@ import java.util.concurrent.PriorityBlockingQueue;
 @Service
 public class TradeService {
 
-    private final Map<String, PriorityBlockingQueue<BuyTradeRequest>> buyQueues;
-    private final Map<String, PriorityBlockingQueue<SellTradeRequest>> sellQueues;
+    private final Map<String, PriorityBlockingQueue<BuyTradeRequest>> limitBuyOrderQueues;
+    private final Map<String, PriorityBlockingQueue<SellTradeRequest>> limitSellOrderQueues;
+    private final Map<String, PriorityBlockingQueue<BuyTradeRequest>> marketBuyOrderQueues;
+    private final Map<String, PriorityBlockingQueue<SellTradeRequest>> marketSellOrderQueues;
 
     @Autowired
-    public TradeService(Map<String, PriorityBlockingQueue<BuyTradeRequest>> buyQueues,
-                        Map<String, PriorityBlockingQueue<SellTradeRequest>> sellQueues) {
-        this.buyQueues = buyQueues;
-        this.sellQueues = sellQueues;
+    public TradeService(Map<String, PriorityBlockingQueue<BuyTradeRequest>> limitBuyOrderQueues,
+                        Map<String, PriorityBlockingQueue<SellTradeRequest>> limitSellOrderQueues,
+                        Map<String, PriorityBlockingQueue<BuyTradeRequest>> marketBuyOrderQueues,
+                        Map<String, PriorityBlockingQueue<SellTradeRequest>> marketSellOrderQueues) {
+        this.limitBuyOrderQueues = limitBuyOrderQueues;
+        this.limitSellOrderQueues = limitSellOrderQueues;
+        this.marketBuyOrderQueues = marketBuyOrderQueues;
+        this.marketSellOrderQueues = marketSellOrderQueues;
     }
 
     public TradeResponse addBuyRequest(BuyTradeRequest buyTradeRequest) {
-        if(!buyQueues.containsKey(buyTradeRequest.getCompanyName())) {
+        if(!limitBuyOrderQueues.containsKey(buyTradeRequest.getCompanyName())) {
             throw TradeNotFoundException.of(TradeErrorCode.NOT_FOUND);
         }
 
-        buyQueues.get(buyTradeRequest.getCompanyName()).offer(buyTradeRequest);
-         return matchBuyTrades(buyTradeRequest);
+        limitBuyOrderQueues.get(buyTradeRequest.getCompanyName()).offer(buyTradeRequest);
+        return matchBuyTrades(buyTradeRequest);
     }
 
     public TradeResponse addSellRequest(SellTradeRequest sellTradeRequest) {
-        if(!sellQueues.containsKey(sellTradeRequest.getCompanyName())) {
+        if(!limitSellOrderQueues.containsKey(sellTradeRequest.getCompanyName())) {
             throw TradeNotFoundException.of(TradeErrorCode.NOT_FOUND);
         }
 
-        sellQueues.get(sellTradeRequest.getCompanyName()).offer(sellTradeRequest);
+        limitSellOrderQueues.get(sellTradeRequest.getCompanyName()).offer(sellTradeRequest);
         return matchSellTrades(sellTradeRequest);
     }
 
     public BuyTradeRequest processBuyRequest(String company) {
-        return buyQueues.get(company).poll();
+        return limitBuyOrderQueues.get(company).poll();
     }
 
     public SellTradeRequest processSellRequest(String company) {
-        return sellQueues.get(company).poll();
+        return limitSellOrderQueues.get(company).poll();
     }
 
     public boolean isBuyQueueEmpty(String company) {
-        return buyQueues.get(company).isEmpty();
+        return limitBuyOrderQueues.get(company).isEmpty();
     }
 
     public boolean isSellQueueEmpty(String company) {
-        return sellQueues.get(company).isEmpty();
+        return limitSellOrderQueues.get(company).isEmpty();
     }
 
     public TradeResponse matchBuyTrades(BuyTradeRequest buyTradeRequest) {
         String company = buyTradeRequest.getCompanyName();
-        PriorityBlockingQueue<BuyTradeRequest> buyQueue = buyQueues.get(company);
-        PriorityBlockingQueue<SellTradeRequest> sellQueue = sellQueues.get(company);
+        PriorityBlockingQueue<BuyTradeRequest> buyQueue = limitBuyOrderQueues.get(company);
+        PriorityBlockingQueue<SellTradeRequest> sellQueue = limitSellOrderQueues.get(company);
 
         // 우선순위 큐의 첫번째 요소를 가져오지만 제거하지 않음
         BuyTradeRequest buyRequest = buyQueue.peek();
@@ -94,8 +100,8 @@ public class TradeService {
 
     public TradeResponse matchSellTrades(SellTradeRequest sellTradeRequest) {
         String company = sellTradeRequest.getCompanyName();
-        PriorityBlockingQueue<BuyTradeRequest> buyQueue = buyQueues.get(company);
-        PriorityBlockingQueue<SellTradeRequest> sellQueue = sellQueues.get(company);
+        PriorityBlockingQueue<BuyTradeRequest> buyQueue = limitBuyOrderQueues.get(company);
+        PriorityBlockingQueue<SellTradeRequest> sellQueue = limitSellOrderQueues.get(company);
 
         // 우선순위 큐의 첫번째 요소를 가져오지만 제거하지 않음
         BuyTradeRequest buyRequest = buyQueue.peek();
