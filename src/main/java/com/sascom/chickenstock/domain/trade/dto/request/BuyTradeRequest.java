@@ -4,8 +4,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-@Getter
-public class BuyTradeRequest extends TradeRequest {
+public class BuyTradeRequest extends TradeRequest implements Comparable<BuyTradeRequest> {
 
     @Builder
     public BuyTradeRequest(Long accountId, Long memberId, Long companyId, Long competitionId, String companyName, Integer unitCost, Integer amount, LocalDateTime orderTime) {
@@ -13,7 +12,7 @@ public class BuyTradeRequest extends TradeRequest {
     }
 
     @Override
-    public int compareTo(TradeRequest other) {
+    public int compareTo(BuyTradeRequest other) {
         // 가격 우선의 법칙
         if (!getUnitCost().equals(other.getUnitCost())) {
             return this.getUnitCost().compareTo(other.getUnitCost());

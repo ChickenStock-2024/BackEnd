@@ -30,7 +30,7 @@ public class TradeService {
         }
 
         buyQueues.get(buyTradeRequest.getCompanyName()).offer(buyTradeRequest);
-         return matchBuyTrades(buyTradeRequest.getCompanyName());
+         return matchBuyTrades(buyTradeRequest);
     }
 
     public TradeResponse addSellRequest(SellTradeRequest sellTradeRequest) {
@@ -39,7 +39,7 @@ public class TradeService {
         }
 
         sellQueues.get(sellTradeRequest.getCompanyName()).offer(sellTradeRequest);
-        return matchSellTrades(sellTradeRequest.getCompanyName());
+        return matchSellTrades(sellTradeRequest);
     }
 
     public BuyTradeRequest processBuyRequest(String company) {
@@ -58,7 +58,8 @@ public class TradeService {
         return sellQueues.get(company).isEmpty();
     }
 
-    public TradeResponse matchBuyTrades(String company) {
+    public TradeResponse matchBuyTrades(BuyTradeRequest buyTradeRequest) {
+        String company = buyTradeRequest.getCompanyName();
         PriorityBlockingQueue<BuyTradeRequest> buyQueue = buyQueues.get(company);
         PriorityBlockingQueue<SellTradeRequest> sellQueue = sellQueues.get(company);
 
@@ -69,7 +70,7 @@ public class TradeService {
         if (buyRequest == null || sellRequest == null) {
             return TradeResponse.builder()
                     .message("매수요청 성공")
-                    .tradeRequest(null)
+                    .tradeRequest(buyTradeRequest)
                     .build();
         }
 
@@ -81,17 +82,18 @@ public class TradeService {
 
             return TradeResponse.builder()
                     .message("매수 성공")
-                    .tradeRequest(null)
+                    .tradeRequest(buyTradeRequest)
                     .build();
         } else {
             return TradeResponse.builder()
                     .message("매수요청 성공")
-                    .tradeRequest(null)
+                    .tradeRequest(buyTradeRequest)
                     .build();
         }
     }
 
-    public TradeResponse matchSellTrades(String company) {
+    public TradeResponse matchSellTrades(SellTradeRequest sellTradeRequest) {
+        String company = sellTradeRequest.getCompanyName();
         PriorityBlockingQueue<BuyTradeRequest> buyQueue = buyQueues.get(company);
         PriorityBlockingQueue<SellTradeRequest> sellQueue = sellQueues.get(company);
 
@@ -102,7 +104,7 @@ public class TradeService {
         if (buyRequest == null || sellRequest == null) {
             return TradeResponse.builder()
                     .message("매도요청 성공")
-                    .tradeRequest(null)
+                    .tradeRequest(sellTradeRequest)
                     .build();
         }
 
@@ -113,12 +115,12 @@ public class TradeService {
             sellQueue.poll();
             return TradeResponse.builder()
                     .message("매도 성공")
-                    .tradeRequest(null)
+                    .tradeRequest(sellTradeRequest)
                     .build();
         } else {
             return TradeResponse.builder()
                     .message("매도요청 성공")
-                    .tradeRequest(null)
+                    .tradeRequest(sellTradeRequest)
                     .build();
         }
     }
