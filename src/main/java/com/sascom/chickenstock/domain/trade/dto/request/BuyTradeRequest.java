@@ -14,8 +14,7 @@ public class BuyTradeRequest implements Comparable<BuyTradeRequest>{
     private final Long competitionId;
     private final String companyName;
     private final Integer unitCost;
-    @Setter
-    private Integer amount;
+    @Setter private Integer amount;
     private final LocalDateTime orderTime;
 
     @Override

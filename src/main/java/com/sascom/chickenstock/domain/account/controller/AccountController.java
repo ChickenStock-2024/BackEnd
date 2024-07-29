@@ -3,6 +3,7 @@ package com.sascom.chickenstock.domain.account.controller;
 import com.sascom.chickenstock.domain.account.dto.request.AccountCreateRequest;
 import com.sascom.chickenstock.domain.account.dto.request.BuyStockRequest;
 import com.sascom.chickenstock.domain.account.dto.request.SellStockRequest;
+import com.sascom.chickenstock.domain.account.dto.request.StockOrderRequest;
 import com.sascom.chickenstock.domain.account.dto.response.AccountInfoResponse;
 import com.sascom.chickenstock.domain.account.service.AccountService;
 import com.sascom.chickenstock.domain.trade.dto.response.BuyTradeResponse;
@@ -36,15 +37,15 @@ public class AccountController {
     }
 
     @PostMapping("/buy")
-    public ResponseEntity<BuyTradeResponse> buyStocks(@RequestBody BuyStockRequest buyStockRequest) {
-        BuyTradeResponse response = accountService.buyStocks(buyStockRequest);
+    public ResponseEntity<BuyTradeResponse> buyStocks(@RequestBody StockOrderRequest stockOrderRequest) {
+        BuyTradeResponse response = accountService.buyStocks(stockOrderRequest);
 
         return ResponseEntity.ok().body(response);
     }
 
     @PostMapping("/sell")
-    public ResponseEntity<SellTradeResponse> sellStocks(@RequestBody SellStockRequest sellStockRequest) {
-        SellTradeResponse response = accountService.sellStocks(sellStockRequest);
+    public ResponseEntity<SellTradeResponse> sellStocks(@RequestBody StockOrderRequest stockOrderRequest) {
+        SellTradeResponse response = accountService.sellStocks(stockOrderRequest);
 
         return ResponseEntity.ok().body(response);
     }

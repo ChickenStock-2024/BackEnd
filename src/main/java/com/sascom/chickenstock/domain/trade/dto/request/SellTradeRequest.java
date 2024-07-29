@@ -22,7 +22,7 @@ public class SellTradeRequest implements Comparable<SellTradeRequest>{
 
         // 1. 가격 우선의 법칙
         if(!unitCost.equals(other.getAmount())) {
-            return unitCost.compareTo(other.getAmount());
+            return -1 * unitCost.compareTo(other.getAmount());
         }
         // 2. 시간 우선의 법칙
         if(!orderTime.isEqual(other.getOrderTime())) {
