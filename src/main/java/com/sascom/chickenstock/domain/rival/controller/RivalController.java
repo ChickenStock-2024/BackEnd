@@ -17,16 +17,15 @@ public class RivalController {
 
     private RivalService rivalService;
 
-    @PostMapping
-    public ResponseEntity<ResponseEnrollRivalDTO> enroll(@RequestBody RequestEnrollRivalDTO requestEnrollRivalDTO) {
-        rivalService.save(requestEnrollRivalDTO);
-
+    @PostMapping("/{rivalId}")
+    public ResponseEntity<Void> createRival(@PathVariable(name = "rivalId") Long rivalId) {
+        rivalService.addRivalByRivalId(rivalId);
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{rivalId}")
-    public ResponseEntity<ResponseEnrollRivalDTO> delete(@PathVariable(name = "rivalId") Long rivalId) {
-        rivalService.delete(rivalId);
+    public ResponseEntity<ResponseEnrollRivalDTO> deleteRival(@PathVariable(name = "rivalId") Long rivalId) {
+        rivalService.removeRivalByRivalId(rivalId);
 
         return ResponseEntity.ok().build();
     }

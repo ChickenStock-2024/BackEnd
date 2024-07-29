@@ -28,8 +28,8 @@ public class Rival extends BaseTimeEntity {
     @JoinColumn(name = "enemy_id")
     private Member enemy;
 
-    public Rival(Member enemy, Member member) {
-        this.enemy = enemy;
+    public Rival(Member member, Member enemy) {
         this.member = member;
+        this.enemy = enemy;
     }
 }
