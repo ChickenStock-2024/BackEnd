@@ -3,6 +3,8 @@ package com.sascom.chickenstock.domain.account.service;
 import com.sascom.chickenstock.domain.account.dto.request.BuyStockRequest;
 import com.sascom.chickenstock.domain.account.dto.request.SellStockRequest;
 import com.sascom.chickenstock.domain.account.dto.response.AccountInfoResponse;
+import com.sascom.chickenstock.domain.account.dto.response.ExecutionContentResponse;
+import com.sascom.chickenstock.domain.account.dto.response.HistoryInfo;
 import com.sascom.chickenstock.domain.account.dto.response.StockInfo;
 import com.sascom.chickenstock.domain.account.entity.Account;
 import com.sascom.chickenstock.domain.account.error.code.AccountErrorCode;
@@ -38,12 +40,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.StringTokenizer;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 @Service
 public class AccountService {
 
     private final AccountRepository accountRepository;
+    private final HistoryRepository historyRepository;
     private final MemberRepository memberRepository;
     private final CompetitionRepository competitionRepository;
     private final CompanyRepository companyRepository;
@@ -95,6 +99,18 @@ public class AccountService {
 
         return accountInfoResponse;
     }
+
+    public ExecutionContentResponse getExecutionContent(Long accountId){
+        List<History> histories = historyRepository.findExecutionContent(accountId);
+        List<HistoryInfo> result = histories.stream()
+                .map(h -> new HistoryInfo(h.getCompany().getName(),
+                        h.getPrice(),
+                        h.getVolume(),
+                        h.getStatus(),
+                        h.getCreatedAt()
+                        ))
+                .collect(Collectors.toList());
+        return new ExecutionContentResponse(result);
 
     public BuyTradeResponse buyStocks(BuyStockRequest buyStockRequest) {
 
@@ -194,5 +210,6 @@ public class AccountService {
                         .orderTime(sellStockRequest.orderTime())
                         .build()
         );
+
     }
 }

@@ -4,6 +4,9 @@ import com.sascom.chickenstock.domain.account.dto.request.AccountCreateRequest;
 import com.sascom.chickenstock.domain.account.dto.request.BuyStockRequest;
 import com.sascom.chickenstock.domain.account.dto.request.SellStockRequest;
 import com.sascom.chickenstock.domain.account.dto.response.AccountInfoResponse;
+import com.sascom.chickenstock.domain.account.dto.response.ExecutionContentResponse;
+import com.sascom.chickenstock.domain.account.dto.response.HistoryInfo;
+import com.sascom.chickenstock.domain.account.dto.response.StockInfo;
 import com.sascom.chickenstock.domain.account.service.AccountService;
 import com.sascom.chickenstock.domain.trade.dto.response.BuyTradeResponse;
 import com.sascom.chickenstock.domain.trade.dto.response.SellTradeResponse;
@@ -31,8 +34,14 @@ public class AccountController {
     }
 
     @PostMapping("/{accountId}")
-    public AccountInfoResponse accountInfoResponse(@PathVariable("accountId") Long accountId){
+    public AccountInfoResponse getAccountInfo(@PathVariable("accountId") Long accountId){
         return accountService.getAccountInfo(accountId);
+    }
+
+
+    @GetMapping("/{accountId}/execution")
+    public ExecutionContentResponse getExecutionContent(@PathVariable("accountId") Long accountId){
+        return accountService.getExecutionContent(accountId);
     }
 
     @PostMapping("/buy")

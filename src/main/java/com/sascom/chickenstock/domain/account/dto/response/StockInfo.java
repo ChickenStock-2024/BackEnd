@@ -1,7 +1,7 @@
 package com.sascom.chickenstock.domain.account.dto.response;
 
 public record StockInfo (
-    String companyTitle,
+    String companyName,
     Integer price,
     Integer volume
 ) {

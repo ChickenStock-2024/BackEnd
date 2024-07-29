@@ -73,8 +73,8 @@ public class RedisService {
 //
 //    }
 
-    public void setStockInfo(Long accountId, String companyTitle, Integer price, Integer volume) {
-        String key = "account:" + accountId +":companyTitle:" + companyTitle;
+    public void setStockInfo(Long accountId, String companyName, Integer price, Integer volume) {
+        String key = "account:" + accountId +":companyName:" + companyName;
         Map<String, String> stockData = new HashMap<>();
         stockData.put("price", price.toString());
         stockData.put("volume", volume.toString());
@@ -82,7 +82,7 @@ public class RedisService {
     }
 
     public Map<String, Map<String, String>> getStockInfo(Long accountId) {
-        String pattern = "accountId:" + accountId + ":companyTitle:*";
+        String pattern = "accountId:" + accountId + ":companyName:*";
         Set<String> keys = redisTemplate.keys(pattern);
 
         Map<String, Map<String, String>> StockInfo = new HashMap<>();
