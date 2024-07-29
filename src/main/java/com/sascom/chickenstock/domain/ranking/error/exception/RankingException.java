@@ -9,7 +9,7 @@ public class RankingException extends ChickenStockException {
         super(errorCode);
     }
 
-    public static RankingException of (RankingErrorCode errorCode) {
+    public static RankingException of(RankingErrorCode errorCode) {
         return new RankingException(errorCode);
     }
 }
