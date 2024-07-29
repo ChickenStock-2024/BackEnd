@@ -2,8 +2,7 @@ package com.sascom.chickenstock.domain.trade.service;
 
 import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.SellTradeRequest;
-import com.sascom.chickenstock.domain.trade.dto.response.BuyTradeResponse;
-import com.sascom.chickenstock.domain.trade.dto.response.SellTradeResponse;
+import com.sascom.chickenstock.domain.trade.dto.response.TradeResponse;
 import com.sascom.chickenstock.domain.trade.error.code.TradeErrorCode;
 import com.sascom.chickenstock.domain.trade.error.exception.TradeNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,22 +24,22 @@ public class TradeService {
         this.sellQueues = sellQueues;
     }
 
-    public BuyTradeResponse addBuyRequest(BuyTradeRequest buyTradeRequest) {
+    public TradeResponse addBuyRequest(BuyTradeRequest buyTradeRequest) {
         if(!buyQueues.containsKey(buyTradeRequest.getCompanyName())) {
             throw TradeNotFoundException.of(TradeErrorCode.NOT_FOUND);
         }
 
         buyQueues.get(buyTradeRequest.getCompanyName()).offer(buyTradeRequest);
-         return matchBuyTrades(buyTradeRequest.getCompanyName());
+         return matchBuyTrades(buyTradeRequest);
     }
 
-    public SellTradeResponse addSellRequest(SellTradeRequest sellTradeRequest) {
+    public TradeResponse addSellRequest(SellTradeRequest sellTradeRequest) {
         if(!sellQueues.containsKey(sellTradeRequest.getCompanyName())) {
             throw TradeNotFoundException.of(TradeErrorCode.NOT_FOUND);
         }
 
         sellQueues.get(sellTradeRequest.getCompanyName()).offer(sellTradeRequest);
-        return matchSellTrades(sellTradeRequest.getCompanyName());
+        return matchSellTrades(sellTradeRequest);
     }
 
     public BuyTradeRequest processBuyRequest(String company) {
@@ -59,7 +58,8 @@ public class TradeService {
         return sellQueues.get(company).isEmpty();
     }
 
-    public BuyTradeResponse matchBuyTrades(String company) {
+    public TradeResponse matchBuyTrades(BuyTradeRequest buyTradeRequest) {
+        String company = buyTradeRequest.getCompanyName();
         PriorityBlockingQueue<BuyTradeRequest> buyQueue = buyQueues.get(company);
         PriorityBlockingQueue<SellTradeRequest> sellQueue = sellQueues.get(company);
 
@@ -68,9 +68,9 @@ public class TradeService {
         SellTradeRequest sellRequest = sellQueue.peek();
 
         if (buyRequest == null || sellRequest == null) {
-            return BuyTradeResponse.builder()
+            return TradeResponse.builder()
                     .message("매수요청 성공")
-                    .buyTradeRequest(null)
+                    .tradeRequest(buyTradeRequest)
                     .build();
         }
 
@@ -80,19 +80,20 @@ public class TradeService {
             buyQueue.poll();
             sellQueue.poll();
 
-            return BuyTradeResponse.builder()
+            return TradeResponse.builder()
                     .message("매수 성공")
-                    .buyTradeRequest(null)
+                    .tradeRequest(buyTradeRequest)
                     .build();
         } else {
-            return BuyTradeResponse.builder()
+            return TradeResponse.builder()
                     .message("매수요청 성공")
-                    .buyTradeRequest(null)
+                    .tradeRequest(buyTradeRequest)
                     .build();
         }
     }
 
-    public SellTradeResponse matchSellTrades(String company) {
+    public TradeResponse matchSellTrades(SellTradeRequest sellTradeRequest) {
+        String company = sellTradeRequest.getCompanyName();
         PriorityBlockingQueue<BuyTradeRequest> buyQueue = buyQueues.get(company);
         PriorityBlockingQueue<SellTradeRequest> sellQueue = sellQueues.get(company);
 
@@ -101,9 +102,9 @@ public class TradeService {
         SellTradeRequest sellRequest = sellQueue.peek();
 
         if (buyRequest == null || sellRequest == null) {
-            return SellTradeResponse.builder()
+            return TradeResponse.builder()
                     .message("매도요청 성공")
-                    .sellTradeRequest(null)
+                    .tradeRequest(sellTradeRequest)
                     .build();
         }
 
@@ -112,14 +113,14 @@ public class TradeService {
             // 큐에서 제거
             buyQueue.poll();
             sellQueue.poll();
-            return SellTradeResponse.builder()
+            return TradeResponse.builder()
                     .message("매도 성공")
-                    .sellTradeRequest(null)
+                    .tradeRequest(sellTradeRequest)
                     .build();
         } else {
-            return SellTradeResponse.builder()
+            return TradeResponse.builder()
                     .message("매도요청 성공")
-                    .sellTradeRequest(null)
+                    .tradeRequest(sellTradeRequest)
                     .build();
         }
     }
