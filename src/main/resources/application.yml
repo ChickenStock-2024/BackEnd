@@ -12,4 +12,14 @@ spring:
     properties:
       hibernate:
         format_sql: true
+    defer-datasource-initialization: true
+  sql:
+    init:
+      mode: always
 #        show_sql: true
+
+redis:
+  config:
+    import: classpath:privacy.yml
+  host: ${redis.host}
+  port: ${redis.port}

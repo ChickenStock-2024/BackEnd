@@ -9,6 +9,7 @@ import com.sascom.chickenstock.domain.member.dto.response.MemberInfoResponse;
 import com.sascom.chickenstock.domain.member.dto.response.PrefixNicknameInfosResponse;
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
+import com.sascom.chickenstock.domain.ranking.util.RatingCalculatorV1;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -81,20 +82,8 @@ public class MemberService {
         return new MemberInfoResponse(
                 member.getId(),
                 member.getNickname(),
-                calculateLatestRating(member),
+                RatingCalculatorV1.calculateRating(member.getAccounts()),
                 member.getPoint());
-    }
-
-    private int calculateLatestRating(Member member) {
-        // find latest competition and latest rating from account.
-        // this implementation may occur 1 + N problem.
-        int latestRating = 0;
-        for(Account account : member.getAccounts()) {
-            if(account.getRatingChange() != null) {
-                latestRating += account.getRatingChange();
-            }
-        }
-        return latestRating;
     }
 
     // check that given new password is fit to safe password standard.
