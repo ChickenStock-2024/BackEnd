@@ -109,7 +109,7 @@ public class AccountService {
         return new ExecutionContentResponse(result);
     }
 
-    public TradeResponse buyStocks(StockOrderRequest stockOrderRequest) {
+    public TradeResponse buyLimitStocks(StockOrderRequest stockOrderRequest) {
         // Member 유효성 체크
         Member member = memberRepository.findById(stockOrderRequest.memberId())
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
@@ -144,7 +144,7 @@ public class AccountService {
         );
 
         // 구매요청
-        return tradeService.addBuyRequest(
+        return tradeService.addLimitBuyRequest(
                 BuyTradeRequest.builder()
                         .accountId(stockOrderRequest.accountId())
                         .memberId(stockOrderRequest.memberId())
@@ -159,7 +159,7 @@ public class AccountService {
 
     }
 
-    public TradeResponse sellStocks(StockOrderRequest stockOrderRequest) {
+    public TradeResponse sellLimitStocks(StockOrderRequest stockOrderRequest) {
         // Member 유효성 체크
         Member member = memberRepository.findById(stockOrderRequest.memberId())
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
@@ -194,7 +194,106 @@ public class AccountService {
         );
 
         // 구매요청
-        return tradeService.addSellRequest(
+        return tradeService.addLimitSellRequest(
+                SellTradeRequest.builder()
+                        .accountId(stockOrderRequest.accountId())
+                        .memberId(stockOrderRequest.memberId())
+                        .companyId(stockOrderRequest.companyId())
+                        .companyName(stockOrderRequest.companyName())
+                        .competitionId(stockOrderRequest.competitionId())
+                        .unitCost(stockOrderRequest.unitCost())
+                        .amount(stockOrderRequest.amount())
+                        .orderTime(stockOrderRequest.orderTime())
+                        .build()
+        );
+    }
+
+    public TradeResponse buyMarketStocks(StockOrderRequest stockOrderRequest) {
+        // Member 유효성 체크
+        Member member = memberRepository.findById(stockOrderRequest.memberId())
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+
+        // Account 유효성 체크
+        Account account = accountRepository.findById(stockOrderRequest.accountId())
+                .orElseThrow(() -> AccountNotFoundException.of(AccountErrorCode.NOT_FOUND));
+
+        // 계좌에 구매가능 잔고 있는지 확인
+        if (account.getBalance() < (long) stockOrderRequest.amount() * stockOrderRequest.unitCost()) {
+            throw AccountNotEnoughException.of(AccountErrorCode.NOT_ENOUGH_BALANCE);
+        }
+
+        // Company 유효성 체크
+        Company company = companyRepository.findById(stockOrderRequest.companyId())
+                .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
+
+        // Competition 유효성 체크
+        Competition competition = competitionRepository.findById(stockOrderRequest.companyId())
+                .orElseThrow(() -> CompetitionNotFoundException.of(CompetitionErrorCode.NOT_FOUND));
+
+        // 계좌에서 해당 금액만큼 임시구매처리 (미완)
+
+        // History Table에 기록 Write
+        historyRepository.save(History.builder()
+                .account(account)
+                .price(stockOrderRequest.unitCost())
+                .company(company)
+                .volume(stockOrderRequest.amount())
+                .status(HistoryStatus.매수요청)
+                .build()
+        );
+
+        // 구매요청
+        return tradeService.addMarketBuyRequest(
+                BuyTradeRequest.builder()
+                        .accountId(stockOrderRequest.accountId())
+                        .memberId(stockOrderRequest.memberId())
+                        .companyId(stockOrderRequest.companyId())
+                        .companyName(stockOrderRequest.companyName())
+                        .competitionId(stockOrderRequest.competitionId())
+                        .unitCost(stockOrderRequest.unitCost())
+                        .amount(stockOrderRequest.amount())
+                        .orderTime(stockOrderRequest.orderTime())
+                        .build()
+        );
+
+    }
+
+    public TradeResponse sellMarketStocks(StockOrderRequest stockOrderRequest) {
+        // Member 유효성 체크
+        Member member = memberRepository.findById(stockOrderRequest.memberId())
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+
+        // Account 유효성 체크
+        Account account = accountRepository.findById(stockOrderRequest.accountId())
+                .orElseThrow(() -> AccountNotFoundException.of(AccountErrorCode.NOT_FOUND));
+
+        // 계좌에 구매가능 잔고 있는지 확인
+        if (account.getBalance() < (long) stockOrderRequest.amount() * stockOrderRequest.unitCost()) {
+            throw AccountNotEnoughException.of(AccountErrorCode.NOT_ENOUGH_BALANCE);
+        }
+
+        // Company 유효성 체크
+        Company company = companyRepository.findById(stockOrderRequest.companyId())
+                .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
+
+        // Competition 유효성 체크
+        Competition competition = competitionRepository.findById(stockOrderRequest.companyId())
+                .orElseThrow(() -> CompetitionNotFoundException.of(CompetitionErrorCode.NOT_FOUND));
+
+        // 계좌에서 해당 금액만큼 임시구매처리 (미완)
+
+        // History Table에 기록 Write
+        historyRepository.save(History.builder()
+                .account(account)
+                .price(stockOrderRequest.unitCost())
+                .company(company)
+                .volume(stockOrderRequest.amount())
+                .status(HistoryStatus.매도요청)
+                .build()
+        );
+
+        // 구매요청
+        return tradeService.addMarketSellRequest(
                 SellTradeRequest.builder()
                         .accountId(stockOrderRequest.accountId())
                         .memberId(stockOrderRequest.memberId())

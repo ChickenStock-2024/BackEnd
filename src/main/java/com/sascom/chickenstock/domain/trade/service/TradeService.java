@@ -6,6 +6,7 @@ import com.sascom.chickenstock.domain.trade.dto.response.TradeResponse;
 import com.sascom.chickenstock.domain.trade.error.code.TradeErrorCode;
 import com.sascom.chickenstock.domain.trade.error.exception.TradeNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
@@ -20,17 +21,17 @@ public class TradeService {
     private final Map<String, PriorityBlockingQueue<SellTradeRequest>> marketSellOrderQueues;
 
     @Autowired
-    public TradeService(Map<String, PriorityBlockingQueue<BuyTradeRequest>> limitBuyOrderQueues,
-                        Map<String, PriorityBlockingQueue<SellTradeRequest>> limitSellOrderQueues,
-                        Map<String, PriorityBlockingQueue<BuyTradeRequest>> marketBuyOrderQueues,
-                        Map<String, PriorityBlockingQueue<SellTradeRequest>> marketSellOrderQueues) {
+    public TradeService(@Qualifier("limitBuyOrderQueues") Map<String, PriorityBlockingQueue<BuyTradeRequest>> limitBuyOrderQueues,
+                        @Qualifier("limitSellOrderQueues") Map<String, PriorityBlockingQueue<SellTradeRequest>> limitSellOrderQueues,
+                        @Qualifier("marketBuyOrderQueues") Map<String, PriorityBlockingQueue<BuyTradeRequest>> marketBuyOrderQueues,
+                        @Qualifier("marketSellOrderQueues") Map<String, PriorityBlockingQueue<SellTradeRequest>> marketSellOrderQueues) {
         this.limitBuyOrderQueues = limitBuyOrderQueues;
         this.limitSellOrderQueues = limitSellOrderQueues;
         this.marketBuyOrderQueues = marketBuyOrderQueues;
         this.marketSellOrderQueues = marketSellOrderQueues;
     }
 
-    public TradeResponse addBuyRequest(BuyTradeRequest buyTradeRequest) {
+    public TradeResponse addLimitBuyRequest(BuyTradeRequest buyTradeRequest) {
         if(!limitBuyOrderQueues.containsKey(buyTradeRequest.getCompanyName())) {
             throw TradeNotFoundException.of(TradeErrorCode.NOT_FOUND);
         }
@@ -39,12 +40,30 @@ public class TradeService {
         return matchBuyTrades(buyTradeRequest);
     }
 
-    public TradeResponse addSellRequest(SellTradeRequest sellTradeRequest) {
+    public TradeResponse addLimitSellRequest(SellTradeRequest sellTradeRequest) {
         if(!limitSellOrderQueues.containsKey(sellTradeRequest.getCompanyName())) {
             throw TradeNotFoundException.of(TradeErrorCode.NOT_FOUND);
         }
 
         limitSellOrderQueues.get(sellTradeRequest.getCompanyName()).offer(sellTradeRequest);
+        return matchSellTrades(sellTradeRequest);
+    }
+
+    public TradeResponse addMarketBuyRequest(BuyTradeRequest buyTradeRequest) {
+        if(!marketBuyOrderQueues.containsKey(buyTradeRequest.getCompanyName())) {
+            throw TradeNotFoundException.of(TradeErrorCode.NOT_FOUND);
+        }
+
+        marketBuyOrderQueues.get(buyTradeRequest.getCompanyName()).offer(buyTradeRequest);
+        return matchBuyTrades(buyTradeRequest);
+    }
+
+    public TradeResponse addMarketSellRequest(SellTradeRequest sellTradeRequest) {
+        if(!marketSellOrderQueues.containsKey(sellTradeRequest.getCompanyName())) {
+            throw TradeNotFoundException.of(TradeErrorCode.NOT_FOUND);
+        }
+
+        marketSellOrderQueues.get(sellTradeRequest.getCompanyName()).offer(sellTradeRequest);
         return matchSellTrades(sellTradeRequest);
     }
 
