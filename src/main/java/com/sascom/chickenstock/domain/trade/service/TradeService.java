@@ -6,128 +6,115 @@ import com.sascom.chickenstock.domain.trade.dto.response.TradeResponse;
 import com.sascom.chickenstock.domain.trade.error.code.TradeErrorCode;
 import com.sascom.chickenstock.domain.trade.error.exception.TradeNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.event.ApplicationReadyEvent;
+import org.springframework.context.event.EventListener;
+import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
-
+import org.springframework.transaction.annotation.Transactional;
+import java.time.Duration;
 import java.util.Map;
-import java.util.concurrent.PriorityBlockingQueue;
+import java.util.concurrent.ConcurrentSkipListSet;
 
+@Transactional
 @Service
 public class TradeService {
 
-    private final Map<String, PriorityBlockingQueue<BuyTradeRequest>> limitBuyOrderQueues;
-    private final Map<String, PriorityBlockingQueue<SellTradeRequest>> limitSellOrderQueues;
-    private final Map<String, PriorityBlockingQueue<BuyTradeRequest>> marketBuyOrderQueues;
-    private final Map<String, PriorityBlockingQueue<SellTradeRequest>> marketSellOrderQueues;
+    private final Map<String, ConcurrentSkipListSet<BuyTradeRequest>> limitBuyOrderSets;
+    private final Map<String, ConcurrentSkipListSet<SellTradeRequest>> limitSellOrderSets;
+    private final Map<String, ConcurrentSkipListSet<BuyTradeRequest>> marketBuyOrderSets;
+    private final Map<String, ConcurrentSkipListSet<SellTradeRequest>> marketSellOrderSets;
 
     @Autowired
-    public TradeService(Map<String, PriorityBlockingQueue<BuyTradeRequest>> limitBuyOrderQueues,
-                        Map<String, PriorityBlockingQueue<SellTradeRequest>> limitSellOrderQueues,
-                        Map<String, PriorityBlockingQueue<BuyTradeRequest>> marketBuyOrderQueues,
-                        Map<String, PriorityBlockingQueue<SellTradeRequest>> marketSellOrderQueues) {
-        this.limitBuyOrderQueues = limitBuyOrderQueues;
-        this.limitSellOrderQueues = limitSellOrderQueues;
-        this.marketBuyOrderQueues = marketBuyOrderQueues;
-        this.marketSellOrderQueues = marketSellOrderQueues;
+    private TaskScheduler taskScheduler;
+
+    @Autowired
+    public TradeService(Map<String, ConcurrentSkipListSet<BuyTradeRequest>> limitBuyOrderSets,
+                        Map<String, ConcurrentSkipListSet<SellTradeRequest>> limitSellOrderSets,
+                        Map<String, ConcurrentSkipListSet<BuyTradeRequest>> marketBuyOrderSets,
+                        Map<String, ConcurrentSkipListSet<SellTradeRequest>> marketSellOrderSets) {
+        this.limitBuyOrderSets = limitBuyOrderSets;
+        this.limitSellOrderSets = limitSellOrderSets;
+        this.marketBuyOrderSets = marketBuyOrderSets;
+        this.marketSellOrderSets = marketSellOrderSets;
+    }
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void init() {
+        for (String company : limitBuyOrderSets.keySet()) {
+            scheduleTradeMatching(company);
+        }
+    }
+
+    private void scheduleTradeMatching(String company) {
+        taskScheduler.scheduleAtFixedRate(() -> matchTrades(company), Duration.ofMillis(100));
+    }
+
+    private void matchTrades(String company) {
+        ConcurrentSkipListSet<BuyTradeRequest> buySet = limitBuyOrderSets.get(company);
+        ConcurrentSkipListSet<SellTradeRequest> sellSet = limitSellOrderSets.get(company);
+
+        while (!buySet.isEmpty() && !sellSet.isEmpty()) {
+            BuyTradeRequest buyRequest = buySet.first();
+            SellTradeRequest sellRequest = sellSet.first();
+
+            if (buyRequest.getUnitCost() == sellRequest.getUnitCost()) {
+                buySet.remove(buyRequest);
+                sellSet.remove(sellRequest);
+                processTransaction(buyRequest, sellRequest);
+            } else {
+                break;
+            }
+        }
+    }
+
+    private void processTransaction(BuyTradeRequest buyRequest, SellTradeRequest sellRequest) {
+        // 실제 거래 처리 로직 구현
+        System.out.println("거래 성사: " + buyRequest + " - " + sellRequest);
     }
 
     public TradeResponse addBuyRequest(BuyTradeRequest buyTradeRequest) {
-        if(!limitBuyOrderQueues.containsKey(buyTradeRequest.getCompanyName())) {
+        if(!limitBuyOrderSets.containsKey(buyTradeRequest.getCompanyName())) {
             throw TradeNotFoundException.of(TradeErrorCode.NOT_FOUND);
         }
 
-        limitBuyOrderQueues.get(buyTradeRequest.getCompanyName()).offer(buyTradeRequest);
-        return matchBuyTrades(buyTradeRequest);
+        limitBuyOrderSets.get(buyTradeRequest.getCompanyName()).add(buyTradeRequest);
+        return TradeResponse.builder()
+                .message("매수요청 성공")
+                .tradeRequest(buyTradeRequest)
+                .build();
     }
 
     public TradeResponse addSellRequest(SellTradeRequest sellTradeRequest) {
-        if(!limitSellOrderQueues.containsKey(sellTradeRequest.getCompanyName())) {
+        if(!limitSellOrderSets.containsKey(sellTradeRequest.getCompanyName())) {
             throw TradeNotFoundException.of(TradeErrorCode.NOT_FOUND);
         }
 
-        limitSellOrderQueues.get(sellTradeRequest.getCompanyName()).offer(sellTradeRequest);
-        return matchSellTrades(sellTradeRequest);
+        limitSellOrderSets.get(sellTradeRequest.getCompanyName()).add(sellTradeRequest);
+        return TradeResponse.builder()
+                .message("매도요청 성공")
+                .tradeRequest(sellTradeRequest)
+                .build();
     }
 
     public BuyTradeRequest processBuyRequest(String company) {
-        return limitBuyOrderQueues.get(company).poll();
+        ConcurrentSkipListSet<BuyTradeRequest> buySet = limitBuyOrderSets.get(company);
+        BuyTradeRequest firstRequest = buySet.first();
+        buySet.remove(firstRequest);
+        return firstRequest;
     }
 
     public SellTradeRequest processSellRequest(String company) {
-        return limitSellOrderQueues.get(company).poll();
+        ConcurrentSkipListSet<SellTradeRequest> sellSet = limitSellOrderSets.get(company);
+        SellTradeRequest firstRequest = sellSet.first();
+        sellSet.remove(firstRequest);
+        return firstRequest;
     }
 
-    public boolean isBuyQueueEmpty(String company) {
-        return limitBuyOrderQueues.get(company).isEmpty();
+    public boolean isBuySetEmpty(String company) {
+        return limitBuyOrderSets.get(company).isEmpty();
     }
 
-    public boolean isSellQueueEmpty(String company) {
-        return limitSellOrderQueues.get(company).isEmpty();
-    }
-
-    public TradeResponse matchBuyTrades(BuyTradeRequest buyTradeRequest) {
-        String company = buyTradeRequest.getCompanyName();
-        PriorityBlockingQueue<BuyTradeRequest> buyQueue = limitBuyOrderQueues.get(company);
-        PriorityBlockingQueue<SellTradeRequest> sellQueue = limitSellOrderQueues.get(company);
-
-        // 우선순위 큐의 첫번째 요소를 가져오지만 제거하지 않음
-        BuyTradeRequest buyRequest = buyQueue.peek();
-        SellTradeRequest sellRequest = sellQueue.peek();
-
-        if (buyRequest == null || sellRequest == null) {
-            return TradeResponse.builder()
-                    .message("매수요청 성공")
-                    .tradeRequest(buyTradeRequest)
-                    .build();
-        }
-
-        // 거래 성사 조건: 매수 가격이 매도 가격 이상일 때
-        if (buyRequest.getUnitCost() >= sellRequest.getUnitCost()) {
-            // 큐에서 제거
-            buyQueue.poll();
-            sellQueue.poll();
-
-            return TradeResponse.builder()
-                    .message("매수 성공")
-                    .tradeRequest(buyTradeRequest)
-                    .build();
-        } else {
-            return TradeResponse.builder()
-                    .message("매수요청 성공")
-                    .tradeRequest(buyTradeRequest)
-                    .build();
-        }
-    }
-
-    public TradeResponse matchSellTrades(SellTradeRequest sellTradeRequest) {
-        String company = sellTradeRequest.getCompanyName();
-        PriorityBlockingQueue<BuyTradeRequest> buyQueue = limitBuyOrderQueues.get(company);
-        PriorityBlockingQueue<SellTradeRequest> sellQueue = limitSellOrderQueues.get(company);
-
-        // 우선순위 큐의 첫번째 요소를 가져오지만 제거하지 않음
-        BuyTradeRequest buyRequest = buyQueue.peek();
-        SellTradeRequest sellRequest = sellQueue.peek();
-
-        if (buyRequest == null || sellRequest == null) {
-            return TradeResponse.builder()
-                    .message("매도요청 성공")
-                    .tradeRequest(sellTradeRequest)
-                    .build();
-        }
-
-        // 거래 성사 조건: 매수 가격이 매도 가격 이상일 때
-        if (buyRequest.getUnitCost() >= sellRequest.getUnitCost()) {
-            // 큐에서 제거
-            buyQueue.poll();
-            sellQueue.poll();
-            return TradeResponse.builder()
-                    .message("매도 성공")
-                    .tradeRequest(sellTradeRequest)
-                    .build();
-        } else {
-            return TradeResponse.builder()
-                    .message("매도요청 성공")
-                    .tradeRequest(sellTradeRequest)
-                    .build();
-        }
+    public boolean isSellSetEmpty(String company) {
+        return limitSellOrderSets.get(company).isEmpty();
     }
 }

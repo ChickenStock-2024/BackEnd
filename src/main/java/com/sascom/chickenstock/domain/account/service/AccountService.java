@@ -32,6 +32,7 @@ import com.sascom.chickenstock.domain.trade.service.TradeService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class AccountService {
@@ -51,6 +53,7 @@ public class AccountService {
     private final RedisService redisService;
     private final TradeService tradeService;
 
+    @Transactional
     public Long createAccount(Long memberId, Long competitionId) {
 
         // TODO: 커스텀 에러로 수정 필요
@@ -109,6 +112,7 @@ public class AccountService {
         return new ExecutionContentResponse(result);
     }
 
+    @Transactional
     public TradeResponse buyStocks(StockOrderRequest stockOrderRequest) {
         // Member 유효성 체크
         Member member = memberRepository.findById(stockOrderRequest.memberId())
@@ -159,6 +163,7 @@ public class AccountService {
 
     }
 
+    @Transactional
     public TradeResponse sellStocks(StockOrderRequest stockOrderRequest) {
         // Member 유효성 체크
         Member member = memberRepository.findById(stockOrderRequest.memberId())
