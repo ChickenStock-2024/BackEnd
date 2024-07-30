@@ -31,7 +31,7 @@ public class RankingController {
             // TODO: IllegalArgumentException -> Custom Exception
             throw new IllegalArgumentException("offset must be greater than zero");
         }
-        RankingListResponse rankingListResponse = rankingService.lookUpPaginationRanking(offset);
+        RankingListResponse rankingListResponse = rankingService.lookUpPaginationTotalRanking(offset);
         return ResponseEntity.ok().body(rankingListResponse);
     }
 
@@ -40,14 +40,14 @@ public class RankingController {
             @RequestParam(name = "offset") Integer offset
     ) {
         if(offset == null) {
-            offset = 0;
+            offset = 1;
         }
         if(!isValidOffset(offset)) {
             // TODO: IllegalArgumentException -> Custom Exception
             throw new IllegalArgumentException("offset must be greater than zero");
         }
-
-        return ResponseEntity.ok().body(null);
+        RankingListResponse rankingListResponse = rankingService.lookUpPaginationRivalRanking(offset);
+        return ResponseEntity.ok().body(rankingListResponse);
     }
 
     private boolean isValidOffset(Integer offset) {
