@@ -102,4 +102,19 @@ public class RedisService {
         return StockInfo;
     }
 
+    public void updateStockInfo(Long accountId, String companyName) {
+        String pattern = "accountId:" + accountId + ":companyName:" + companyName;
+        Set<String> keys = redisTemplate.keys(pattern);
+
+        if (keys != null && !keys.isEmpty()) {
+            HashOperations<String, Object, Object> hashOps = redisTemplate.opsForHash();
+
+            for (String key : keys) {
+                Map<Object, Object> entries = hashOps.entries(key);
+                for (Map.Entry<Object, Object> entry : entries.entrySet()) {
+
+                }
+            }
+        }
+
 }
