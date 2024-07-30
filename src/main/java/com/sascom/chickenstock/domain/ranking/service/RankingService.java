@@ -5,6 +5,8 @@ import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.domain.ranking.dto.MemberRankingDto;
 import com.sascom.chickenstock.domain.ranking.dto.response.RankingListResponse;
+import com.sascom.chickenstock.domain.ranking.util.RatingCalculatorV1;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,6 +20,24 @@ public class RankingService {
     // + 전체 유저가 적은데 저걸 매번 DB에서 복잡한 쿼리를 날려서 받아올게 아니라 여기에 List 형태로
     //   memoryRepository로 저장해두고 대회 끝날 때 마다 레이팅 계산하고 update 하면 되지 않나...?
     private final MemberRepository memberRepository;
+    private List<MemberRankingDto> cachedRankingList;
+
+    @PostConstruct
+    public void init() {
+        cachedRankingList = memberRepository.findAllMemberInfos();
+        for(int i = 0; i < cachedRankingList.size(); i++) {
+            if(cachedRankingList.get(i).getCompetitionCount() > 0) {
+                cachedRankingList.get(i).addRating(RatingCalculatorV1.INITIAL_RATING);
+            }
+        }
+        cachedRankingList.sort((lhs, rhs) -> -Integer.compare(lhs.getRating(), rhs.getRating()));
+        for(int i = 0, j = 0; i < cachedRankingList.size(); i = j) {
+            while(j < cachedRankingList.size() &&
+                    cachedRankingList.get(i).getRating() == cachedRankingList.get(j).getRating()) {
+                cachedRankingList.get(j++).updateRanking(i + 1);
+            }
+        }
+    }
 
     @Autowired
     public RankingService(MemberRepository memberRepository, AccountRepository accountRepository) {
