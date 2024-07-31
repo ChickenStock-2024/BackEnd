@@ -1,17 +1,16 @@
 package com.sascom.chickenstock.domain.account.controller;
 
 import com.sascom.chickenstock.domain.account.dto.request.AccountCreateRequest;
-import com.sascom.chickenstock.domain.account.dto.request.BuyStockRequest;
-import com.sascom.chickenstock.domain.account.dto.request.SellStockRequest;
+import com.sascom.chickenstock.domain.account.dto.request.StockOrderRequest;
 import com.sascom.chickenstock.domain.account.dto.response.AccountInfoResponse;
+import com.sascom.chickenstock.domain.account.dto.response.ExecutionContentResponse;
+import com.sascom.chickenstock.domain.account.dto.response.HistoryInfo;
+import com.sascom.chickenstock.domain.account.dto.response.StockInfo;
 import com.sascom.chickenstock.domain.account.service.AccountService;
-import com.sascom.chickenstock.domain.trade.dto.response.BuyTradeResponse;
-import com.sascom.chickenstock.domain.trade.dto.response.SellTradeResponse;
+import com.sascom.chickenstock.domain.trade.dto.response.TradeResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/account")
@@ -31,20 +30,26 @@ public class AccountController {
     }
 
     @PostMapping("/{accountId}")
-    public AccountInfoResponse accountInfoResponse(@PathVariable("accountId") Long accountId){
+    public AccountInfoResponse getAccountInfo(@PathVariable("accountId") Long accountId){
         return accountService.getAccountInfo(accountId);
     }
 
+
+    @GetMapping("/{accountId}/execution")
+    public ExecutionContentResponse getExecutionContent(@PathVariable("accountId") Long accountId){
+        return accountService.getExecutionContent(accountId);
+    }
+
     @PostMapping("/buy")
-    public ResponseEntity<BuyTradeResponse> buyStocks(@RequestBody BuyStockRequest buyStockRequest) {
-        BuyTradeResponse response = accountService.buyStocks(buyStockRequest);
+    public ResponseEntity<TradeResponse> buyStocks(@RequestBody StockOrderRequest stockOrderRequest) {
+        TradeResponse response = accountService.buyStocks(stockOrderRequest);
 
         return ResponseEntity.ok().body(response);
     }
 
     @PostMapping("/sell")
-    public ResponseEntity<SellTradeResponse> sellStocks(@RequestBody SellStockRequest sellStockRequest) {
-        SellTradeResponse response = accountService.sellStocks(sellStockRequest);
+    public ResponseEntity<TradeResponse> sellStocks(@RequestBody StockOrderRequest stockOrderRequest) {
+        TradeResponse response = accountService.sellStocks(stockOrderRequest);
 
         return ResponseEntity.ok().body(response);
     }

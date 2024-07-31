@@ -4,7 +4,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.LocalDateTime;
 
-public record BuyStockRequest (
+public record StockOrderRequest (
         Long accountId,
         Long memberId,
         Long companyId,
@@ -14,5 +14,5 @@ public record BuyStockRequest (
         Integer amount,
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime orderTime
-){
+) {
 }

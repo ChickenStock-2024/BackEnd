@@ -1,6 +1,8 @@
 package com.sascom.chickenstock.domain.ranking.controller;
 
 import com.sascom.chickenstock.domain.ranking.dto.response.RankingListResponse;
+import com.sascom.chickenstock.domain.ranking.error.code.RankingErrorCode;
+import com.sascom.chickenstock.domain.ranking.error.exception.RankingException;
 import com.sascom.chickenstock.domain.ranking.service.RankingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -28,10 +30,9 @@ public class RankingController {
             offset = 1;
         }
         if(!isValidOffset(offset)) {
-            // TODO: IllegalArgumentException -> Custom Exception
-            throw new IllegalArgumentException("offset must be greater than zero");
+            throw RankingException.of(RankingErrorCode.NOT_FOUND);
         }
-        RankingListResponse rankingListResponse = rankingService.lookUpPaginationRanking(offset);
+        RankingListResponse rankingListResponse = rankingService.lookUpPaginationTotalRanking(offset);
         return ResponseEntity.ok().body(rankingListResponse);
     }
 
@@ -40,14 +41,13 @@ public class RankingController {
             @RequestParam(name = "offset") Integer offset
     ) {
         if(offset == null) {
-            offset = 0;
+            offset = 1;
         }
         if(!isValidOffset(offset)) {
-            // TODO: IllegalArgumentException -> Custom Exception
-            throw new IllegalArgumentException("offset must be greater than zero");
+            throw RankingException.of(RankingErrorCode.NOT_FOUND);
         }
-
-        return ResponseEntity.ok().body(null);
+        RankingListResponse rankingListResponse = rankingService.lookUpPaginationRivalRanking(offset);
+        return ResponseEntity.ok().body(rankingListResponse);
     }
 
     private boolean isValidOffset(Integer offset) {
