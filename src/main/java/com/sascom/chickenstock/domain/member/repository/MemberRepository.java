@@ -23,4 +23,15 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
             "LIMIT :offset, 10",
             nativeQuery = true)
     List<MemberRankingDto> test(@Param("offset") int offset);
+
+    @Query("SELECT new com.sascom.chickenstock.domain.ranking.dto.MemberRankingDto(" +
+            "m.id, " +
+            "m.nickname, " +
+            "SUM(a.balance), " +
+            "SUM(a.ratingChange), " +
+            "COUNT(a.id)) " +
+            "FROM Member m " +
+            "JOIN m.accounts a " +
+            "GROUP BY m.id, m.nickname")
+    List<MemberRankingDto> findAllMemberInfos();
 }

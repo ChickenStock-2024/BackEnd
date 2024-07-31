@@ -32,7 +32,7 @@ public class RankingController {
         if(!isValidOffset(offset)) {
             throw RankingException.of(RankingErrorCode.NOT_FOUND);
         }
-        RankingListResponse rankingListResponse = rankingService.lookUpPaginationRanking(offset);
+        RankingListResponse rankingListResponse = rankingService.lookUpPaginationTotalRanking(offset);
         return ResponseEntity.ok().body(rankingListResponse);
     }
 
@@ -46,8 +46,8 @@ public class RankingController {
         if(!isValidOffset(offset)) {
             throw RankingException.of(RankingErrorCode.NOT_FOUND);
         }
-
-        return ResponseEntity.ok().body(null);
+        RankingListResponse rankingListResponse = rankingService.lookUpPaginationRivalRanking(offset);
+        return ResponseEntity.ok().body(rankingListResponse);
     }
 
     private boolean isValidOffset(Integer offset) {

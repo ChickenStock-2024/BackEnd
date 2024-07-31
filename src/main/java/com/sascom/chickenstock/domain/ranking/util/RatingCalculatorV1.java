@@ -9,7 +9,7 @@ reference: [Codeforces Rating System](https://codeforces.com/blog/entry/20762)
  */
 public class RatingCalculatorV1 {
 
-    static final int INITIAL_RATING = 1200;
+    public static final int INITIAL_RATING = 1200;
     private final int RATING_LOWER_BOUND = 0;
     private final int RATING_UPPER_BOUND = 5000;
 
