@@ -1,15 +1,9 @@
 package com.sascom.chickenstock.domain.trade.service;
 
-import com.sascom.chickenstock.domain.account.entity.Account;
-import com.sascom.chickenstock.domain.account.error.code.AccountErrorCode;
-import com.sascom.chickenstock.domain.account.error.exception.AccountNotFoundException;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
 import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.SellTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.TradeRequest;
-import com.sascom.chickenstock.domain.trade.dto.response.TradeResponse;
-import com.sascom.chickenstock.domain.trade.error.code.TradeErrorCode;
-import com.sascom.chickenstock.domain.trade.error.exception.TradeNotFoundException;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -88,8 +82,7 @@ public class TradeService {
                 }
                 else { // 매도 큐의 맨 앞 녀석이 시장가보다 비쌀 때
                     buyOrder = B.first(); // B쪽 거래 시키고
-                    // A 퇴갤시킴
-
+                    // A 퇴갤시킴 -> redis에서 이 계좌에 대한 요청들 삭제
                 }
             } else if (!isA) {
                 buyOrder = A.first();

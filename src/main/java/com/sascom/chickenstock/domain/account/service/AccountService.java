@@ -127,7 +127,7 @@ public class AccountService {
         }
 
         // History Table에 기록 Write
-        historyRepository.save(History.builder()
+        History history = historyRepository.save(History.builder()
                 .account(account)
                 .price(stockOrderRequest.unitCost())
                 .company(company)
@@ -135,6 +135,7 @@ public class AccountService {
                 .status(HistoryStatus.지정가매수요청)
                 .build()
         );
+        history.getId() // historyId를 요청 객체(TradeRequest)에 포함시킬 것임
 
         // 구매요청
         return tradeService.addLimitBuyRequest(
