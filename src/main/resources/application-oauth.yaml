@@ -20,3 +20,7 @@ spring:
             token-uri: ${TOKEN_URI_KAKAO}
             user-info-uri: ${USER_INFO_URI_KAKAO}
             user-name-attribute: id
+
+oauth:
+  base-uri: ${CHICKENSTOCK_BASE_URL}
+  redirect-uri: ${SERVICE_OAUTH_PATH}
