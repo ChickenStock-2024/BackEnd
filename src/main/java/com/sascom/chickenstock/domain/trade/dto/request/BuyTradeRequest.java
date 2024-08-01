@@ -8,12 +8,26 @@ import java.time.LocalDateTime;
 public class BuyTradeRequest extends TradeRequest implements Comparable<BuyTradeRequest> {
 
     @Builder
-    public BuyTradeRequest(OrderType OrderType, Long accountId, Long memberId, Long companyId, Long competitionId, String companyName, Integer unitCost, Integer amount, LocalDateTime orderTime) {
-        super(OrderType, accountId, memberId, companyId, competitionId, companyName, unitCost, amount, orderTime);
+    public BuyTradeRequest(OrderType orderType,
+                           Long accountId, Long memberId, Long companyId, Long competitionId, Long historyId,
+                           String companyName, Integer unitCost, Integer totalOrderVolume,
+                           LocalDateTime orderTime) {
+        super(orderType,
+                accountId, memberId, companyId, competitionId, historyId,
+                companyName, unitCost, totalOrderVolume,
+                orderTime);
+    }
+
+    @Override
+    public int compareByUnitCost(Integer cost) {
+        return this.getUnitCost().compareTo(cost);
     }
 
     public int compareByUnitCost(BuyTradeRequest other) {
-        return this.getUnitCost().compareTo(other.getUnitCost());
+        if(getOrderType() != other.getOrderType()) {
+            return 0;
+        }
+        return this.compareByUnitCost(other.getUnitCost());
     }
 
     @Override
@@ -31,6 +45,9 @@ public class BuyTradeRequest extends TradeRequest implements Comparable<BuyTrade
         if (compareByUnitCost(other) != 0) {
             return compareByUnitCost(other);
         }
-        return compareByOrderTimeAndAmount(other);
+        if (compareByOrderTimeAndVolume(other) != 0) {
+            return compareByOrderTimeAndVolume(other);
+        }
+        return getHistoryId().compareTo(other.getHistoryId());
     }
 }

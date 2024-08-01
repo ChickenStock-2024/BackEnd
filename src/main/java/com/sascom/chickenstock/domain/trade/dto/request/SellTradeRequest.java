@@ -8,12 +8,26 @@ import java.time.LocalDateTime;
 public class SellTradeRequest extends TradeRequest implements Comparable<SellTradeRequest> {
 
     @Builder
-    public SellTradeRequest(OrderType orderType, Long accountId, Long memberId, Long companyId, Long competitionId, String companyName, Integer unitCost, Integer amount, LocalDateTime orderTime) {
-        super(orderType, accountId, memberId, companyId, competitionId, companyName, unitCost, amount, orderTime);
+    public SellTradeRequest(OrderType orderType,
+                           Long accountId, Long memberId, Long companyId, Long competitionId, Long historyId,
+                           String companyName, Integer unitCost, Integer totalOrderVolume,
+                           LocalDateTime orderTime) {
+        super(orderType,
+                accountId, memberId, companyId, competitionId, historyId,
+                companyName, unitCost, totalOrderVolume,
+                orderTime);
+    }
+
+    @Override
+    public int compareByUnitCost(Integer cost) {
+        return -this.getUnitCost().compareTo(cost);
     }
 
     public int compareByUnitCost(SellTradeRequest other) {
-        return -this.getUnitCost().compareTo(other.getUnitCost());
+        if(getOrderType() != other.getOrderType()) {
+            return 0;
+        }
+        return this.compareByUnitCost(other.getUnitCost());
     }
 
     @Override
@@ -31,6 +45,9 @@ public class SellTradeRequest extends TradeRequest implements Comparable<SellTra
         if(compareByUnitCost(other) != 0) {
             return compareByUnitCost(other);
         }
-        return compareByOrderTimeAndAmount(other);
+        if (compareByOrderTimeAndVolume(other) != 0) {
+            return compareByOrderTimeAndVolume(other);
+        }
+        return getHistoryId().compareTo(other.getHistoryId());
     }
 }
