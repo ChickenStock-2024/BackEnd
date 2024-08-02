@@ -26,10 +26,10 @@ redis:
   port: ${redis.port}
 
 jwt:
+  secret: ${TOKEN_SECRET}
   access-token:
     expire-duration: ${ACCESS_TOKEN_EXPIRE_DURATION}
     cookie-name: ${ACCESS_TOKEN_NAME}
   refresh-token:
     expire-duration: ${REFRESH_TOKEN_EXPIRE_DURATION}
     cookie-name: ${REFRESH_TOKEN_NAME}
-  secret: ${TOKEN_SECRET}
