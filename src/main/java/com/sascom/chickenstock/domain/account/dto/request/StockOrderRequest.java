@@ -26,6 +26,7 @@ public record StockOrderRequest (
                         .companyName(companyName)
                         .competitionId(competitionId)
                         .unitCost(unitCost)
+                        .totalOrderVolume(amount)
                         .orderTime(orderTime)
                         .build();
         }
@@ -39,6 +40,7 @@ public record StockOrderRequest (
                         .companyName(companyName)
                         .competitionId(competitionId)
                         .unitCost(unitCost)
+                        .totalOrderVolume(amount)
                         .orderTime(orderTime)
                         .build();
         }
