@@ -2,8 +2,11 @@ package com.sascom.chickenstock.domain.trade.util;
 
 import com.sascom.chickenstock.domain.trade.dto.request.TradeRequest;
 
+import java.util.List;
+
 public interface ChickenStockQueue<T extends TradeRequest> {
-    public boolean add(T tradeRequest);
-    public boolean remove(T tradeRequest);
+    public T add(T tradeRequest);
+    public T remove(T tradeRequest);
+    public List<T> remove(int marketPrice);
     public T first(int marketPrice);
 }

@@ -16,7 +16,7 @@ public abstract class TradeRequest {
     private final String companyName;
     private final Integer unitCost;
     private final Integer totalOrderVolume;
-    private Integer volumeCount;
+    private Integer executedVolume;
     private final LocalDateTime orderTime;
 
     public TradeRequest(OrderType orderType,
@@ -32,7 +32,7 @@ public abstract class TradeRequest {
         this.companyName = companyName;
         this.unitCost = unitCost;
         this.totalOrderVolume = totalOrderVolume;
-        this.volumeCount = 0;
+        this.executedVolume = 0;
         this.orderTime = orderTime;
     }
 
@@ -67,14 +67,6 @@ public abstract class TradeRequest {
         return compareByVolume(other);
     }
 
-    public final int addVolumnCount(int value) {
-        if(value < 0 || value + volumeCount > totalOrderVolume) {
-            throw new IllegalArgumentException("invalid parameter value");
-        }
-        volumeCount += value;
-        return volumeCount;
-    }
-
     @Override
     public boolean equals(Object o) {
         if(!(o instanceof TradeRequest)) {
@@ -83,4 +75,15 @@ public abstract class TradeRequest {
         return this.historyId.equals(((TradeRequest)o).getHistoryId());
     }
 
+    public final int addExecutedVolume(int value) {
+        if(value < 0 || value + executedVolume > totalOrderVolume) {
+            throw new IllegalArgumentException("invalid parameter value");
+        }
+        executedVolume += value;
+        return executedVolume;
+    }
+
+    public final int getRemainingVolume() {
+        return totalOrderVolume - executedVolume;
+    }
 }

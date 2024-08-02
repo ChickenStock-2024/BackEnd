@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+@Getter
 public class BuyTradeRequest extends TradeRequest implements Comparable<BuyTradeRequest> {
 
     @Builder
