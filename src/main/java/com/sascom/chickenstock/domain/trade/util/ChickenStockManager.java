@@ -45,9 +45,9 @@ public class ChickenStockManager implements StockManager {
 
             // if 둘 중 하나라도 가격검증 실패 -> continue;
             sellTradeRequest.addExecutedVolume(executionVolume);
-            executed.add(tradeRequestToProcessedOrderDto(sellTradeRequest, MatchStatus.EXECUTED));
+//            executed.add(addCanceledTradeRequestToList(sellTradeRequest, MatchStatus.EXECUTED));
             buyTradeRequest.addExecutedVolume(executionVolume);
-            executed.add(tradeRequestToProcessedOrderDto(buyTradeRequest, MatchStatus.EXECUTED));
+//            executed.add(addCanceledTradeRequestToList(buyTradeRequest, MatchStatus.EXECUTED));
 
             if(sellTradeRequest.getTotalOrderVolume().equals(sellTradeRequest.getExecutedVolume())) {
                 sellQueue.remove(sellTradeRequest);
@@ -114,7 +114,4 @@ public class ChickenStockManager implements StockManager {
                 .build();
     }
 
-    private ProcessedOrderDto executedTradeRequestToProcessedOrderDto(
-            TradeRequest tradeRequest
-    )
 }
