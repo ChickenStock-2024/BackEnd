@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
     List<Member> findFirst10ByNicknameStartingWithOrderByNickname(String prefix);
@@ -34,4 +35,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
             "JOIN m.accounts a " +
             "GROUP BY m.id, m.nickname")
     List<MemberRankingDto> findAllMemberInfos();
+
+    Optional<Member> findByEmail(String email);
 }
