@@ -2,6 +2,7 @@ package com.sascom.chickenstock.global.config;
 
 import com.sascom.chickenstock.global.filter.JwtExceptionFilter;
 import jakarta.servlet.Filter;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -28,7 +29,12 @@ public class WebSecurityConfig {
     private final DefaultOAuth2UserService chickenstockOauth2MemberService;
     private final AuthenticationSuccessHandler oauth2SuccessHandler;
 
-    public WebSecurityConfig(Filter jwtAuthenticationFilter, DefaultOAuth2UserService chickenstockOauth2MemberService, AuthenticationSuccessHandler oauth2SuccessHandler) {
+    public WebSecurityConfig(
+            @Qualifier("jwtAuthenticationFilter")
+            Filter jwtAuthenticationFilter,
+            DefaultOAuth2UserService chickenstockOauth2MemberService,
+            AuthenticationSuccessHandler oauth2SuccessHandler
+    ) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
         this.chickenstockOauth2MemberService = chickenstockOauth2MemberService;
         this.oauth2SuccessHandler = oauth2SuccessHandler;
@@ -58,8 +64,9 @@ public class WebSecurityConfig {
         http
                 .authorizeHttpRequests(
                         request -> request.requestMatchers(
-                                        new AntPathRequestMatcher("/v1/auth/login"),
-                                        new AntPathRequestMatcher("v1/auth/{socialId}")
+                                        new AntPathRequestMatcher("/"),
+                                        new AntPathRequestMatcher("/auth/login/*")
+//                                        new AntPathRequestMatcher("/auth/login/{socialId}")
                                 )
                                 .permitAll()
                                 .anyRequest().authenticated()
@@ -67,9 +74,9 @@ public class WebSecurityConfig {
 
                 .oauth2Login(
                         oauth -> oauth.userInfoEndpoint(
-                                endpoint -> endpoint.userService(chickenstockOauth2MemberService)
-                        )
-                        .successHandler(oauth2SuccessHandler)
+                                        endpoint -> endpoint.userService(chickenstockOauth2MemberService)
+                                )
+                                .successHandler(oauth2SuccessHandler)
                 );
 
         http
