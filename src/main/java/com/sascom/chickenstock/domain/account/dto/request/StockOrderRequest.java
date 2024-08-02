@@ -17,7 +17,7 @@ public record StockOrderRequest (
         @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
         LocalDateTime orderTime
 ) {
-
+        // TODO: 나중에 꼭 수정할 것.
         public BuyTradeRequest toBuyTradeRequestEntity() {
                 return BuyTradeRequest.builder()
                         .accountId(accountId)
@@ -31,7 +31,7 @@ public record StockOrderRequest (
                         .build();
         }
 
-
+        // TODO: 나중에 꼭 수정할 것.
         public SellTradeRequest toSellTradeRequestEntity() {
                 return SellTradeRequest.builder()
                         .accountId(accountId)

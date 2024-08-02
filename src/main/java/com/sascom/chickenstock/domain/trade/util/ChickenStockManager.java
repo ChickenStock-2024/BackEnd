@@ -40,6 +40,7 @@ public class ChickenStockManager implements StockManager {
             if(sellTradeRequest == null || buyTradeRequest == null) {
                 break;
             }
+
             int executedVolume = Math.min(sellTradeRequest.getRemainingVolume(), buyTradeRequest.getRemainingVolume());
             // TODO: validate balance. AccountRepository와 Redis에 있는 미체결 정보를 통해 최대한으로 살 수 있는 개수 확인.
             // 한 주도 살 수 없다면 continue.
