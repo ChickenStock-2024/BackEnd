@@ -135,7 +135,7 @@ public class AccountService {
                 .status(HistoryStatus.지정가매수요청)
                 .build()
         );
-        history.getId() // historyId를 요청 객체(TradeRequest)에 포함시킬 것임
+        history.getId(); // historyId를 요청 객체(TradeRequest)에 포함시킬 것임
 
         // 구매요청
         return tradeService.addLimitBuyRequest(
