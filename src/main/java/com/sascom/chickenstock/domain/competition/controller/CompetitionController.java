@@ -2,6 +2,7 @@ package com.sascom.chickenstock.domain.competition.controller;
 
 import com.sascom.chickenstock.domain.account.service.AccountService;
 import com.sascom.chickenstock.domain.competition.dto.request.CompetitionParticipationRequest;
+import com.sascom.chickenstock.domain.competition.dto.response.CompetitionHistoryResponse;
 import com.sascom.chickenstock.domain.competition.dto.response.CompetitionListResponse;
 import com.sascom.chickenstock.domain.competition.service.CompetitionService;
 import lombok.RequiredArgsConstructor;
@@ -29,4 +30,12 @@ public class CompetitionController {
 
         return ResponseEntity.ok().body(competitionListResponses);
     }
+
+    @GetMapping("/history/{account_id}")
+    public ResponseEntity<List<CompetitionHistoryResponse>> getAllHistoryByCompetitionId(@PathVariable("account_id") Long accountId){
+        List<CompetitionHistoryResponse> competitionHistoryResponseList = competitionService.findAllHistoryByCompetition(accountId);
+
+        return ResponseEntity.ok().body(competitionHistoryResponseList);
+    }
+
 }
