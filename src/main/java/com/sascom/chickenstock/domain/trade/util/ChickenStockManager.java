@@ -40,14 +40,38 @@ public class ChickenStockManager implements StockManager {
             if(sellTradeRequest == null || buyTradeRequest == null) {
                 break;
             }
-            int executionVolume = Math.min(sellTradeRequest.getRemainingVolume(), buyTradeRequest.getRemainingVolume());
-            // TODO: validate balance.
-
-            // if 둘 중 하나라도 가격검증 실패 -> continue;
-            sellTradeRequest.addExecutedVolume(executionVolume);
-            executed.add(tradeRequestToProcessedOrderDto(sellTradeRequest, MatchStatus.EXECUTED));
-            buyTradeRequest.addExecutedVolume(executionVolume);
-            executed.add(tradeRequestToProcessedOrderDto(buyTradeRequest, MatchStatus.EXECUTED));
+            int executedVolume = Math.min(sellTradeRequest.getRemainingVolume(), buyTradeRequest.getRemainingVolume());
+            // TODO: validate balance. AccountRepository와 Redis에 있는 미체결 정보를 통해 최대한으로 살 수 있는 개수 확인.
+            // 한 주도 살 수 없다면 continue.
+            // 아래는 대충 pseudocode.
+            /*
+            Integer realBalance = AccountService.~~~ - Redis.~~~ + marketPrice * buyTradeRequest.getRemainingVolume();
+            Integer maxBuyVolume = realBalance / marketPrice;
+            // 지금 체결하려는 개수(executedVolume) 만큼은 못산다면 나머지 buy 요청은 전부 취소.
+            if(maxBuyVolume < executedVolume) {
+                Integer canceledVolume = buyTradeRequest.getRemainingVolume() - maxBuyVolume;
+                canceled.add(ProcessedOrderDto.builder()
+                    .accountId(buyTradeRequest.getAccountId())
+                    .requestHistoryId(buyTradeRequest.getHistoryId())
+                    .companyName(buyTradeRequest.getCompanyName())
+                    .price(marketPrice)
+                    .volume(canceledVolume)
+                    .orderType(tradeRequest.getOrderType())
+                    .matchStatus(MatchStatus.CANCELED_BY_BALANCE)
+                    .build());
+                buyTradeRequest.addExecutedVolume(canceledVolume);
+                executedVolume = maxBuyVolume
+            }
+            if(executedVolume == 0) {
+                buyQueue.remove(buyTradeRequest);
+                buyTradeRequest = null;
+                continue;
+            }
+             */
+            sellTradeRequest.addExecutedVolume(executedVolume);
+            executed.add(executedTradeRequestToProcessedOrderDto(sellTradeRequest, executedVolume, marketPrice));
+            buyTradeRequest.addExecutedVolume(executedVolume);
+            executed.add(executedTradeRequestToProcessedOrderDto(buyTradeRequest, executedVolume, marketPrice));
 
             if(sellTradeRequest.getTotalOrderVolume().equals(sellTradeRequest.getExecutedVolume())) {
                 sellQueue.remove(sellTradeRequest);
@@ -115,6 +139,18 @@ public class ChickenStockManager implements StockManager {
     }
 
     private ProcessedOrderDto executedTradeRequestToProcessedOrderDto(
-            TradeRequest tradeRequest
-    )
+            TradeRequest tradeRequest,
+            int executedVolume,
+            int marketPrice
+    ) {
+        return ProcessedOrderDto.builder()
+                .accountId(tradeRequest.getAccountId())
+                .requestHistoryId(tradeRequest.getHistoryId())
+                .companyName(tradeRequest.getCompanyName())
+                .price(marketPrice)
+                .volume(executedVolume)
+                .orderType(tradeRequest.getOrderType())
+                .matchStatus(MatchStatus.EXECUTED)
+                .build();
+    }
 }
