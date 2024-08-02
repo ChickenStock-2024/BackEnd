@@ -24,3 +24,12 @@ redis:
     import: classpath:privacy.yml
   host: ${redis.host}
   port: ${redis.port}
+
+jwt:
+  access-token:
+    expire-duration: ${ACCESS_TOKEN_EXPIRE_DURATION}
+    cookie-name: ${ACCESS_TOKEN_NAME}
+  refresh-token:
+    expire-duration: ${REFRESH_TOKEN_EXPIRE_DURATION}
+    cookie-name: ${REFRESH_TOKEN_NAME}
+  secret: ${TOKEN_SECRET}
