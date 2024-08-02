@@ -32,6 +32,7 @@ import com.sascom.chickenstock.domain.trade.service.TradeService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,6 +40,7 @@ import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.stream.Collectors;
 
+@Transactional(readOnly = true)
 @RequiredArgsConstructor
 @Service
 public class AccountService {
@@ -51,6 +53,7 @@ public class AccountService {
     private final RedisService redisService;
     private final TradeService tradeService;
 
+    @Transactional
     public Long createAccount(Long memberId, Long competitionId) {
 
         // TODO: 커스텀 에러로 수정 필요
@@ -109,57 +112,125 @@ public class AccountService {
         return new ExecutionContentResponse(result);
     }
 
-    public TradeResponse buyStocks(StockOrderRequest stockOrderRequest) {
-        // Member 유효성 체크
-        Member member = memberRepository.findById(stockOrderRequest.memberId())
-                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+    @Transactional
+    public TradeResponse buyLimitStocks(StockOrderRequest stockOrderRequest) {
+        validateStockOrderRequest(stockOrderRequest);
 
-        // Account 유효성 체크
         Account account = accountRepository.findById(stockOrderRequest.accountId())
                 .orElseThrow(() -> AccountNotFoundException.of(AccountErrorCode.NOT_FOUND));
+        Company company = companyRepository.findById(stockOrderRequest.companyId())
+                .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
 
-        // 계좌에 구매가능 잔고 있는지 확인
+        // 주식 매수하려고 하는데 계좌에 구매가능 잔고 있는지 확인
         if (account.getBalance() < (long) stockOrderRequest.amount() * stockOrderRequest.unitCost()) {
             throw AccountNotEnoughException.of(AccountErrorCode.NOT_ENOUGH_BALANCE);
         }
 
-        // Company 유효성 체크
-        Company company = companyRepository.findById(stockOrderRequest.companyId())
-                .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
-
-        // Competition 유효성 체크
-        Competition competition = competitionRepository.findById(stockOrderRequest.companyId())
-                .orElseThrow(() -> CompetitionNotFoundException.of(CompetitionErrorCode.NOT_FOUND));
-
-        // 계좌에서 해당 금액만큼 임시구매처리 (미완)
-
         // History Table에 기록 Write
-        historyRepository.save(History.builder()
+        History history = historyRepository.save(History.builder()
                 .account(account)
                 .price(stockOrderRequest.unitCost())
                 .company(company)
                 .volume(stockOrderRequest.amount())
-                .status(HistoryStatus.매수요청)
+                .status(HistoryStatus.지정가매수요청)
                 .build()
         );
+        history.getId(); // historyId를 요청 객체(TradeRequest)에 포함시킬 것임
 
         // 구매요청
-        return tradeService.addBuyRequest(
-                BuyTradeRequest.builder()
-                        .accountId(stockOrderRequest.accountId())
-                        .memberId(stockOrderRequest.memberId())
-                        .companyId(stockOrderRequest.companyId())
-                        .companyName(stockOrderRequest.companyName())
-                        .competitionId(stockOrderRequest.competitionId())
-                        .unitCost(stockOrderRequest.unitCost())
-                        .amount(stockOrderRequest.amount())
-                        .orderTime(stockOrderRequest.orderTime())
-                        .build()
+        return tradeService.addLimitBuyRequest(
+                stockOrderRequest.toBuyTradeRequestEntity()
         );
 
     }
 
-    public TradeResponse sellStocks(StockOrderRequest stockOrderRequest) {
+
+    @Transactional
+    public TradeResponse sellLimitStocks(StockOrderRequest stockOrderRequest) {
+        validateStockOrderRequest(stockOrderRequest);
+
+        Account account = accountRepository.findById(stockOrderRequest.accountId())
+                .orElseThrow(() -> AccountNotFoundException.of(AccountErrorCode.NOT_FOUND));
+        Company company = companyRepository.findById(stockOrderRequest.companyId())
+                .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
+
+        // 주식 매도하려고 하는데 사용자가 해당 주식을 매도하려는만큼 가지고있는지 확인
+
+        // History Table에 기록 Write
+        historyRepository.save(History.builder()
+                .account(account)
+                .price(stockOrderRequest.unitCost())
+                .company(company)
+                .volume(stockOrderRequest.amount())
+                .status(HistoryStatus.지정가매도요청)
+                .build()
+        );
+
+        // 구매요청
+        return tradeService.addLimitSellRequest(
+                stockOrderRequest.toSellTradeRequestEntity()
+        );
+    }
+
+    @Transactional
+    public TradeResponse buyMarketStocks(StockOrderRequest stockOrderRequest) {
+        validateStockOrderRequest(stockOrderRequest);
+
+        Account account = accountRepository.findById(stockOrderRequest.accountId())
+                .orElseThrow(() -> AccountNotFoundException.of(AccountErrorCode.NOT_FOUND));
+        Company company = companyRepository.findById(stockOrderRequest.companyId())
+                .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
+
+        // 주식 매수하려고 하는데 계좌에 구매가능 잔고 있는지 확인
+        if (account.getBalance() < (long) stockOrderRequest.amount() * stockOrderRequest.unitCost()) {
+            throw AccountNotEnoughException.of(AccountErrorCode.NOT_ENOUGH_BALANCE);
+        }
+
+        // History Table에 기록 Write
+        historyRepository.save(History.builder()
+                .account(account)
+                .price(stockOrderRequest.unitCost())
+                .company(company)
+                .volume(stockOrderRequest.amount())
+                .status(HistoryStatus.시장가매수요청)
+                .build()
+        );
+
+        // 구매요청
+        return tradeService.addMarketBuyRequest(
+                stockOrderRequest.toBuyTradeRequestEntity()
+        );
+
+    }
+
+    @Transactional
+    public TradeResponse sellMarketStocks(StockOrderRequest stockOrderRequest) {
+        validateStockOrderRequest(stockOrderRequest);
+
+        Account account = accountRepository.findById(stockOrderRequest.accountId())
+                .orElseThrow(() -> AccountNotFoundException.of(AccountErrorCode.NOT_FOUND));
+        Company company = companyRepository.findById(stockOrderRequest.companyId())
+                .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
+
+        // 주식 매도하려고 하는데 사용자가 해당 주식을 매도하려는만큼 가지고있는지 확인
+
+        // History Table에 기록 Write
+        historyRepository.save(History.builder()
+                .account(account)
+                .price(stockOrderRequest.unitCost())
+                .company(company)
+                .volume(stockOrderRequest.amount())
+                .status(HistoryStatus.시장가매도요청)
+                .build()
+        );
+
+        // 구매요청
+        return tradeService.addMarketSellRequest(
+                stockOrderRequest.toSellTradeRequestEntity()
+        );
+    }
+
+    public void validateStockOrderRequest(StockOrderRequest stockOrderRequest) {
         // Member 유효성 체크
         Member member = memberRepository.findById(stockOrderRequest.memberId())
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
@@ -168,11 +239,6 @@ public class AccountService {
         Account account = accountRepository.findById(stockOrderRequest.accountId())
                 .orElseThrow(() -> AccountNotFoundException.of(AccountErrorCode.NOT_FOUND));
 
-        // 계좌에 구매가능 잔고 있는지 확인
-        if (account.getBalance() < (long) stockOrderRequest.amount() * stockOrderRequest.unitCost()) {
-            throw AccountNotEnoughException.of(AccountErrorCode.NOT_ENOUGH_BALANCE);
-        }
-
         // Company 유효성 체크
         Company company = companyRepository.findById(stockOrderRequest.companyId())
                 .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
@@ -180,32 +246,6 @@ public class AccountService {
         // Competition 유효성 체크
         Competition competition = competitionRepository.findById(stockOrderRequest.companyId())
                 .orElseThrow(() -> CompetitionNotFoundException.of(CompetitionErrorCode.NOT_FOUND));
-
-        // 계좌에서 해당 금액만큼 임시구매처리 (미완)
-
-        // History Table에 기록 Write
-        historyRepository.save(History.builder()
-                .account(account)
-                .price(stockOrderRequest.unitCost())
-                .company(company)
-                .volume(stockOrderRequest.amount())
-                .status(HistoryStatus.매도요청)
-                .build()
-        );
-
-        // 구매요청
-        return tradeService.addSellRequest(
-                SellTradeRequest.builder()
-                        .accountId(stockOrderRequest.accountId())
-                        .memberId(stockOrderRequest.memberId())
-                        .companyId(stockOrderRequest.companyId())
-                        .companyName(stockOrderRequest.companyName())
-                        .competitionId(stockOrderRequest.competitionId())
-                        .unitCost(stockOrderRequest.unitCost())
-                        .amount(stockOrderRequest.amount())
-                        .orderTime(stockOrderRequest.orderTime())
-                        .build()
-        );
     }
 }
 
