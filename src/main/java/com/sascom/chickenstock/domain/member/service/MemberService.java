@@ -10,6 +10,7 @@ import com.sascom.chickenstock.domain.member.dto.response.PrefixNicknameInfosRes
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.domain.ranking.util.RatingCalculatorV1;
+import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -91,5 +92,10 @@ public class MemberService {
     private boolean isSafePassword(String password) {
         // TODO: implementation
         return true;
+    }
+
+    public Member findByEmail(String email) {
+        return memberRepository.findByEmail(email)
+                .orElseThrow(EntityNotFoundException::new);
     }
 }
