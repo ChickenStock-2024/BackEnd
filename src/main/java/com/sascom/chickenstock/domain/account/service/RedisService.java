@@ -102,4 +102,31 @@ public class RedisService {
         return StockInfo;
     }
 
+    public void updateStockInfo(Long accountId, String companyName, int newAmount, double newPrice) {
+        String pattern = "accountId:" + accountId + ":companyName:" + companyName;
+        Set<String> keys = redisTemplate.keys(pattern);
+
+        if (keys != null && !keys.isEmpty()) {
+            HashOperations<String, Object, Object> hashOps = redisTemplate.opsForHash();
+
+            for (String key : keys) {
+                // 기존의 값을 가져옵니다.
+                Map<Object, Object> entries = hashOps.entries(key);
+
+                // 필요한 필드만 삭제합니다.
+                if (entries.containsKey("amount")) {
+                    hashOps.delete(key, "amount");
+                }
+                if (entries.containsKey("price")) {
+                    hashOps.delete(key, "price");
+                }
+
+                // 새로운 값을 추가합니다.
+                hashOps.put(key, "amount", String.valueOf(newAmount));
+                hashOps.put(key, "price", String.valueOf(newPrice));
+            }
+        }
+    }
+
+
 }

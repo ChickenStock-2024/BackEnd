@@ -56,8 +56,8 @@ public class GetExcutionContentRepositoryTest {
         );
         account = new Account(member,competition);
         company = new Company("삼성전자","003288");
-        history1 = new History(account,company,2000,20, HistoryStatus.매수체결);
-        history2 = new History(account,company,1000,10, HistoryStatus.매도체결);
+        history1 = new History(account,company,2000,20, HistoryStatus.지정가매수체결);
+        history2 = new History(account,company,1000,10, HistoryStatus.지정가매도체결);
 
     }
 
@@ -77,6 +77,6 @@ public class GetExcutionContentRepositoryTest {
         // then
         assertThat(executionContent).hasSize(2);
         assertThat(executionContent).extracting("status")
-                .containsOnly(HistoryStatus.매도체결, HistoryStatus.매수체결);
+                .containsOnly(HistoryStatus.지정가매도체결, HistoryStatus.지정가매수체결);
     }
 }

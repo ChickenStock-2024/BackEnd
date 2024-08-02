@@ -12,22 +12,40 @@ import java.util.concurrent.PriorityBlockingQueue;
 
 @Configuration
 public class TradeConfig {
-    @Bean
-    public Map<String, PriorityBlockingQueue<BuyTradeRequest>> buyQueues() {
-        Map<String, PriorityBlockingQueue<BuyTradeRequest>> buyQueues = new HashMap<>();
-        buyQueues.put("Samsung", new PriorityBlockingQueue<>());
-        buyQueues.put("LG", new PriorityBlockingQueue<>());
-        buyQueues.put("Chicken Delight", new PriorityBlockingQueue<>());
-        return buyQueues;
+    @Bean(name = "limitBuyOrderQueues")
+    public Map<String, PriorityBlockingQueue<BuyTradeRequest>> limitBuyOrderQueues() {
+        Map<String, PriorityBlockingQueue<BuyTradeRequest>> limitBuyOrderQueues = new HashMap<>();
+        limitBuyOrderQueues.put("Samsung", new PriorityBlockingQueue<>());
+        limitBuyOrderQueues.put("LG", new PriorityBlockingQueue<>());
+        limitBuyOrderQueues.put("Chicken Delight", new PriorityBlockingQueue<>());
+        return limitBuyOrderQueues;
     }
 
-    @Bean
-    public Map<String, PriorityBlockingQueue<SellTradeRequest>> sellQueues() {
-        Map<String, PriorityBlockingQueue<SellTradeRequest>> sellQueues = new HashMap<>();
-        sellQueues.put("Samsung", new PriorityBlockingQueue<>());
-        sellQueues.put("LG", new PriorityBlockingQueue<>());
-        sellQueues.put("Chicken Delight", new PriorityBlockingQueue<>());
-        return sellQueues;
+    @Bean(name = "limitSellOrderQueues")
+    public Map<String, PriorityBlockingQueue<SellTradeRequest>> limitSellOrderQueues() {
+        Map<String, PriorityBlockingQueue<SellTradeRequest>> limitSellOrderQueues = new HashMap<>();
+        limitSellOrderQueues.put("Samsung", new PriorityBlockingQueue<>());
+        limitSellOrderQueues.put("LG", new PriorityBlockingQueue<>());
+        limitSellOrderQueues.put("Chicken Delight", new PriorityBlockingQueue<>());
+        return limitSellOrderQueues;
+    }
+
+    @Bean(name = "marketBuyOrderQueues")
+    public Map<String, PriorityBlockingQueue<BuyTradeRequest>> marketBuyOrderQueues() {
+        Map<String, PriorityBlockingQueue<BuyTradeRequest>> marketBuyOrderQueues = new HashMap<>();
+        marketBuyOrderQueues.put("Samsung", new PriorityBlockingQueue<>());
+        marketBuyOrderQueues.put("LG", new PriorityBlockingQueue<>());
+        marketBuyOrderQueues.put("Chicken Delight", new PriorityBlockingQueue<>());
+        return marketBuyOrderQueues;
+    }
+
+    @Bean(name = "marketSellOrderQueues")
+    public Map<String, PriorityBlockingQueue<SellTradeRequest>> marketSellOrderQueues() {
+        Map<String, PriorityBlockingQueue<SellTradeRequest>> marketSellOrderQueues = new HashMap<>();
+        marketSellOrderQueues.put("Samsung", new PriorityBlockingQueue<>());
+        marketSellOrderQueues.put("LG", new PriorityBlockingQueue<>());
+        marketSellOrderQueues.put("Chicken Delight", new PriorityBlockingQueue<>());
+        return marketSellOrderQueues;
     }
 
 }
