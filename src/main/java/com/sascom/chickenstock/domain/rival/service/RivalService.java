@@ -4,6 +4,7 @@ import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.error.code.MemberErrorCode;
 import com.sascom.chickenstock.domain.member.error.exception.MemberNotFoundException;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
+import com.sascom.chickenstock.domain.rival.dto.response.RivalMemberInfoResponse;
 import com.sascom.chickenstock.domain.rival.entity.Rival;
 import com.sascom.chickenstock.domain.rival.error.code.RivalErrorCode;
 import com.sascom.chickenstock.domain.rival.error.exception.ExistRivalException;
@@ -63,9 +64,19 @@ public class RivalService {
         }
     }
 
-    public List<?> getRivalList(Long memberId) {
+    public List<RivalMemberInfoResponse> getRivalList(Long memberId) {
         // 나와 연관된 모든 라이벌들 리스트로 반환
-        return null;
+        List<Rival> rivalList = rivalRepository.findByMemberId(memberId);
+
+        List<RivalMemberInfoResponse> rivalMemberInfoResponses = rivalList.stream()
+                .map(rival -> RivalMemberInfoResponse.builder()
+                        .id(rival.getEnemy().getId())
+                        .nickname(rival.getEnemy().getNickname())
+                        .build()
+                )
+                .toList();
+
+        return rivalMemberInfoResponses;
     }
 
     public boolean checkRivalRelationship(Long memberId, Long rivalId) {
