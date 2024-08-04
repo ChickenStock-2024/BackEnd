@@ -1,49 +1,54 @@
 package com.sascom.chickenstock.domain.rival.controller;
 
-import com.sascom.chickenstock.domain.rival.dto.request.RequestEnrollRivalDTO;
-import com.sascom.chickenstock.domain.rival.dto.response.ResponseEnrollRivalDTO;
 import com.sascom.chickenstock.domain.rival.service.RivalService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
 
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/rival")
 public class RivalController {
 
-    private RivalService rivalService;
+    private final RivalService rivalService;
 
-    @PostMapping
-    public ResponseEntity<ResponseEnrollRivalDTO> enroll(@RequestBody RequestEnrollRivalDTO requestEnrollRivalDTO) {
-        rivalService.save(requestEnrollRivalDTO);
+    @Autowired
+    private RivalController(RivalService rivalService) {
+        this.rivalService = rivalService;
+    }
+
+    /*
+    나중에 Spring Security에서 memberID 조회되면 제거
+     */
+    @PostMapping("/{member_id}/{rival_id}")
+    public ResponseEntity<?> enroll(@PathVariable("member_id") Long memberId, @PathVariable("rival_id") Long rivalId) {
+        rivalService.enrollRival(memberId, rivalId);
 
         return ResponseEntity.ok().build();
     }
 
     @DeleteMapping("/{rivalId}")
-    public ResponseEntity<ResponseEnrollRivalDTO> delete(@PathVariable(name = "rivalId") Long rivalId) {
+    public ResponseEntity<?> delete(@PathVariable(name = "rivalId") Long rivalId) {
         rivalService.delete(rivalId);
 
         return ResponseEntity.ok().build();
     }
 
     @GetMapping
-    public ResponseEntity<List<ResponseEnrollRivalDTO>> getList() {
-        List<ResponseEnrollRivalDTO> rivals = rivalService.getRivalList();
+    public ResponseEntity<?> getList() {
+
         // id, 닉네임, 랭킹, 수익률, 대회참여횟수, 경험치... 라이벌 멤버 정보를 리스트로 반환해야한다.
 
-        return ResponseEntity.ok().body(rivals);
+        return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{rivalId}")
-    public ResponseEntity<Map<String, Boolean>> check(@PathVariable(name = "rivalId") Long id) {
-        boolean result = rivalService.check(id);
+    public void check(@PathVariable(name = "rivalId") Long id) {
+        // boolean result = rivalService.check(id);
 
-        return ResponseEntity.ok().body(Map.of("is_rival", result));
+        // return ResponseEntity.ok().body(Map.of("is_rival", result));
     }
 
 

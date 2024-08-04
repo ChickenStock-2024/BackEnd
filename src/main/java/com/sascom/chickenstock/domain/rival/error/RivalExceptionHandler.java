@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @Slf4j
 @RestControllerAdvice
 public class RivalExceptionHandler extends BaseExceptionHandler {
-    
+
     @ExceptionHandler(RivalNotFoundException.class)
     protected ResponseEntity<?> handleRivalNotFoundException(RivalNotFoundException e) {
         log.error(e.getMessage());
