@@ -7,6 +7,7 @@ import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.domain.rival.entity.Rival;
 import com.sascom.chickenstock.domain.rival.error.code.RivalErrorCode;
 import com.sascom.chickenstock.domain.rival.error.exception.ExistRivalException;
+import com.sascom.chickenstock.domain.rival.error.exception.NotExistRivalException;
 import com.sascom.chickenstock.domain.rival.error.exception.SameMemberException;
 import com.sascom.chickenstock.domain.rival.repository.RivalRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +27,7 @@ public class RivalService {
         this.memberRepository = memberRepository;
     }
 
-    public void enrollRival(Long memberId, Long rivalId) {
+    public void enroll(Long memberId, Long rivalId) {
         if(memberId.equals(rivalId)) {
             throw SameMemberException.of(RivalErrorCode.SAME_MEMBER);
         }
@@ -44,11 +45,25 @@ public class RivalService {
         rivalRepository.save(rival);
     }
 
-    public void delete(Long id) {
-        // 내 id와 라이벌 id가 매핑된 행을 지운다.
+    public void delete(Long memberId, Long rivalId) {
+        if(memberId.equals(rivalId)) {
+            throw SameMemberException.of(RivalErrorCode.SAME_MEMBER);
+        }
+
+        if(checkRivalRelationship(memberId, rivalId)) {
+            throw NotExistRivalException.of(RivalErrorCode.NOT_EXIST_RELATIONSHIP);
+        }
+
+        List<Rival> rivals = rivalRepository.findByMemberId(memberId);
+
+        for(Rival rival : rivals) {
+            if(rival.getEnemy().getId().equals(rivalId)) {
+                rivalRepository.delete(rival);
+            }
+        }
     }
 
-    public List<?> getRivalList() {
+    public List<?> getRivalList(Long memberId) {
         // 나와 연관된 모든 라이벌들 리스트로 반환
         return null;
     }
