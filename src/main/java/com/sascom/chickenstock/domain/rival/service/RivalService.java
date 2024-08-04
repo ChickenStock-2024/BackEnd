@@ -4,6 +4,7 @@ import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.error.code.MemberErrorCode;
 import com.sascom.chickenstock.domain.member.error.exception.MemberNotFoundException;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
+import com.sascom.chickenstock.domain.rival.dto.response.CheckRivalResponse;
 import com.sascom.chickenstock.domain.rival.dto.response.RivalMemberInfoResponse;
 import com.sascom.chickenstock.domain.rival.entity.Rival;
 import com.sascom.chickenstock.domain.rival.error.code.RivalErrorCode;
@@ -88,5 +89,16 @@ public class RivalService {
             }
         }
         return true;
+    }
+
+    public CheckRivalResponse checkRival(Long memberId, Long rivalId) {
+        List<Rival> rivals = rivalRepository.findByMemberId(memberId);
+
+        for(Rival rival : rivals) {
+            if(rival.getEnemy().getId().equals(rivalId)) {
+                return new CheckRivalResponse("true");
+            }
+        }
+        return new CheckRivalResponse("false");
     }
 }

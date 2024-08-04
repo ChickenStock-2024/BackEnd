@@ -1,5 +1,6 @@
 package com.sascom.chickenstock.domain.rival.controller;
 
+import com.sascom.chickenstock.domain.rival.dto.response.CheckRivalResponse;
 import com.sascom.chickenstock.domain.rival.dto.response.RivalMemberInfoResponse;
 import com.sascom.chickenstock.domain.rival.service.RivalService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -52,11 +53,14 @@ public class RivalController {
         return ResponseEntity.ok().body(rivalMemberInfoResponses);
     }
 
-    @GetMapping("/{rivalId}")
-    public void check(@PathVariable(name = "rivalId") Long id) {
-        // boolean result = rivalService.check(id);
+    /*
+    나중에 Spring Security에서 memberID 조회되면 제거
+     */
+    @GetMapping("/{member_id}/{rival_id}")
+    public ResponseEntity<CheckRivalResponse> check(@PathVariable("member_id") Long memberId, @PathVariable("rival_id") Long rivalId) {
+        CheckRivalResponse checkRivalResponse = rivalService.checkRival(memberId, rivalId);
 
-        // return ResponseEntity.ok().body(Map.of("is_rival", result));
+        return ResponseEntity.ok().body(checkRivalResponse);
     }
 
 
