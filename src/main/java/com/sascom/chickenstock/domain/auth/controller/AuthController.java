@@ -9,25 +9,33 @@ import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.service.MemberService;
 import com.sascom.chickenstock.global.error.code.AuthErrorCode;
 import com.sascom.chickenstock.global.error.exception.AuthException;
+import com.sascom.chickenstock.global.jwt.JwtProperties;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 
 @RestController
-@RequiredArgsConstructor
 @RequestMapping("/auth")
 public class AuthController {
     private final AuthService authService;
     private final MemberService memberService;
+    private final JwtProperties jwtProperties;
 
     @Value("${oauth.redirect-uri}")
     private String oauthRedirectUri;
+
+    public AuthController(AuthService authService, MemberService memberService, JwtProperties jwtProperties) {
+        this.authService = authService;
+        this.memberService = memberService;
+        this.jwtProperties = jwtProperties;
+    }
 
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody RequestSignupMember requestSignupMember) {
@@ -36,16 +44,20 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<ResponseLoginMember> login(@RequestBody RequestLoginMember requestLoginMember) {
+    public ResponseEntity<ResponseLoginMember> login(@RequestBody RequestLoginMember requestLoginMember, HttpServletResponse response) {
         TokenDto tokenDto = authService.login(requestLoginMember);
         Member member = memberService.findByEmail(requestLoginMember.email());
+        ResponseLoginMember responseLoginMember = new ResponseLoginMember(member);
 
-        HttpHeaders headers = new HttpHeaders();
-        headers.add("Access-token", tokenDto.accessToken());
+        ResponseCookie accessTokenCookie = ResponseCookie.from(jwtProperties.accessToken().cookieName(), tokenDto.accessToken())
+                .path("/").httpOnly(true).build();
+        ResponseCookie refreshTokenCookie = ResponseCookie.from(jwtProperties.refreshToken().cookieName(), tokenDto.refreshToken())
+                .path("/").httpOnly(true).build();
 
-        return ResponseEntity.ok()
-                .headers(headers)
-                .body(new ResponseLoginMember(member));
+        response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
+        response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
+
+        return ResponseEntity.ok(responseLoginMember);
     }
 
     @GetMapping("login/{socialId}")

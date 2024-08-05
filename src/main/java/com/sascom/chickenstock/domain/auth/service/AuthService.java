@@ -1,5 +1,6 @@
 package com.sascom.chickenstock.domain.auth.service;
 
+import com.sascom.chickenstock.domain.account.service.RedisService;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestLoginMember;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestSignupMember;
 import com.sascom.chickenstock.domain.auth.dto.token.TokenDto;
@@ -8,7 +9,6 @@ import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.global.error.code.AuthErrorCode;
 import com.sascom.chickenstock.global.jwt.JwtProperties;
 import com.sascom.chickenstock.global.jwt.JwtProvider;
-import com.sascom.chickenstock.global.jwt.TokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.regex.Pattern;
 
 @Service
@@ -27,7 +28,7 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
 
     private final JwtProvider jwtProvider;
-    private final JwtProperties jwtProperties;
+    private final RedisService redisService;
 
     @Transactional
     public void signup(RequestSignupMember requestSignupMember) {
@@ -59,27 +60,12 @@ public class AuthService {
         Authentication authResponse = authenticationManager.authenticate(authRequest);
 
         String accessToken = jwtProvider.createToken(authResponse, jwtProvider.getAccessTokenExpirationDate());
-        String refreshToken = jwtProvider.createToken(authResponse, jwtProvider.getAccessTokenExpirationDate());
+        LocalDateTime refreshTokenExpirationDate = jwtProvider.getRefreshTokenExpirationDate();
+        String refreshToken = jwtProvider.createToken(authResponse, refreshTokenExpirationDate);
 
-        /**
-         * TODO 한주형 체크
-         * 이부분 어떻게 할건지?
-         */
-//        // 3. 인증 정보를 기반으로 JWT 토큰 생성
-//        TokenDto tokenDto = tokenProvider.generateTokenDto(authentication);
-//
-//        // 4. RefreshToken 저장
-////        RefreshToken refreshToken = RefreshToken.builder()
-////                .key(authentication.getName())
-////                .value(tokenDto.getRefreshToken())
-////                .accessToken(tokenDto.getAccessToken())
-////                .build();
-////        refreshTokenRepository.save(refreshToken);
-//
-//        // 5. 토큰 발급
-//        return tokenDto;
+        redisService.setValues(authResponse.getName(), refreshToken, refreshTokenExpirationDate);
 
-        return new TokenDto(null, null, jwtProperties.bearerType(), accessToken, refreshToken, null);
+        return new TokenDto(accessToken, refreshToken);
     }
 
 //    @Transactional
