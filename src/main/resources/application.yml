@@ -1,6 +1,7 @@
 spring:
   config:
     import: classpath:privacy.yml, optional:file:.env[.properties]
+  profiles.include: oauth
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
     url: jdbc:mysql://${db.host}:${db.port}/${db.databasename}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
@@ -23,3 +24,13 @@ redis:
     import: classpath:privacy.yml
   host: ${redis.host}
   port: ${redis.port}
+
+jwt:
+  bearer-type: ${BEARER_TYPE}
+  secret: ${TOKEN_SECRET}
+  access-token:
+    expire-duration: ${ACCESS_TOKEN_EXPIRE_DURATION}
+    cookie-name: ${ACCESS_TOKEN_NAME}
+  refresh-token:
+    expire-duration: ${REFRESH_TOKEN_EXPIRE_DURATION}
+    cookie-name: ${REFRESH_TOKEN_NAME}

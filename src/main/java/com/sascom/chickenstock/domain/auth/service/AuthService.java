@@ -3,14 +3,15 @@ package com.sascom.chickenstock.domain.auth.service;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestLoginMember;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestSignupMember;
 import com.sascom.chickenstock.domain.auth.dto.token.TokenDto;
-import com.sascom.chickenstock.domain.auth.dto.token.TokenRequestDto;
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.global.error.code.AuthErrorCode;
+import com.sascom.chickenstock.global.jwt.JwtProperties;
+import com.sascom.chickenstock.global.jwt.JwtProvider;
 import com.sascom.chickenstock.global.jwt.TokenProvider;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,9 +23,11 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class AuthService {
     private final MemberRepository memberRepository;
-    private final TokenProvider tokenProvider;
-    private final AuthenticationManagerBuilder authenticationManagerBuilder;
+    private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
+
+    private final JwtProvider jwtProvider;
+    private final JwtProperties jwtProperties;
 
     @Transactional
     public void signup(RequestSignupMember requestSignupMember) {
@@ -35,6 +38,7 @@ public class AuthService {
         if (!isValidEmail(requestSignupMember.email())) {
             throw new IllegalArgumentException(AuthErrorCode.SIGNUP_INVALID_REQUEST.getMessage() + ": 이메일 형식이 올바르지 않습니다.");
         }
+
         Member member = new Member(
                 requestSignupMember.nickname(),
                 requestSignupMember.email(),
@@ -48,28 +52,34 @@ public class AuthService {
         return pattern.matcher(email).matches();
     }
 
-    @Transactional
     public TokenDto login(RequestLoginMember requestLoginMember) {
-        // 1. Login ID/PW 를 기반으로 AuthenticationToken 생성
-        UsernamePasswordAuthenticationToken authenticationToken = requestLoginMember.toAuthentication();
+        Authentication authRequest =
+                UsernamePasswordAuthenticationToken.unauthenticated(requestLoginMember.email(), requestLoginMember.password());
 
-        // 2. 실제로 검증 (사용자 비밀번호 체크) 이 이루어지는 부분
-        //    authenticate 메서드가 실행이 될 때 CustomUserDetailsService 에서 만들었던 loadUserByUsername 메서드가 실행됨
-        Authentication authentication = authenticationManagerBuilder.getObject().authenticate(authenticationToken);
+        Authentication authResponse = authenticationManager.authenticate(authRequest);
 
-        // 3. 인증 정보를 기반으로 JWT 토큰 생성
-        TokenDto tokenDto = tokenProvider.generateTokenDto(authentication);
+        String accessToken = jwtProvider.createToken(authResponse, jwtProvider.getAccessTokenExpirationDate());
+        String refreshToken = jwtProvider.createToken(authResponse, jwtProvider.getAccessTokenExpirationDate());
 
-        // 4. RefreshToken 저장
-//        RefreshToken refreshToken = RefreshToken.builder()
-//                .key(authentication.getName())
-//                .value(tokenDto.getRefreshToken())
-//                .accessToken(tokenDto.getAccessToken())
-//                .build();
-//        refreshTokenRepository.save(refreshToken);
+        /**
+         * TODO 한주형 체크
+         * 이부분 어떻게 할건지?
+         */
+//        // 3. 인증 정보를 기반으로 JWT 토큰 생성
+//        TokenDto tokenDto = tokenProvider.generateTokenDto(authentication);
+//
+//        // 4. RefreshToken 저장
+////        RefreshToken refreshToken = RefreshToken.builder()
+////                .key(authentication.getName())
+////                .value(tokenDto.getRefreshToken())
+////                .accessToken(tokenDto.getAccessToken())
+////                .build();
+////        refreshTokenRepository.save(refreshToken);
+//
+//        // 5. 토큰 발급
+//        return tokenDto;
 
-        // 5. 토큰 발급
-        return tokenDto;
+        return new TokenDto(null, null, jwtProperties.bearerType(), accessToken, refreshToken, null);
     }
 
 //    @Transactional

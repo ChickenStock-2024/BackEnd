@@ -62,6 +62,15 @@ public class Member extends BaseTimeEntity {
         this.password = password;
     }
 
+    public static Member of(Long id, String nickname) {
+        return new Member(id, nickname);
+    }
+
+    private Member(Long id, String nickname) {
+        this.id = id;
+        this.nickname = nickname;
+    }
+
     public int updatePoint(int newPoint) {
         if (newPoint < 0) {
             throw new IllegalArgumentException("잘못된 포인트 업데이트~");
