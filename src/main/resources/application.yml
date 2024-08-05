@@ -26,6 +26,7 @@ redis:
   port: ${redis.port}
 
 jwt:
+  bearer-type: ${BEARER_TYPE}
   secret: ${TOKEN_SECRET}
   access-token:
     expire-duration: ${ACCESS_TOKEN_EXPIRE_DURATION}

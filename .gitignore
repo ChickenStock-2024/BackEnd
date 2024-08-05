@@ -38,3 +38,4 @@ out/
 
 ### yml
 /src/main/resources/privacy.yml
+.env

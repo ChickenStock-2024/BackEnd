@@ -1,4 +1,4 @@
-package com.sascom.chickenstock.global.oauth.service;
+package com.sascom.chickenstock.domain.auth.service;
 
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;

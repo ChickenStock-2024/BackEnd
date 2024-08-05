@@ -7,6 +7,7 @@ import io.jsonwebtoken.JwtParser;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -19,14 +20,13 @@ import java.util.Date;
 @Component
 public class JwtResolver {
     private final JwtProperties jwtProperties;
-    private final SecretKey secretKey;
-
+    private SecretKey secretKey;
 
     @Autowired
     public JwtResolver(JwtProperties jwtProperties) {
         this.jwtProperties = jwtProperties;
 
-        byte[] decodeArr = Decoders.BASE64.decode(jwtProperties.getSecret());
+        byte[] decodeArr = Decoders.BASE64.decode(this.jwtProperties.secret());
         secretKey = Keys.hmacShaKeyFor(decodeArr);
     }
 

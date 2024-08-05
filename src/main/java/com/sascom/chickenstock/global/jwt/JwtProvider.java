@@ -27,34 +27,22 @@ public class JwtProvider {
 
     private static final String ISSUER_NAME = "chickenstock";
     public static final String NICKNAME = "nickname";
+    public static final String ROLE = "role";
 
     @PostConstruct
     private void setSecretKey() {
-        byte[] decode = Decoders.BASE64.decode(jwtProperties.getSecret());
+        byte[] decode = Decoders.BASE64.decode(jwtProperties.secret());
         key = Keys.hmacShaKeyFor(decode);
     }
 
     public LocalDateTime getAccessTokenExpirationDate() {
         LocalDateTime now = LocalDateTime.now();
-        return now.plusSeconds(jwtProperties.getAccessToken().expireDuration().toSeconds());
+        return now.plusSeconds(jwtProperties.accessToken().expireDuration().toSeconds());
     }
 
     public LocalDateTime getRefreshTokenExpirationDate() {
         LocalDateTime now = LocalDateTime.now();
-        return now.plusSeconds(jwtProperties.getRefreshToken().expireDuration().toSeconds());
-    }
-
-    @Deprecated
-    public String createToken(Member member, LocalDateTime expirationTime) {
-        Date expirationDate = TimeUtil.localDateTime2Date(expirationTime);
-
-        return Jwts.builder()
-                .issuer(ISSUER_NAME)
-                .subject(member.getId().toString())
-                .claim(NICKNAME, member.getNickname())
-                .expiration(expirationDate)
-                .signWith(key, Jwts.SIG.HS512)
-                .compact();
+        return now.plusSeconds(jwtProperties.refreshToken().expireDuration().toSeconds());
     }
 
     /**
@@ -63,9 +51,13 @@ public class JwtProvider {
     public String createToken(Authentication authentication, LocalDateTime expirationTime) {
         Date expirationDate = TimeUtil.localDateTime2Date(expirationTime);
 
+        String memberRole = authentication.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.joining());
         return Jwts.builder()
                 .issuer(ISSUER_NAME)
                 .subject(authentication.getName())
+                .claim(ROLE, memberRole)
                 .expiration(expirationDate)
                 .signWith(key, Jwts.SIG.HS512)
                 .compact();
@@ -79,10 +71,14 @@ public class JwtProvider {
                     .build()
                     .parseSignedClaims(token);
             return true;
+        } catch (io.jsonwebtoken.security.SecurityException | MalformedJwtException e) {
+            log.info("잘못된 JWT 서명입니다.");
         } catch (ExpiredJwtException e) {
-            // TODO 만료 예외처리
-        } catch (JwtException | IllegalArgumentException e) {
-            log.error(e.getMessage(), e);
+            log.info("만료된 JWT 토큰입니다.");
+        } catch (UnsupportedJwtException e) {
+            log.info("지원되지 않는 JWT 토큰입니다.");
+        } catch (IllegalArgumentException e) {
+            log.info("JWT 토큰이 잘못되었습니다.");
         }
         return false;
     }

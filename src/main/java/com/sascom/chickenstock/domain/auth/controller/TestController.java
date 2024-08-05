@@ -1,7 +1,6 @@
-package com.sascom.chickenstock.global.oauth.controller;
+package com.sascom.chickenstock.domain.auth.controller;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.GetMapping;
