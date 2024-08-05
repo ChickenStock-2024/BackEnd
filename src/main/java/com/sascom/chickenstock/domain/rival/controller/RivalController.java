@@ -20,45 +20,33 @@ public class RivalController {
         this.rivalService = rivalService;
     }
 
-    /*
-    나중에 Spring Security에서 memberID 조회되면 제거
-     */
-    @PostMapping("/{member_id}/{rival_id}")
-    public ResponseEntity<?> enroll(@PathVariable("member_id") Long memberId, @PathVariable("rival_id") Long rivalId) {
-        rivalService.enroll(memberId, rivalId);
+    @PostMapping("/{rival_id}")
+    public ResponseEntity<?> enroll(@PathVariable("rival_id") Long rivalId) {
+        rivalService.enroll(rivalId);
 
         return ResponseEntity.ok().build();
     }
 
-    /*
-    나중에 Spring Security에서 memberID 조회되면 제거
-     */
-    @DeleteMapping("/{member_id}/{rival_id}")
-    public ResponseEntity<?> delete(@PathVariable("member_id") Long memberId, @PathVariable("rival_id") Long rivalId) {
-        rivalService.delete(memberId, rivalId);
+    @DeleteMapping("/{rival_id}")
+    public ResponseEntity<?> delete(@PathVariable("rival_id") Long rivalId) {
+        rivalService.delete(rivalId);
 
         return ResponseEntity.ok().build();
     }
 
-    /*
-    나중에 Spring Security에서 memberID 조회되면 제거
-     */
-    @GetMapping("/{member_id}")
-    public ResponseEntity<List<RivalMemberInfoResponse>> getList(@PathVariable("member_id") Long memberId) {
+    @GetMapping
+    public ResponseEntity<List<RivalMemberInfoResponse>> getList() {
 
         // id, 닉네임, 랭킹, 수익률, 대회참여횟수, 경험치... 라이벌 멤버 정보를 리스트로 반환해야한다.
         // 현재 id와 닉네임만 반환중....
-        List<RivalMemberInfoResponse> rivalMemberInfoResponses = rivalService.getRivalList(memberId);
+        List<RivalMemberInfoResponse> rivalMemberInfoResponses = rivalService.getRivalList();
 
         return ResponseEntity.ok().body(rivalMemberInfoResponses);
     }
 
-    /*
-    나중에 Spring Security에서 memberID 조회되면 제거
-     */
-    @GetMapping("/{member_id}/{rival_id}")
-    public ResponseEntity<CheckRivalResponse> check(@PathVariable("member_id") Long memberId, @PathVariable("rival_id") Long rivalId) {
-        CheckRivalResponse checkRivalResponse = rivalService.checkRival(memberId, rivalId);
+    @GetMapping("/{rival_id}")
+    public ResponseEntity<CheckRivalResponse> check(@PathVariable("rival_id") Long rivalId) {
+        CheckRivalResponse checkRivalResponse = rivalService.checkRival(rivalId);
 
         return ResponseEntity.ok().body(checkRivalResponse);
     }

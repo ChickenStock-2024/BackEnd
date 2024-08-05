@@ -12,6 +12,7 @@ import com.sascom.chickenstock.domain.rival.error.exception.ExistRivalException;
 import com.sascom.chickenstock.domain.rival.error.exception.NotExistRivalException;
 import com.sascom.chickenstock.domain.rival.error.exception.SameMemberException;
 import com.sascom.chickenstock.domain.rival.repository.RivalRepository;
+import com.sascom.chickenstock.global.util.SecurityUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -29,7 +30,9 @@ public class RivalService {
         this.memberRepository = memberRepository;
     }
 
-    public void enroll(Long memberId, Long rivalId) {
+    public void enroll(Long rivalId) {
+        Long memberId = SecurityUtil.getCurrentMemberId();
+
         if(memberId.equals(rivalId)) {
             throw SameMemberException.of(RivalErrorCode.SAME_MEMBER);
         }
@@ -51,7 +54,9 @@ public class RivalService {
         );
     }
 
-    public void delete(Long memberId, Long rivalId) {
+    public void delete(Long rivalId) {
+        Long memberId = SecurityUtil.getCurrentMemberId();
+
         if(memberId.equals(rivalId)) {
             throw SameMemberException.of(RivalErrorCode.SAME_MEMBER);
         }
@@ -69,7 +74,9 @@ public class RivalService {
         }
     }
 
-    public List<RivalMemberInfoResponse> getRivalList(Long memberId) {
+    public List<RivalMemberInfoResponse> getRivalList() {
+        Long memberId = SecurityUtil.getCurrentMemberId();
+
         // 나와 연관된 모든 라이벌들 리스트로 반환
         List<Rival> rivalList = rivalRepository.findByMemberId(memberId);
 
@@ -95,7 +102,9 @@ public class RivalService {
         return true;
     }
 
-    public CheckRivalResponse checkRival(Long memberId, Long rivalId) {
+    public CheckRivalResponse checkRival(Long rivalId) {
+        Long memberId = SecurityUtil.getCurrentMemberId();
+
         List<Rival> rivals = rivalRepository.findByMemberId(memberId);
 
         for(Rival rival : rivals) {
