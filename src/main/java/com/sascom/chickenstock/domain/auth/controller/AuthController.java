@@ -10,16 +10,20 @@ import com.sascom.chickenstock.domain.member.service.MemberService;
 import com.sascom.chickenstock.global.error.code.AuthErrorCode;
 import com.sascom.chickenstock.global.error.exception.AuthException;
 import com.sascom.chickenstock.global.jwt.JwtProperties;
+import jakarta.servlet.http.Cookie;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.WebUtils;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.stream.Stream;
 
 @RestController
 @RequestMapping("/auth")
@@ -70,5 +74,23 @@ public class AuthController {
         } catch (IOException e) {
             throw AuthException.of(AuthErrorCode.OAUTH_REDIRECT_FAIL);
         }
+    }
+
+    @GetMapping("/reissue")
+    public ResponseEntity<Object> reissueToken(HttpServletRequest request, HttpServletResponse response) {
+
+        Cookie accesstokenCookie = WebUtils.getCookie(request, jwtProperties.accessToken().cookieName());
+        Cookie refreshtokenCookie = WebUtils.getCookie(request, jwtProperties.refreshToken().cookieName());
+
+        if (accesstokenCookie == null || refreshtokenCookie == null) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        TokenDto reissuedToken = authService.reissue(accesstokenCookie.getValue(), refreshtokenCookie.getValue());
+
+        response.addHeader(HttpHeaders.SET_COOKIE, reissuedToken.accessToken());
+        response.addHeader(HttpHeaders.SET_COOKIE, reissuedToken.refreshToken());
+
+        return ResponseEntity.ok("재발급완");
     }
 }

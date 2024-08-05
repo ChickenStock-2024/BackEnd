@@ -11,10 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -37,12 +34,16 @@ public class RedisService {
     }
 
     @Transactional(readOnly = true)
-    public String getValues(String key) {
+    public Optional<String> getValues(String key) {
         ValueOperations<String, Object> values = redisTemplate.opsForValue();
-        if (values.get(key) == null) {
-            return "false";
+
+        Object result = values.get(key);
+        if (result == null) {
+            return Optional.empty();
         }
-        return (String) values.get(key);
+
+        return Optional.of(result.toString());
+
     }
 
     public void deleteValues(String key) {

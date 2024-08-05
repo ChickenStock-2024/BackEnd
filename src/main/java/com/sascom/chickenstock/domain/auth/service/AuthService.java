@@ -1,5 +1,7 @@
 package com.sascom.chickenstock.domain.auth.service;
 
+import com.sascom.chickenstock.domain.account.error.code.AccountErrorCode;
+import com.sascom.chickenstock.domain.account.error.exception.AccountDuplicateException;
 import com.sascom.chickenstock.domain.account.service.RedisService;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestLoginMember;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestSignupMember;
@@ -9,7 +11,9 @@ import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.global.error.code.AuthErrorCode;
 import com.sascom.chickenstock.global.jwt.JwtProperties;
 import com.sascom.chickenstock.global.jwt.JwtProvider;
+import com.sascom.chickenstock.global.jwt.JwtResolver;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -29,6 +33,7 @@ public class AuthService {
 
     private final JwtProvider jwtProvider;
     private final RedisService redisService;
+    private final JwtResolver jwtResolver;
 
     @Transactional
     public void signup(RequestSignupMember requestSignupMember) {
@@ -44,7 +49,12 @@ public class AuthService {
                 requestSignupMember.nickname(),
                 requestSignupMember.email(),
                 passwordEncoder.encode(requestSignupMember.password()));
-        memberRepository.save(member);
+
+        try {
+            memberRepository.save(member);
+        } catch (DataIntegrityViolationException e) {
+            throw AccountDuplicateException.of(AccountErrorCode.DUPLICATED_VALUE);
+        }
     }
     // 이메일 정규식 검사
     private boolean isValidEmail(String email) {
@@ -68,32 +78,28 @@ public class AuthService {
         return new TokenDto(accessToken, refreshToken);
     }
 
-//    @Transactional
-//    public TokenDto reissue(TokenRequestDto tokenRequestDto) {
-//        // 1. Refresh Token 검증
-//        if (!tokenProvider.validateToken(tokenRequestDto.getRefreshToken())) {
-//            throw new RuntimeException("Refresh Token 이 유효하지 않습니다.");
-//        }
-//
-//        // 2. Access Token 에서 Member ID 가져오기
-//        Authentication authentication = tokenProvider.getAuthentication(tokenRequestDto.getAccessToken());
-//
-//        // 3. 저장소에서 Member ID 를 기반으로 Refresh Token 값 가져옴
-//        RefreshToken refreshToken = refreshTokenRepository.findByAccessToken(tokenRequestDto.getAccessToken())
-//                .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
-//
-//        // 4. Refresh Token 일치하는지 검사
-//        if (!refreshToken.getValue().equals(tokenRequestDto.getRefreshToken())) {
-//            throw new RuntimeException("토큰의 유저 정보가 일치하지 않습니다.");
-//        }
-//        // 5. 새로운 토큰 생성
-//        TokenDto tokenDto = tokenProvider.generateTokenDto(authentication);
-//
-//        // 6. 저장소 정보 업데이트
-//        RefreshToken newRefreshToken = refreshToken.updateValue(tokenDto.getRefreshToken(), tokenDto.getAccessToken());
-//        refreshTokenRepository.save(newRefreshToken);
-//
-//        // 토큰 발급
-//        return tokenDto;
-//    }
+    @Transactional
+    public TokenDto reissue(String accessToken, String refreshToken) {
+        if (!jwtProvider.isValidToken(refreshToken)) {
+            throw new RuntimeException("Refresh Token 이 유효하지 않습니다.");
+        }
+
+        Authentication authentication = jwtResolver.getAuthentication(accessToken);
+
+        String storedRefreshToken = redisService.getValues(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("로그아웃 된 사용자입니다."));
+
+        // 4. Refresh Token 일치하는지 검사
+        if (storedRefreshToken.equals(refreshToken)) {
+            throw new RuntimeException("토큰의 유저 정보가 일치하지 않습니다.");
+        }
+
+        String newAccessToken = jwtProvider.createToken(authentication, jwtProvider.getAccessTokenExpirationDate());
+        LocalDateTime refreshTokenExpirationDate = jwtProvider.getRefreshTokenExpirationDate();
+        String newRefreshToken = jwtProvider.createToken(authentication, refreshTokenExpirationDate);
+
+        redisService.setValues(authentication.getName(), refreshToken, refreshTokenExpirationDate);
+
+        return new TokenDto(newAccessToken, newRefreshToken);
+    }
 }
