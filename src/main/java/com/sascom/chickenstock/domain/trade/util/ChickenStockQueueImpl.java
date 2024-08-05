@@ -78,4 +78,10 @@ public class ChickenStockQueueImpl<T extends TradeRequest> implements ChickenSto
         }
         return compareResult < 0? limitQueue.first() : marketQueue.first();
     }
+
+    @Override
+    public void clear() {
+        limitQueue.clear();
+        marketQueue.clear();
+    }
 }

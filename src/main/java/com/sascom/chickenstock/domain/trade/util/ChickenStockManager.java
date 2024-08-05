@@ -106,6 +106,12 @@ public class ChickenStockManager implements StockManager {
         return buyQueue.add(tradeRequest) != null;
     }
 
+    @Override
+    public void clear() {
+        sellQueue.clear();
+        buyQueue.clear();
+    }
+
     private void addCanceledTradeRequestToList(
             List<? extends TradeRequest> tradeRequests,
             List<ProcessedOrderDto> list,

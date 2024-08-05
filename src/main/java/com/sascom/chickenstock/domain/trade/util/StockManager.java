@@ -12,4 +12,5 @@ public interface StockManager {
     boolean order(BuyTradeRequest tradeRequest);
     boolean cancel(SellTradeRequest tradeRequest);
     boolean cancel(BuyTradeRequest tradeRequest);
+    void clear();
 }

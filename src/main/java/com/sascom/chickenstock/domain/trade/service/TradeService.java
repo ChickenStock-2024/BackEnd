@@ -1,24 +1,19 @@
 package com.sascom.chickenstock.domain.trade.service;
 
-import com.sascom.chickenstock.domain.account.repository.AccountRepository;
+import com.sascom.chickenstock.domain.trade.dto.OrderType;
 import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.SellTradeRequest;
-import com.sascom.chickenstock.domain.trade.dto.request.TradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.response.TradeResponse;
 import com.sascom.chickenstock.domain.trade.error.code.TradeErrorCode;
-import com.sascom.chickenstock.domain.trade.error.exception.TradeNotFoundException;
+import com.sascom.chickenstock.domain.trade.error.exception.TradeException;
 import com.sascom.chickenstock.domain.trade.util.ChickenStockManager;
 import com.sascom.chickenstock.domain.trade.util.StockManager;
 import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.scheduling.TaskScheduler;
 import org.springframework.stereotype.Service;
-import java.time.Duration;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentSkipListSet;
 
 @Service
 public class TradeService {
@@ -38,27 +33,57 @@ public class TradeService {
     }
 
     public TradeResponse addLimitBuyRequest(BuyTradeRequest tradeRequest) {
-        StockManager stockManager = getStockManagerByCompanyName(tradeRequest.getCompanyName())
-                .orElseThrow(() -> TradeNotFoundException.of(TradeErrorCode.NOT_FOUND));
-        return null;
+        if(tradeRequest.getOrderType() != OrderType.LIMIT) {
+            throw TradeException.of(TradeErrorCode.INVALID_ORDER);
+        }
+        return processBuyRequest(tradeRequest);
     }
 
     public TradeResponse addMarketBuyRequest(BuyTradeRequest tradeRequest) {
-        StockManager stockManager = getStockManagerByCompanyName(tradeRequest.getCompanyName())
-                .orElseThrow(() -> TradeNotFoundException.of(TradeErrorCode.NOT_FOUND));
-        return null;
+        if(tradeRequest.getOrderType() != OrderType.MARKET) {
+            throw TradeException.of(TradeErrorCode.INVALID_ORDER);
+        }
+        return processBuyRequest(tradeRequest);
     }
 
     public TradeResponse addLimitSellRequest(SellTradeRequest tradeRequest) {
-        StockManager stockManager = getStockManagerByCompanyName(tradeRequest.getCompanyName())
-                .orElseThrow(() -> TradeNotFoundException.of(TradeErrorCode.NOT_FOUND));
-        return null;
+        if(tradeRequest.getOrderType() != OrderType.LIMIT) {
+            throw TradeException.of(TradeErrorCode.INVALID_ORDER);
+        }
+        return processSellRequest(tradeRequest);
     }
 
     public TradeResponse addMarketSellRequest(SellTradeRequest tradeRequest) {
+        if(tradeRequest.getOrderType() != OrderType.LIMIT) {
+            throw TradeException.of(TradeErrorCode.INVALID_ORDER);
+        }
+        return processSellRequest(tradeRequest);
+    }
+
+    private TradeResponse processBuyRequest(BuyTradeRequest tradeRequest) {
         StockManager stockManager = getStockManagerByCompanyName(tradeRequest.getCompanyName())
-                .orElseThrow(() -> TradeNotFoundException.of(TradeErrorCode.NOT_FOUND));
-        return null;
+                .orElseThrow(() -> TradeException.of(TradeErrorCode.COMPANY_NOT_FOUND));
+        boolean result = stockManager.order(tradeRequest);
+        if(!result) {
+            throw TradeException.of(TradeErrorCode.INTERNAL_ERROR);
+        }
+        return TradeResponse.builder()
+                .message("매수 요청 완료")
+                .tradeRequest(tradeRequest)
+                .build();
+    }
+
+    private TradeResponse processSellRequest(SellTradeRequest tradeRequest) {
+        StockManager stockManager = getStockManagerByCompanyName(tradeRequest.getCompanyName())
+                .orElseThrow(() -> TradeException.of(TradeErrorCode.COMPANY_NOT_FOUND));
+        boolean result = stockManager.order(tradeRequest);
+        if(!result) {
+            throw TradeException.of(TradeErrorCode.INTERNAL_ERROR);
+        }
+        return TradeResponse.builder()
+                .message("매도 요청 완료")
+                .tradeRequest(tradeRequest)
+                .build();
     }
 
     private Optional<StockManager> getStockManagerByCompanyName(String companyName) {
