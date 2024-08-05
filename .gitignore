@@ -39,3 +39,4 @@ out/
 ### yml
 /src/main/resources/privacy.yml
 .env
+/src/main/resources/data.sql
