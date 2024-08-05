@@ -4,6 +4,7 @@ import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.global.entity.BaseTimeEntity;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.antlr.v4.runtime.misc.NotNull;
@@ -28,6 +29,7 @@ public class Rival extends BaseTimeEntity {
     @JoinColumn(name = "enemy_id")
     private Member enemy;
 
+    @Builder
     public Rival(Member enemy, Member member) {
         this.enemy = enemy;
         this.member = member;

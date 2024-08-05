@@ -1,49 +1,54 @@
 package com.sascom.chickenstock.domain.rival.controller;
 
-import com.sascom.chickenstock.domain.rival.dto.request.RequestEnrollRivalDTO;
-import com.sascom.chickenstock.domain.rival.dto.response.ResponseEnrollRivalDTO;
+import com.sascom.chickenstock.domain.rival.dto.response.CheckRivalResponse;
+import com.sascom.chickenstock.domain.rival.dto.response.RivalMemberInfoResponse;
 import com.sascom.chickenstock.domain.rival.service.RivalService;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
-import java.util.Map;
 
-@RequiredArgsConstructor
 @RestController
 @RequestMapping("/rival")
 public class RivalController {
 
-    private RivalService rivalService;
+    private final RivalService rivalService;
 
-    @PostMapping
-    public ResponseEntity<ResponseEnrollRivalDTO> enroll(@RequestBody RequestEnrollRivalDTO requestEnrollRivalDTO) {
-        rivalService.save(requestEnrollRivalDTO);
+    @Autowired
+    private RivalController(RivalService rivalService) {
+        this.rivalService = rivalService;
+    }
+
+    @PostMapping("/{rival_id}")
+    public ResponseEntity<?> enroll(@PathVariable("rival_id") Long rivalId) {
+        rivalService.enroll(rivalId);
 
         return ResponseEntity.ok().build();
     }
 
-    @DeleteMapping("/{rivalId}")
-    public ResponseEntity<ResponseEnrollRivalDTO> delete(@PathVariable(name = "rivalId") Long rivalId) {
+    @DeleteMapping("/{rival_id}")
+    public ResponseEntity<?> delete(@PathVariable("rival_id") Long rivalId) {
         rivalService.delete(rivalId);
 
         return ResponseEntity.ok().build();
     }
 
     @GetMapping
-    public ResponseEntity<List<ResponseEnrollRivalDTO>> getList() {
-        List<ResponseEnrollRivalDTO> rivals = rivalService.getRivalList();
-        // id, 닉네임, 랭킹, 수익률, 대회참여횟수, 경험치... 라이벌 멤버 정보를 리스트로 반환해야한다.
+    public ResponseEntity<List<RivalMemberInfoResponse>> getList() {
 
-        return ResponseEntity.ok().body(rivals);
+        // id, 닉네임, 랭킹, 수익률, 대회참여횟수, 경험치... 라이벌 멤버 정보를 리스트로 반환해야한다.
+        // 현재 id와 닉네임만 반환중....
+        List<RivalMemberInfoResponse> rivalMemberInfoResponses = rivalService.getRivalList();
+
+        return ResponseEntity.ok().body(rivalMemberInfoResponses);
     }
 
-    @GetMapping("/{rivalId}")
-    public ResponseEntity<Map<String, Boolean>> check(@PathVariable(name = "rivalId") Long id) {
-        boolean result = rivalService.check(id);
+    @GetMapping("/{rival_id}")
+    public ResponseEntity<CheckRivalResponse> check(@PathVariable("rival_id") Long rivalId) {
+        CheckRivalResponse checkRivalResponse = rivalService.checkRival(rivalId);
 
-        return ResponseEntity.ok().body(Map.of("is_rival", result));
+        return ResponseEntity.ok().body(checkRivalResponse);
     }
 
 

@@ -56,6 +56,13 @@ public class JwtResolver {
         return new UsernamePasswordAuthenticationToken(memberPrincipal, null, memberPrincipal.getAuthorities());
     }
 
+    public Authentication getTestAuthentication() {
+        Member member = Member.of(1L, "test-user");
+
+        MemberPrincipalDetails details = new MemberPrincipalDetails(member, null, null);
+        return new UsernamePasswordAuthenticationToken(details, null, details.getAuthorities());
+    }
+
     private Claims getClaims(String token) {
         JwtParser parser = Jwts.parser().verifyWith(secretKey).build();
         return parser.parseSignedClaims(token).getPayload();
