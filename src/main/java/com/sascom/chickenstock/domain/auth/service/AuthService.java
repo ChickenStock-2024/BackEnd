@@ -45,6 +45,10 @@ public class AuthService {
             throw new IllegalArgumentException(AuthErrorCode.SIGNUP_INVALID_REQUEST.getMessage() + ": 이메일 형식이 올바르지 않습니다.");
         }
 
+        if (!isAvailableEmail(requestSignupMember.email()) || !isAvailableNickname(requestSignupMember.nickname())) {
+            throw AccountDuplicateException.of(AccountErrorCode.DUPLICATED_VALUE);
+        }
+
         Member member = new Member(
                 requestSignupMember.nickname(),
                 requestSignupMember.email(),
@@ -101,5 +105,13 @@ public class AuthService {
         redisService.setValues(authentication.getName(), refreshToken, refreshTokenExpirationDate);
 
         return new TokenDto(newAccessToken, newRefreshToken);
+    }
+
+    public boolean isAvailableNickname(String nickname) {
+        return !memberRepository.existsByNickname(nickname);
+    }
+
+    public boolean isAvailableEmail(String email) {
+        return !memberRepository.existsByEmail(email);
     }
 }

@@ -1,5 +1,7 @@
 package com.sascom.chickenstock.domain.auth.controller;
 
+import com.sascom.chickenstock.domain.account.error.code.AccountErrorCode;
+import com.sascom.chickenstock.domain.account.error.exception.AccountDuplicateException;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestLoginMember;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestSignupMember;
 import com.sascom.chickenstock.domain.auth.dto.response.ResponseLoginMember;
@@ -92,5 +94,23 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, reissuedToken.refreshToken());
 
         return ResponseEntity.ok("재발급완");
+    }
+
+    @GetMapping("/nickname/{nickname}")
+    public ResponseEntity<Object> checkNickname(@PathVariable(name = "nickname") String nickname) {
+        if (authService.isAvailableNickname(nickname)) {
+            return ResponseEntity.accepted().body("사용 가능한 닉네임입니다.");
+        }
+
+        throw AccountDuplicateException.of(AccountErrorCode.DUPLICATED_VALUE);
+    }
+
+    @GetMapping("/email/{email}")
+    public ResponseEntity<Object> checkEmail(@PathVariable(name = "email") String email) {
+        if (authService.isAvailableEmail(email)) {
+            return ResponseEntity.accepted().body("사용 가능한 이메일입니다.");
+        }
+
+        throw AccountDuplicateException.of(AccountErrorCode.DUPLICATED_VALUE);
     }
 }
