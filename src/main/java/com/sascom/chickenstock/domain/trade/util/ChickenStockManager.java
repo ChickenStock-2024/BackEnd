@@ -3,6 +3,7 @@ package com.sascom.chickenstock.domain.trade.util;
 import com.fasterxml.jackson.databind.deser.DataFormatReaders;
 import com.sascom.chickenstock.domain.trade.dto.MatchStatus;
 import com.sascom.chickenstock.domain.trade.dto.ProcessedOrderDto;
+import com.sascom.chickenstock.domain.trade.dto.TradeType;
 import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.SellTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.TradeRequest;
@@ -26,6 +27,7 @@ public class ChickenStockManager implements StockManager {
                 addCanceledTradeRequestToList(
                         sellQueue.remove(marketPrice),
                         canceled,
+                        TradeType.SELL,
                         MatchStatus.CANCELED_BY_LOGIC);
                 sellTradeRequest = sellQueue.first(marketPrice);
             }
@@ -33,6 +35,7 @@ public class ChickenStockManager implements StockManager {
                 addCanceledTradeRequestToList(
                         buyQueue.remove(marketPrice),
                         canceled,
+                        TradeType.BUY,
                         MatchStatus.CANCELED_BY_LOGIC
                 );
                 buyTradeRequest = buyQueue.first(marketPrice);
@@ -70,9 +73,9 @@ public class ChickenStockManager implements StockManager {
             }
              */
             sellTradeRequest.addExecutedVolume(executedVolume);
-            executed.add(executedTradeRequestToProcessedOrderDto(sellTradeRequest, executedVolume, marketPrice));
+            executed.add(executedTradeRequestToProcessedOrderDto(sellTradeRequest, TradeType.SELL, executedVolume, marketPrice));
             buyTradeRequest.addExecutedVolume(executedVolume);
-            executed.add(executedTradeRequestToProcessedOrderDto(buyTradeRequest, executedVolume, marketPrice));
+            executed.add(executedTradeRequestToProcessedOrderDto(buyTradeRequest, TradeType.BUY, executedVolume, marketPrice));
 
             if(sellTradeRequest.getTotalOrderVolume().equals(sellTradeRequest.getExecutedVolume())) {
                 sellQueue.remove(sellTradeRequest);
@@ -115,31 +118,34 @@ public class ChickenStockManager implements StockManager {
     private void addCanceledTradeRequestToList(
             List<? extends TradeRequest> tradeRequests,
             List<ProcessedOrderDto> list,
+            TradeType tradeType,
             MatchStatus matchStatus
     ) {
         for(TradeRequest tradeRequest : tradeRequests) {
-            list.add(canceledTradeRequestToProcessedOrderDto(tradeRequest, matchStatus));
+            list.add(canceledTradeRequestToProcessedOrderDto(tradeRequest, tradeType, matchStatus));
         }
         return;
     }
 
-    private void addCanceledTradeRequestToList(
-            TradeRequest tradeRequest,
-            List<ProcessedOrderDto> list,
-            MatchStatus matchStatus
-    ) {
-        list.add(canceledTradeRequestToProcessedOrderDto(tradeRequest, matchStatus));
-    }
+//    private void addCanceledTradeRequestToList(
+//            TradeRequest tradeRequest,
+//            List<ProcessedOrderDto> list,
+//            MatchStatus matchStatus
+//    ) {
+//        list.add(canceledTradeRequestToProcessedOrderDto(tradeRequest, matchStatus));
+//    }
 
     private ProcessedOrderDto canceledTradeRequestToProcessedOrderDto(
             TradeRequest tradeRequest,
+            TradeType tradeType,
             MatchStatus matchStatus) {
         return ProcessedOrderDto.builder()
                 .accountId(tradeRequest.getAccountId())
                 .requestHistoryId(tradeRequest.getHistoryId())
-                .companyName(tradeRequest.getCompanyName())
+                .companyId(tradeRequest.getCompanyId())
                 .price(tradeRequest.getUnitCost())
                 .volume(tradeRequest.getRemainingVolume())
+                .tradeType(tradeType)
                 .orderType(tradeRequest.getOrderType())
                 .matchStatus(matchStatus)
                 .build();
@@ -147,15 +153,17 @@ public class ChickenStockManager implements StockManager {
 
     private ProcessedOrderDto executedTradeRequestToProcessedOrderDto(
             TradeRequest tradeRequest,
+            TradeType tradeType,
             int executedVolume,
             int marketPrice
     ) {
         return ProcessedOrderDto.builder()
                 .accountId(tradeRequest.getAccountId())
                 .requestHistoryId(tradeRequest.getHistoryId())
-                .companyName(tradeRequest.getCompanyName())
+                .companyId(tradeRequest.getCompanyId())
                 .price(marketPrice)
                 .volume(executedVolume)
+                .tradeType(tradeType)
                 .orderType(tradeRequest.getOrderType())
                 .matchStatus(MatchStatus.EXECUTED)
                 .build();

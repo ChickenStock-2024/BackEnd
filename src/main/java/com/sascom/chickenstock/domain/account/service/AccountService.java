@@ -25,6 +25,7 @@ import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.error.code.MemberErrorCode;
 import com.sascom.chickenstock.domain.member.error.exception.MemberNotFoundException;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
+import com.sascom.chickenstock.domain.trade.dto.OrderType;
 import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.SellTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.response.TradeResponse;
@@ -135,11 +136,11 @@ public class AccountService {
                 .status(HistoryStatus.지정가매수요청)
                 .build()
         );
-        history.getId(); // historyId를 요청 객체(TradeRequest)에 포함시킬 것임
+        Long historyId = history.getId(); // historyId를 요청 객체(TradeRequest)에 포함시킬 것임
 
         // 구매요청
         return tradeService.addLimitBuyRequest(
-                stockOrderRequest.toBuyTradeRequestEntity()
+                stockOrderRequest.toBuyTradeRequestEntity(historyId, history.getCreatedAt(), OrderType.LIMIT)
         );
 
     }
@@ -157,7 +158,7 @@ public class AccountService {
         // 주식 매도하려고 하는데 사용자가 해당 주식을 매도하려는만큼 가지고있는지 확인
 
         // History Table에 기록 Write
-        historyRepository.save(History.builder()
+        History history = historyRepository.save(History.builder()
                 .account(account)
                 .price(stockOrderRequest.unitCost())
                 .company(company)
@@ -166,9 +167,11 @@ public class AccountService {
                 .build()
         );
 
+        Long historyId = history.getId();
+
         // 구매요청
         return tradeService.addLimitSellRequest(
-                stockOrderRequest.toSellTradeRequestEntity()
+                stockOrderRequest.toSellTradeRequestEntity(historyId, history.getCreatedAt(), OrderType.LIMIT)
         );
     }
 
@@ -187,7 +190,7 @@ public class AccountService {
         }
 
         // History Table에 기록 Write
-        historyRepository.save(History.builder()
+        History history = historyRepository.save(History.builder()
                 .account(account)
                 .price(stockOrderRequest.unitCost())
                 .company(company)
@@ -195,10 +198,11 @@ public class AccountService {
                 .status(HistoryStatus.시장가매수요청)
                 .build()
         );
+        Long historyId = history.getId();
 
         // 구매요청
         return tradeService.addMarketBuyRequest(
-                stockOrderRequest.toBuyTradeRequestEntity()
+                stockOrderRequest.toBuyTradeRequestEntity(historyId, history.getCreatedAt(), OrderType.MARKET)
         );
 
     }
@@ -215,7 +219,7 @@ public class AccountService {
         // 주식 매도하려고 하는데 사용자가 해당 주식을 매도하려는만큼 가지고있는지 확인
 
         // History Table에 기록 Write
-        historyRepository.save(History.builder()
+        History history = historyRepository.save(History.builder()
                 .account(account)
                 .price(stockOrderRequest.unitCost())
                 .company(company)
@@ -224,9 +228,11 @@ public class AccountService {
                 .build()
         );
 
+        Long historyId = history.getId();
+
         // 구매요청
         return tradeService.addMarketSellRequest(
-                stockOrderRequest.toSellTradeRequestEntity()
+                stockOrderRequest.toSellTradeRequestEntity(historyId, history.getCreatedAt(), OrderType.MARKET)
         );
     }
 
@@ -244,7 +250,7 @@ public class AccountService {
                 .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
 
         // Competition 유효성 체크
-        Competition competition = competitionRepository.findById(stockOrderRequest.companyId())
+        Competition competition = competitionRepository.findById(stockOrderRequest.competitionId())
                 .orElseThrow(() -> CompetitionNotFoundException.of(CompetitionErrorCode.NOT_FOUND));
     }
 }

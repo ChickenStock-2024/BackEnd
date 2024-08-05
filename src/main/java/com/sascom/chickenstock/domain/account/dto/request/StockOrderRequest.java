@@ -1,9 +1,11 @@
 package com.sascom.chickenstock.domain.account.dto.request;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.sascom.chickenstock.domain.trade.dto.OrderType;
 import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.SellTradeRequest;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 public record StockOrderRequest (
@@ -13,33 +15,39 @@ public record StockOrderRequest (
         Long competitionId,
         String companyName,
         Integer unitCost,
-        Integer amount,
-        @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-        LocalDateTime orderTime
+        Integer amount
 ) {
-        // TODO: 나중에 꼭 수정할 것.
-        public BuyTradeRequest toBuyTradeRequestEntity() {
+        public BuyTradeRequest toBuyTradeRequestEntity(
+                Long historyId,
+                LocalDateTime orderTime,
+                OrderType orderType) {
                 return BuyTradeRequest.builder()
+                        .orderType(orderType)
                         .accountId(accountId)
                         .memberId(memberId)
                         .companyId(companyId)
+                        .historyId(historyId)
                         .companyName(companyName)
                         .competitionId(competitionId)
-                        .unitCost(unitCost)
+                        .unitCost(orderType == OrderType.LIMIT? unitCost : 0)
                         .totalOrderVolume(amount)
                         .orderTime(orderTime)
                         .build();
         }
 
-        // TODO: 나중에 꼭 수정할 것.
-        public SellTradeRequest toSellTradeRequestEntity() {
+        public SellTradeRequest toSellTradeRequestEntity(
+                Long historyId,
+                LocalDateTime orderTime,
+                OrderType orderType) {
                 return SellTradeRequest.builder()
+                        .orderType(orderType)
                         .accountId(accountId)
                         .memberId(memberId)
                         .companyId(companyId)
+                        .historyId(historyId)
                         .companyName(companyName)
                         .competitionId(competitionId)
-                        .unitCost(unitCost)
+                        .unitCost(orderType == OrderType.LIMIT? unitCost : 0)
                         .totalOrderVolume(amount)
                         .orderTime(orderTime)
                         .build();

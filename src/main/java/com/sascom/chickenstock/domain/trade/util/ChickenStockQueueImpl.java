@@ -30,10 +30,10 @@ public class ChickenStockQueueImpl<T extends TradeRequest> implements ChickenSto
         T result = null;
         switch(tradeRequest.getOrderType()) {
             case LIMIT:
-                result = limitQueue.lower(tradeRequest);
+                result = limitQueue.floor(tradeRequest);
                 break;
             case MARKET:
-                result = marketQueue.lower(tradeRequest);
+                result = marketQueue.floor(tradeRequest);
                 break;
             default:
         }
@@ -65,7 +65,7 @@ public class ChickenStockQueueImpl<T extends TradeRequest> implements ChickenSto
 
     @Override
     public T first(int marketPrice) {
-        if(!limitQueue.isEmpty() && limitQueue.first().compareByUnitCost(marketPrice) > 0) {
+        if(limitQueue.isEmpty() || limitQueue.first().compareByUnitCost(marketPrice) > 0) {
             return marketQueue.isEmpty()? null : marketQueue.first();
         }
         if(marketQueue.isEmpty()) {
