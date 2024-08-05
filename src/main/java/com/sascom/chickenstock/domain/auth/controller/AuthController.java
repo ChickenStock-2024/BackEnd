@@ -41,7 +41,7 @@ public class AuthController {
         Member member = memberService.findByEmail(requestLoginMember.email());
 
         HttpHeaders headers = new HttpHeaders();
-        headers.add("Access-token", tokenDto.accessToken());
+        headers.add("Authorization", "Bearer " + tokenDto.accessToken());
 
         return ResponseEntity.ok()
                 .headers(headers)

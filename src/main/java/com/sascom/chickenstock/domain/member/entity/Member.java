@@ -56,6 +56,9 @@ public class Member extends BaseTimeEntity {
     @OneToMany(mappedBy = "member")
     private List<CompanyLike> companyLikes;
 
+    @Embedded
+    private Image image;
+
     public Member(String nickName, String email, String password) {
         this.nickname = nickName;
         this.email = email;
@@ -80,5 +83,9 @@ public class Member extends BaseTimeEntity {
 
     public String updatePassword(String password) {
         return this.password = password;
+    }
+
+    public void updateImage(Image image){
+        this.image = image;
     }
 }

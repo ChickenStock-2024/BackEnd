@@ -8,16 +8,29 @@ import com.sascom.chickenstock.domain.member.dto.response.ChangeInfoResponse;
 import com.sascom.chickenstock.domain.member.dto.response.MemberInfoResponse;
 import com.sascom.chickenstock.domain.member.dto.response.PrefixNicknameInfosResponse;
 import com.sascom.chickenstock.domain.member.entity.Member;
+import com.sascom.chickenstock.domain.member.error.MemberExceptionHandler;
+import com.sascom.chickenstock.domain.member.error.code.MemberErrorCode;
+import com.sascom.chickenstock.domain.member.error.exception.MemberNotFoundException;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.domain.ranking.util.RatingCalculatorV1;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
+import org.springframework.web.multipart.MultipartFile;
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.imgscalr.Scalr;
+import com.sascom.chickenstock.domain.member.entity.Image;
 
 @Service
 public class MemberService {
@@ -97,5 +110,31 @@ public class MemberService {
     public Member findByEmail(String email) {
         return memberRepository.findByEmail(email)
                 .orElseThrow(EntityNotFoundException::new);
+    }
+
+    public Member findById(Long userId){
+        return memberRepository.findById(userId)
+                .orElseThrow(EntityNotFoundException::new);
+    }
+
+    public void setImage(Member member, MultipartFile file) throws IOException {
+        if(file.isEmpty()){
+            //return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+            throw MemberNotFoundException.of(MemberErrorCode.NO_FILE);
+        }
+
+        LocalDateTime localDateTime = LocalDateTime.now();
+        String file_name = localDateTime + file.getOriginalFilename();
+        String img_path = "/member/img" + file_name;
+        String img_link = "https:/도메인/" + file_name;
+        File dest = new File(img_path);
+
+        String format = file_name.substring(file_name.lastIndexOf(".")+1);
+        BufferedImage bufferedImage = Scalr.resize(ImageIO.read(file.getInputStream()), 1000, 1000, Scalr.OP_ANTIALIAS);
+        ImageIO.write(bufferedImage, format, dest);
+
+        Image image = new Image(img_link, file_name, img_path);
+        member.updateImage(image);
+        memberRepository.save(member);
     }
 }
