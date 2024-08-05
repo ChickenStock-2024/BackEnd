@@ -1,19 +1,25 @@
 package com.sascom.chickenstock.domain.auth.dto.token;
 
-import lombok.*;
+import lombok.Builder;
 
 import java.time.LocalDateTime;
 
-@Getter @Setter
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class TokenDto {
+public record TokenDto (
+    String id,
+    Integer count,
+    String grantType,
+    String accessToken,
+    String refreshToken,
+    LocalDateTime accessTokenExpiresIn
+){
 
-    private String id;
-    private Integer count;
-    private String grantType;
-    private String accessToken;
-    private String refreshToken;
-    private LocalDateTime accessTokenExpiresIn;
+    @Builder
+    public TokenDto(String id, Integer count, String grantType, String accessToken, String refreshToken, LocalDateTime accessTokenExpiresIn) {
+        this.id = id;
+        this.count = count;
+        this.grantType = grantType;
+        this.accessToken = accessToken;
+        this.refreshToken = refreshToken;
+        this.accessTokenExpiresIn = accessTokenExpiresIn;
+    }
 }

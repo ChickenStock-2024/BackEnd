@@ -1,0 +1,26 @@
+spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          kakao:
+            client-id: ${CLIENT_ID_KAKAO}
+            client-secret: ${CLIENT_SECRET_KAKAO}
+            redirect-uri: ${REDIRECT_URI_KAKAO}
+            client-authentication-method: client_secret_post
+            authorization-grant-type: authorization_code
+            scope:
+              - profile_image
+              - profile_nickname
+              - account_email
+            client-name: kakao
+        provider:
+          kakao:
+            authorization-uri: ${AUTH_URI_KAKAO}
+            token-uri: ${TOKEN_URI_KAKAO}
+            user-info-uri: ${USER_INFO_URI_KAKAO}
+            user-name-attribute: id
+
+oauth:
+  base-uri: ${CHICKENSTOCK_BASE_URL}
+  redirect-uri: ${SERVICE_OAUTH_PATH}
