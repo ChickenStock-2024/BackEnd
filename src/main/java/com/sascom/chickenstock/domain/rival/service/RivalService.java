@@ -43,8 +43,12 @@ public class RivalService {
         Member enemy = memberRepository.findById(rivalId)
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
 
-        Rival rival = new Rival(member, enemy);
-        rivalRepository.save(rival);
+        rivalRepository.save(
+                Rival.builder()
+                        .enemy(enemy)
+                        .member(member)
+                        .build()
+        );
     }
 
     public void delete(Long memberId, Long rivalId) {
