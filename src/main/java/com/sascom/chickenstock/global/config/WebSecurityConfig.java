@@ -65,9 +65,7 @@ public class WebSecurityConfig {
                                         new AntPathRequestMatcher("/error"),
                                         new AntPathRequestMatcher("/favicon.ico"),
                                         new AntPathRequestMatcher("/"),
-                                        new AntPathRequestMatcher("/auth/signup"),
-                                        new AntPathRequestMatcher("/auth/login/**"),
-                                        new AntPathRequestMatcher("/auth/reissue")
+                                        new AntPathRequestMatcher("/auth/**")
                                 ).permitAll()
                                 .anyRequest().authenticated()
                 )
