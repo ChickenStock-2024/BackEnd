@@ -63,12 +63,7 @@ class AuthControllerTest {
     @Test
     void testLogin() throws Exception {
         RequestLoginMember requestLoginMember = new RequestLoginMember("test@example.com", "password");
-        TokenDto tokenDto = TokenDto.builder()
-                .grantType("Bearer")
-                .accessToken("testAccessToken")
-                .refreshToken("testRefreshToken")
-                .accessTokenExpiresIn(LocalDateTime.now().plusHours(1))
-                .build();
+        TokenDto tokenDto = new TokenDto("testAccessToken", "testRefreshToken");
         Member member = new Member("TestUser", "test@example.com", "encodedPassword");
         ResponseLoginMember responseLoginMember = new ResponseLoginMember(member);
 

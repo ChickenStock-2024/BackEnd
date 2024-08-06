@@ -24,6 +24,7 @@ redis:
     import: classpath:privacy.yml
   host: ${redis.host}
   port: ${redis.port}
+  nodes: ${redis.nodes}
 
 jwt:
   bearer-type: ${BEARER_TYPE}
