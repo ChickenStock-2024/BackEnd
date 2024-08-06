@@ -37,4 +37,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     List<MemberRankingDto> findAllMemberInfos();
 
     Optional<Member> findByEmail(String email);
+
+    boolean existsByNickname(String nickname);
+
+    boolean existsByEmail(String email);
 }

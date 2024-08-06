@@ -30,6 +30,7 @@ public class GlobalExceptionHandler extends BaseExceptionHandler {
     public ResponseEntity<ErrorResponse> handleRuntimeException (Exception e) {
         log.error("class: {}, message: {}", e.getClass(), e.getMessage());
         log.error(Arrays.toString(e.getStackTrace()));
+        e.printStackTrace();
         return createErrorResponse(GlobalErrorCode.ERROR);
     }
 
@@ -37,6 +38,7 @@ public class GlobalExceptionHandler extends BaseExceptionHandler {
     public ResponseEntity<ErrorResponse> handleRuntimeException (RuntimeException e) {
         log.error("class: {}, message: {}", e.getClass(), e.getMessage());
         log.error(Arrays.toString(e.getStackTrace()));
+        e.printStackTrace();
         return createErrorResponse(GlobalErrorCode.RUNTIME_ERROR);
     }
 
@@ -44,6 +46,7 @@ public class GlobalExceptionHandler extends BaseExceptionHandler {
     public ResponseEntity<ErrorResponse> handleMissingPathVariableException (NoResourceFoundException e) {
         log.error("class: {}, message: {}", e.getClass(), e.getMessage());
         log.error(Arrays.toString(e.getStackTrace()));
+        e.printStackTrace();
         return createErrorResponse(GlobalErrorCode.ILLEGAL_PATH);
     }
 
