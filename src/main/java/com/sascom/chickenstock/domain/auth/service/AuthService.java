@@ -3,6 +3,7 @@ package com.sascom.chickenstock.domain.auth.service;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestLoginMember;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestSignupMember;
 import com.sascom.chickenstock.domain.auth.dto.token.TokenDto;
+import com.sascom.chickenstock.domain.member.entity.Image;
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.global.error.code.AuthErrorCode;
@@ -38,11 +39,12 @@ public class AuthService {
         if (!isValidEmail(requestSignupMember.email())) {
             throw new IllegalArgumentException(AuthErrorCode.SIGNUP_INVALID_REQUEST.getMessage() + ": 이메일 형식이 올바르지 않습니다.");
         }
-
+        Image defaultImage = new Image(null,"default_lmg.png", "C:\\Users\\SSAFY\\Image\\");
         Member member = new Member(
                 requestSignupMember.nickname(),
                 requestSignupMember.email(),
-                passwordEncoder.encode(requestSignupMember.password()));
+                passwordEncoder.encode(requestSignupMember.password()),
+                defaultImage);
         memberRepository.save(member);
     }
     // 이메일 정규식 검사

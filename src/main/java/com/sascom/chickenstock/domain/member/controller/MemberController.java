@@ -4,6 +4,7 @@ import com.sascom.chickenstock.domain.member.dto.request.ChangeInfoRequest;
 import com.sascom.chickenstock.domain.member.dto.response.ChangeInfoResponse;
 import com.sascom.chickenstock.domain.member.dto.response.MemberInfoResponse;
 import com.sascom.chickenstock.domain.member.dto.response.PrefixNicknameInfosResponse;
+import com.sascom.chickenstock.domain.member.entity.Image;
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.error.code.MemberErrorCode;
 import com.sascom.chickenstock.domain.member.service.MemberService;
@@ -17,7 +18,9 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 
 @RestController
@@ -53,13 +56,16 @@ public class MemberController {
     }
 
     @PostMapping(value = "/img", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> postImage(@RequestBody MultipartFile file) throws IOException {
+    public ResponseEntity<String> postImage(@RequestParam("file") MultipartFile file) throws IOException {
         Member member = memberService.findById(SecurityUtil.getCurrentMemberId());
         memberService.setImage(member, file);
-
         return ResponseEntity.ok()
-                .body("프로필 이미지 완료~!");
+                .body("프로필 이미지 업로드 완료");
     }
 
-
+    @GetMapping(value = "/img/{userId}", produces = MediaType.IMAGE_JPEG_VALUE)
+    public ResponseEntity<byte[]> getImage(@PathVariable("userId") Long id) throws IOException {
+        byte[] bytes = memberService.getImage(id);
+        return new ResponseEntity<byte[]>(bytes, HttpStatus.OK);
+    }
 }

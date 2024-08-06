@@ -59,10 +59,20 @@ public class Member extends BaseTimeEntity {
     @Embedded
     private Image image;
 
+    @Column(name = "ImageUuid")
+    private String ImageUuid;
+
     public Member(String nickName, String email, String password) {
         this.nickname = nickName;
         this.email = email;
         this.password = password;
+    }
+
+    public Member(String nickName, String email, String password, Image image) {
+        this.nickname = nickName;
+        this.email = email;
+        this.password = password;
+        this.image = image;
     }
 
     public static Member of(Long id, String nickname) {
@@ -87,5 +97,9 @@ public class Member extends BaseTimeEntity {
 
     public void updateImage(Image image){
         this.image = image;
+    }
+
+    public void updateImageUuid(String ImageUuid) {
+        this.ImageUuid = ImageUuid;
     }
 }

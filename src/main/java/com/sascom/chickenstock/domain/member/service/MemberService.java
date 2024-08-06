@@ -24,10 +24,13 @@ import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.imgscalr.Scalr;
 import com.sascom.chickenstock.domain.member.entity.Image;
@@ -123,18 +126,32 @@ public class MemberService {
             throw MemberNotFoundException.of(MemberErrorCode.NO_FILE);
         }
 
-        LocalDateTime localDateTime = LocalDateTime.now();
-        String file_name = localDateTime + file.getOriginalFilename();
-        String img_path = "/member/img" + file_name;
-        String img_link = "https:/도메인/" + file_name;
+        String ImageUuid = UUID.randomUUID().toString();
+        String file_name = ImageUuid + file.getOriginalFilename();
+        String img_path = "C:\\Users\\SSAFY\\Image\\" + file_name;
+        String img_link = "http://localhost:8080" + file_name;
         File dest = new File(img_path);
 
         String format = file_name.substring(file_name.lastIndexOf(".")+1);
         BufferedImage bufferedImage = Scalr.resize(ImageIO.read(file.getInputStream()), 1000, 1000, Scalr.OP_ANTIALIAS);
         ImageIO.write(bufferedImage, format, dest);
 
-        Image image = new Image(img_link, file_name, img_path);
+        Image image = new Image(img_link, file_name, "C:\\Users\\SSAFY\\Image\\");
         member.updateImage(image);
+        member.updateImageUuid(ImageUuid);
         memberRepository.save(member);
+    }
+
+    public byte[] getImage(Long id) throws IOException{
+        Member member = memberRepository.findById(id)
+                .orElseThrow(EntityNotFoundException::new);
+        Image image = member.getImage();
+        // 이미지를 InputStream에 읽어오기
+        InputStream inputStream = new FileInputStream(image.getImg_path() + image.getImg_name());
+
+        // InputStream에 읽어 온 이미지를 byte 배열에 저장
+        byte[] bytes = inputStream.readAllBytes();
+        inputStream.close();
+        return bytes;
     }
 }
