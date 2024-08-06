@@ -9,10 +9,12 @@ import com.sascom.chickenstock.domain.auth.dto.token.TokenDto;
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.global.error.code.AuthErrorCode;
+import com.sascom.chickenstock.global.error.exception.AuthException;
 import com.sascom.chickenstock.global.jwt.JwtProvider;
 import com.sascom.chickenstock.global.jwt.JwtResolver;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -21,6 +23,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 @Service
@@ -44,13 +48,12 @@ public class AuthService {
             throw new IllegalArgumentException(AuthErrorCode.SIGNUP_INVALID_REQUEST.getMessage() + ": 이메일 형식이 올바르지 않습니다.");
         }
 
-        if (!isAvailableEmail(requestSignupMember.email()) || !isAvailableNickname(requestSignupMember.nickname())) {
-            throw AccountDuplicateException.of(AccountErrorCode.DUPLICATED_VALUE);
-        }
+        String validNickname = isAvailableNickname(requestSignupMember.nickname());
+        String validEmail = isAvailableEmail(requestSignupMember.email());
 
         Member member = new Member(
-                requestSignupMember.nickname(),
-                requestSignupMember.email(),
+                validNickname,
+                validEmail,
                 passwordEncoder.encode(requestSignupMember.password()));
 
         try {
@@ -60,7 +63,7 @@ public class AuthService {
         }
     }
     // 이메일 정규식 검사
-    private boolean isValidEmail(String email) {
+    public boolean isValidEmail(String email) {
         String emailRegex = "^[a-zA-Z0-9_+&*-]+(?:\\.[a-zA-Z0-9_+&*-]+)*@(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,7}$";
         Pattern pattern = Pattern.compile(emailRegex);
         return pattern.matcher(email).matches();
@@ -106,11 +109,23 @@ public class AuthService {
         return new TokenDto(newAccessToken, newRefreshToken);
     }
 
-    public boolean isAvailableNickname(String nickname) {
-        return !memberRepository.existsByNickname(nickname);
+    public String isAvailableNickname(String nickname) {
+        if (memberRepository.existsByNickname(nickname)) {
+            throw AuthException.of(AuthErrorCode.NICKNAME_CONFLICT);
+        }
+
+        return nickname;
     }
 
-    public boolean isAvailableEmail(String email) {
-        return !memberRepository.existsByEmail(email);
+    public String isAvailableEmail(String email) {
+        if (email == null || !isValidEmail(email)) {
+            throw AuthException.of(AuthErrorCode.EMAIL_INVALID);
+        }
+
+        if (memberRepository.existsByEmail(email)) {
+            throw AuthException.of(AuthErrorCode.EMAIL_CONFLICT);
+        }
+
+        return email;
     }
 }

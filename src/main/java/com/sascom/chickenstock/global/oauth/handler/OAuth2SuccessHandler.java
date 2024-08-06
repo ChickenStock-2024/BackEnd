@@ -9,6 +9,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseCookie;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -51,7 +52,8 @@ class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
         redisService.setValues(authentication.getName(), refreshToken, refreshTokenExpirationDate);
 
-        response.addHeader(HttpHeaders.LOCATION, BASE_URI);
-        response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+//        response.addHeader(HttpHeaders.LOCATION, BASE_URI);
+//        response.setStatus(HttpServletResponse.SC_MOVED_PERMANENTLY);
+        response.setStatus(HttpServletResponse.SC_OK);
     }
 }

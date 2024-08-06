@@ -1,7 +1,10 @@
 package com.sascom.chickenstock.domain.auth.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sascom.chickenstock.domain.account.error.code.AccountErrorCode;
 import com.sascom.chickenstock.domain.account.error.exception.AccountDuplicateException;
+import com.sascom.chickenstock.domain.account.error.exception.AccountNotEnoughException;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestLoginMember;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestSignupMember;
 import com.sascom.chickenstock.domain.auth.dto.response.ResponseLoginMember;
@@ -24,8 +27,8 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.WebUtils;
 
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.stream.Stream;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/auth")
@@ -33,20 +36,24 @@ public class AuthController {
     private final AuthService authService;
     private final MemberService memberService;
     private final JwtProperties jwtProperties;
+    private final String BASE_URI;
 
     @Value("${oauth.redirect-uri}")
     private String oauthRedirectUri;
 
-    public AuthController(AuthService authService, MemberService memberService, JwtProperties jwtProperties) {
+
+    public AuthController(AuthService authService, MemberService memberService, JwtProperties jwtProperties, @Value("${oauth.base-uri}") String baseUri) {
         this.authService = authService;
         this.memberService = memberService;
         this.jwtProperties = jwtProperties;
+        BASE_URI = baseUri;
     }
 
     @PostMapping("/signup")
     public ResponseEntity<String> signup(@RequestBody RequestSignupMember requestSignupMember) {
         authService.signup(requestSignupMember);
-        return ResponseEntity.status(HttpStatus.CREATED).body("회원가입이 처리되었습니다!");
+//        return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY).header(HttpHeaders.LOCATION, BASE_URI).body("회원가입이 처리되었습니다!");
+        return ResponseEntity.ok("회원가입이 처리되었습니다!");
     }
 
     @PostMapping("/login")
@@ -63,10 +70,11 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
 
+//        return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY).header(HttpHeaders.LOCATION, BASE_URI).body(responseLoginMember);
         return ResponseEntity.ok(responseLoginMember);
     }
 
-    @GetMapping("login/{socialId}")
+    @GetMapping("/login/{socialId}")
     public void socialAuth(@PathVariable(name = "socialId") String socialId, HttpServletResponse response) {
 
         String redirectUri = oauthRedirectUri + socialId;
@@ -93,24 +101,24 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, reissuedToken.accessToken());
         response.addHeader(HttpHeaders.SET_COOKIE, reissuedToken.refreshToken());
 
-        return ResponseEntity.ok("재발급완");
+        return ResponseEntity.ok("재발급 완료");
     }
 
     @GetMapping("/nickname/{nickname}")
     public ResponseEntity<Object> checkNickname(@PathVariable(name = "nickname") String nickname) {
-        if (authService.isAvailableNickname(nickname)) {
-            return ResponseEntity.accepted().body("사용 가능한 닉네임입니다.");
-        }
+        String validNickname = authService.isAvailableNickname(nickname);
 
-        throw AccountDuplicateException.of(AccountErrorCode.DUPLICATED_VALUE);
+        Map<String, String> responseMap = new HashMap<>();
+        responseMap.put("nickname", validNickname);
+        return ResponseEntity.accepted().body(responseMap);
     }
 
     @GetMapping("/email/{email}")
     public ResponseEntity<Object> checkEmail(@PathVariable(name = "email") String email) {
-        if (authService.isAvailableEmail(email)) {
-            return ResponseEntity.accepted().body("사용 가능한 이메일입니다.");
-        }
+        String validEmail = authService.isAvailableEmail(email);
 
-        throw AccountDuplicateException.of(AccountErrorCode.DUPLICATED_VALUE);
+        Map<String, String> responseMap = new HashMap<>();
+        responseMap.put("email", validEmail);
+        return ResponseEntity.accepted().body(responseMap);
     }
 }
