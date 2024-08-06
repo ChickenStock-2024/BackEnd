@@ -15,7 +15,9 @@ public enum AuthErrorCode implements ChickenStockErrorCode {
     LOGIN_FAILURE(HttpStatus.UNAUTHORIZED, "007", "로그인 실패"),
     ACCESS_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "008", "Access Token 만료"),
     REFRESH_TOKEN_EXPIRED(HttpStatus.UNAUTHORIZED, "009", "Refresh Token 만료"),
-    OAUTH_REDIRECT_FAIL(HttpStatus.NOT_FOUND, "010", "oauth redirect 실패");
+    OAUTH_REDIRECT_FAIL(HttpStatus.NOT_FOUND, "010", "oauth redirect 실패"),
+    TOKEN_NOT_FOUND(HttpStatus.NOT_FOUND, "011", "인증 토큰이 없습니다."),
+    EMAIL_INVALID(HttpStatus.BAD_REQUEST, "012", "이메일 형식에 맞지 않습니다.");
 
     private final HttpStatus status;
     private final String code;
