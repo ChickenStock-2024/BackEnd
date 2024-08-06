@@ -70,6 +70,7 @@ public class WebSecurityConfig {
                 .authorizeHttpRequests(
                         request -> request.requestMatchers(
                                         new AntPathRequestMatcher("/error"),
+                                        new AntPathRequestMatcher("/favicon.ico"),
                                         new AntPathRequestMatcher("/"),
                                         new AntPathRequestMatcher("/auth/signup"),
                                         new AntPathRequestMatcher("/auth/login/**"),
