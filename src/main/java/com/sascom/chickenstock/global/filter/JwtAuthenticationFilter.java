@@ -1,7 +1,9 @@
 package com.sascom.chickenstock.global.filter;
 
 import com.sascom.chickenstock.global.error.code.AuthErrorCode;
+import com.sascom.chickenstock.global.error.code.ChickenStockErrorCode;
 import com.sascom.chickenstock.global.error.exception.AccessTokenExpireException;
+import com.sascom.chickenstock.global.error.exception.ChickenStockException;
 import com.sascom.chickenstock.global.error.exception.TokenNotFoundException;
 import com.sascom.chickenstock.global.jwt.JwtProperties;
 import com.sascom.chickenstock.global.jwt.JwtProvider;
@@ -44,17 +46,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         try {
             Cookie accesTokenCookie = WebUtils.getCookie(request, jwtProperties.accessToken().cookieName());
             if (accesTokenCookie == null) {
-                throw TokenNotFoundException.of(AuthErrorCode.TOKEN_NOT_FOUND);
+                ChickenStockException e = TokenNotFoundException.of(AuthErrorCode.TOKEN_NOT_FOUND);
+                request.setAttribute("exception", e);
+                throw e;
             }
 
             String accessToken = accesTokenCookie.getValue();
 
             if (!StringUtils.hasText(accessToken)) {
-                throw TokenNotFoundException.of(AuthErrorCode.TOKEN_NOT_FOUND);
+                ChickenStockException e = TokenNotFoundException.of(AuthErrorCode.TOKEN_NOT_FOUND);
+                request.setAttribute("exception", e);
+                throw e;
             }
 
             if (!jwtResolver.isValidToken(accessToken)) {
-                throw AccessTokenExpireException.of(AuthErrorCode.ACCESS_TOKEN_EXPIRED);
+                ChickenStockException e = AccessTokenExpireException.of(AuthErrorCode.ACCESS_TOKEN_EXPIRED);
+                request.setAttribute("exception", e);
+                throw e;
             }
 
             Authentication authentication = jwtResolver.getAuthentication(accessToken);
