@@ -72,7 +72,8 @@ public class WebSecurityConfig {
                                         new AntPathRequestMatcher("/error"),
                                         new AntPathRequestMatcher("/"),
                                         new AntPathRequestMatcher("/auth/signup"),
-                                        new AntPathRequestMatcher("/auth/login/**")
+                                        new AntPathRequestMatcher("/auth/login/**"),
+                                        new AntPathRequestMatcher("/auth/reissue")
                                 ).permitAll()
                                 .anyRequest().authenticated()
                 )
