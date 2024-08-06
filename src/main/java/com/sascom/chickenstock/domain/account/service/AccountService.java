@@ -30,6 +30,7 @@ import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.SellTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.response.TradeResponse;
 import com.sascom.chickenstock.domain.trade.service.TradeService;
+import com.sascom.chickenstock.global.util.SecurityUtil;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -238,6 +239,10 @@ public class AccountService {
 
     public void validateStockOrderRequest(StockOrderRequest stockOrderRequest) {
         // Member 유효성 체크
+        Long loginMemberId = SecurityUtil.getCurrentMemberId();
+        if(!loginMemberId.equals(stockOrderRequest.memberId())) {
+            throw MemberNotFoundException.of(MemberErrorCode.INVALID_VALUE);
+        }
         Member member = memberRepository.findById(stockOrderRequest.memberId())
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
 
