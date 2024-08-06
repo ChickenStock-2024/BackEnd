@@ -9,9 +9,9 @@ public class SellTradeRequest extends TradeRequest implements Comparable<SellTra
 
     @Builder
     public SellTradeRequest(OrderType orderType,
-                           Long accountId, Long memberId, Long companyId, Long competitionId, Long historyId,
-                           String companyName, Integer unitCost, Integer totalOrderVolume,
-                           LocalDateTime orderTime) {
+                            Long accountId, Long memberId, Long companyId, Long competitionId, Long historyId,
+                            String companyName, Integer unitCost, Integer totalOrderVolume,
+                            LocalDateTime orderTime) {
         super(orderType,
                 accountId, memberId, companyId, competitionId, historyId,
                 companyName, unitCost, totalOrderVolume,

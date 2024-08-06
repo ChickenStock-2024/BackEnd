@@ -10,6 +10,7 @@ import com.sascom.chickenstock.domain.trade.dto.ProcessedOrderDto;
 import com.sascom.chickenstock.domain.trade.dto.TradeType;
 import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.SellTradeRequest;
+import com.sascom.chickenstock.domain.trade.dto.response.CancelOrderResponse;
 import com.sascom.chickenstock.domain.trade.dto.response.TradeResponse;
 import com.sascom.chickenstock.domain.trade.error.code.TradeErrorCode;
 import com.sascom.chickenstock.domain.trade.error.exception.TradeException;
@@ -19,6 +20,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -78,6 +80,68 @@ public class TradeService {
             throw TradeException.of(TradeErrorCode.INVALID_ORDER);
         }
         return processSellRequest(tradeRequest);
+    }
+
+    public CancelOrderResponse cancelOrderRequest(SellTradeRequest tradeRequest) {
+        StockManager stockManager = getStockManagerByCompanyName(tradeRequest.getCompanyName())
+                .orElseThrow(() -> TradeException.of(TradeErrorCode.COMPANY_NOT_FOUND));
+        SellTradeRequest poppedRequest = stockManager.cancel(tradeRequest);
+        if(poppedRequest == null) {
+            // 분명 확인하고 요청 넣었는데 무슨일일까? 동시성? 아니면 누락?
+            throw new IllegalStateException("there is no request in queue");
+        }
+        History history = History.builder()
+                .account(accountRepository.getReferenceById(poppedRequest.getAccountId()))
+                .company(companyRepository.getReferenceById(poppedRequest.getCompanyId()))
+                .price(poppedRequest.getUnitCost())
+                .volume(poppedRequest.getRemainingVolume())
+                .status(OrderType.LIMIT.equals(tradeRequest.getOrderType())?
+                        HistoryStatus.지정가매도취소 :
+                        HistoryStatus.시장가매도취소)
+                .build();
+        historyRepository.save(history);
+        return CancelOrderResponse.builder()
+                .accountId(poppedRequest.getAccountId())
+                .memberId(poppedRequest.getMemberId())
+                .companyId(poppedRequest.getCompanyId())
+                .competitionId(poppedRequest.getCompetitionId())
+                .companyName(poppedRequest.getCompanyName())
+                .totalOrderVolume(poppedRequest.getTotalOrderVolume())
+                .executedVolume(poppedRequest.getExecutedVolume())
+                .cancelVolume(poppedRequest.getRemainingVolume())
+                .cancelTime(history.getCreatedAt())
+                .build();
+    }
+
+    public CancelOrderResponse cancelOrderRequest(BuyTradeRequest tradeRequest) {
+        StockManager stockManager = getStockManagerByCompanyName(tradeRequest.getCompanyName())
+                .orElseThrow(() -> TradeException.of(TradeErrorCode.COMPANY_NOT_FOUND));
+        BuyTradeRequest poppedRequest = stockManager.cancel(tradeRequest);
+        if(poppedRequest == null) {
+            // 분명 확인하고 요청 넣었는데 무슨일일까? 동시성? 아니면 누락?
+            throw new IllegalStateException("there is no request in queue");
+        }
+        History history = History.builder()
+                .account(accountRepository.getReferenceById(poppedRequest.getAccountId()))
+                .company(companyRepository.getReferenceById(poppedRequest.getCompanyId()))
+                .price(poppedRequest.getUnitCost())
+                .volume(poppedRequest.getRemainingVolume())
+                .status(OrderType.LIMIT.equals(tradeRequest.getOrderType())?
+                        HistoryStatus.지정가매수취소 :
+                        HistoryStatus.시장가매수취소)
+                .build();
+        historyRepository.save(history);
+        return CancelOrderResponse.builder()
+                .accountId(poppedRequest.getAccountId())
+                .memberId(poppedRequest.getMemberId())
+                .companyId(poppedRequest.getCompanyId())
+                .competitionId(poppedRequest.getCompetitionId())
+                .companyName(poppedRequest.getCompanyName())
+                .totalOrderVolume(poppedRequest.getTotalOrderVolume())
+                .executedVolume(poppedRequest.getExecutedVolume())
+                .cancelVolume(poppedRequest.getRemainingVolume())
+                .cancelTime(history.getCreatedAt())
+                .build();
     }
 
     private TradeResponse processBuyRequest(BuyTradeRequest tradeRequest) {

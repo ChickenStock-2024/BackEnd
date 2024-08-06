@@ -100,13 +100,11 @@ public class ChickenStockManager implements StockManager {
     }
 
     @Override
-    public boolean cancel(SellTradeRequest tradeRequest) {
-        return sellQueue.add(tradeRequest) != null;
-    }
+    public SellTradeRequest cancel(SellTradeRequest tradeRequest) { return sellQueue.remove(tradeRequest); }
 
     @Override
-    public boolean cancel(BuyTradeRequest tradeRequest) {
-        return buyQueue.add(tradeRequest) != null;
+    public BuyTradeRequest cancel(BuyTradeRequest tradeRequest) {
+        return buyQueue.remove(tradeRequest);
     }
 
     @Override

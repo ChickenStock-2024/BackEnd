@@ -40,10 +40,10 @@ public class ChickenStockQueueImpl<T extends TradeRequest> implements ChickenSto
         if (tradeRequest.equals(result)) {
             switch(tradeRequest.getOrderType()) {
                 case LIMIT:
-                    limitQueue.remove(tradeRequest);
+                    limitQueue.remove(result);
                     break;
                 case MARKET:
-                    marketQueue.remove(tradeRequest);
+                    marketQueue.remove(result);
                     break;
                 default:
             }

@@ -10,7 +10,7 @@ public interface StockManager {
     void match(int marketPrice, List<ProcessedOrderDto> canceled, List<ProcessedOrderDto> executed);
     boolean order(SellTradeRequest tradeRequest);
     boolean order(BuyTradeRequest tradeRequest);
-    boolean cancel(SellTradeRequest tradeRequest);
-    boolean cancel(BuyTradeRequest tradeRequest);
+    SellTradeRequest cancel(SellTradeRequest tradeRequest);
+    BuyTradeRequest cancel(BuyTradeRequest tradeRequest);
     void clear();
 }
