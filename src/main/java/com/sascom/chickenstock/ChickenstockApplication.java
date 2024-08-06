@@ -22,9 +22,10 @@ public class ChickenstockApplication {
 			@Override
 			public void addCorsMappings(CorsRegistry registry) {
 				registry.addMapping("/**")
-						.allowedOrigins("*")
+						.allowedOrigins("http://localhost:5173")
 						.allowedMethods("GET", "POST", "PUT", "DELETE")
-						.allowedHeaders("Authorization", "Content-Type");
+						.allowedHeaders("Authorization", "Content-Type")
+						.allowCredentials(true);
 			}
 		};
 	}

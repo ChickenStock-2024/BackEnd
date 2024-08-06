@@ -63,9 +63,18 @@ public class AuthController {
         ResponseLoginMember responseLoginMember = new ResponseLoginMember(member);
 
         ResponseCookie accessTokenCookie = ResponseCookie.from(jwtProperties.accessToken().cookieName(), tokenDto.accessToken())
-                .path("/").httpOnly(true).build();
+                .path("/")
+                .httpOnly(true)
+                .sameSite("Lax")
+                .secure(false)
+                .build();
         ResponseCookie refreshTokenCookie = ResponseCookie.from(jwtProperties.refreshToken().cookieName(), tokenDto.refreshToken())
-                .path("/").httpOnly(true).build();
+                .path("/")
+                .httpOnly(true)
+                .sameSite("Lax")
+                .secure(false)
+                .build();
+
 
         response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
