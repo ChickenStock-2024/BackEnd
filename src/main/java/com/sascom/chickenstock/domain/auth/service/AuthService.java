@@ -9,7 +9,6 @@ import com.sascom.chickenstock.domain.auth.dto.token.TokenDto;
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.global.error.code.AuthErrorCode;
-import com.sascom.chickenstock.global.jwt.JwtProperties;
 import com.sascom.chickenstock.global.jwt.JwtProvider;
 import com.sascom.chickenstock.global.jwt.JwtResolver;
 import lombok.RequiredArgsConstructor;
@@ -84,7 +83,7 @@ public class AuthService {
 
     @Transactional
     public TokenDto reissue(String accessToken, String refreshToken) {
-        if (!jwtProvider.isValidToken(refreshToken)) {
+        if (!jwtResolver.isValidToken(refreshToken)) {
             throw new RuntimeException("Refresh Token 이 유효하지 않습니다.");
         }
 
