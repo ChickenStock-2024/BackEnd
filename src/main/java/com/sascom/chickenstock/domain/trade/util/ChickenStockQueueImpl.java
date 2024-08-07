@@ -84,4 +84,9 @@ public class ChickenStockQueueImpl<T extends TradeRequest> implements ChickenSto
         limitQueue.clear();
         marketQueue.clear();
     }
+
+    @Override
+    public boolean isEmpty() {
+        return limitQueue.isEmpty() && marketQueue.isEmpty();
+    }
 }

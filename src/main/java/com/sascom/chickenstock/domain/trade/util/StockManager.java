@@ -13,4 +13,6 @@ public interface StockManager {
     SellTradeRequest cancel(SellTradeRequest tradeRequest);
     BuyTradeRequest cancel(BuyTradeRequest tradeRequest);
     void clear();
+    boolean isSellQueueEmpty();
+    boolean isBuyQueueEmpty();
 }

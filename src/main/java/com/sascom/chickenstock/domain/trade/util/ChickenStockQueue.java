@@ -10,4 +10,5 @@ public interface ChickenStockQueue<T extends TradeRequest> {
     public List<T> remove(int marketPrice);
     public T first(int marketPrice);
     public void clear();
+    public boolean isEmpty();
 }
