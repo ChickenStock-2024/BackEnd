@@ -13,13 +13,14 @@ import java.util.List;
 public class ChickenStockManager implements StockManager {
     private ChickenStockQueue<SellTradeRequest> sellQueue;
     private ChickenStockQueue<BuyTradeRequest> buyQueue;
+
     public ChickenStockManager() {
         sellQueue = new ChickenStockQueueImpl<>();
         buyQueue = new ChickenStockQueueImpl<>();
     }
 
     @Override
-    public void match(int marketPrice, List<ProcessedOrderDto> canceled, List<ProcessedOrderDto> executed) {
+    public synchronized void match(int marketPrice, List<ProcessedOrderDto> canceled, List<ProcessedOrderDto> executed) {
         SellTradeRequest sellTradeRequest = null;
         BuyTradeRequest buyTradeRequest = null;
         while(true) {
@@ -89,6 +90,71 @@ public class ChickenStockManager implements StockManager {
         return;
     }
 
+//    @Override
+//    public void match(int marketPrice, List<ProcessedOrderDto> canceled, List<ProcessedOrderDto> executed) {
+//        while (true) {
+//            addCanceledTradeRequestToList(
+//                    sellQueue.remove(marketPrice),
+//                    canceled,
+//                    TradeType.SELL,
+//                    MatchStatus.CANCELED_BY_LOGIC);
+//            SellTradeRequest sellTradeRequest = sellQueue.first(marketPrice);
+//            addCanceledTradeRequestToList(
+//                    buyQueue.remove(marketPrice),
+//                    canceled,
+//                    TradeType.BUY,
+//                    MatchStatus.CANCELED_BY_LOGIC
+//            );
+//            BuyTradeRequest buyTradeRequest = buyQueue.first(marketPrice);
+//            if (sellTradeRequest == null || buyTradeRequest == null) {
+//                break;
+//            }
+//
+//            int executedVolume = Math.min(sellTradeRequest.getRemainingVolume(), buyTradeRequest.getRemainingVolume());
+//            // TODO: validate balance. AccountRepository와 Redis에 있는 미체결 정보를 통해 최대한으로 살 수 있는 개수 확인.
+//            // 한 주도 살 수 없다면 continue.
+//            // 아래는 대충 pseudocode.
+//            /*
+//            Integer realBalance = AccountService.~~~ - Redis.~~~ + marketPrice * buyTradeRequest.getRemainingVolume();
+//            Integer maxBuyVolume = realBalance / marketPrice;
+//            // 지금 체결하려는 개수(executedVolume) 만큼은 못산다면 나머지 buy 요청은 전부 취소.
+//            if(maxBuyVolume < executedVolume) {
+//                Integer canceledVolume = buyTradeRequest.getRemainingVolume() - maxBuyVolume;
+//                canceled.add(ProcessedOrderDto.builder()
+//                    .accountId(buyTradeRequest.getAccountId())
+//                    .requestHistoryId(buyTradeRequest.getHistoryId())
+//                    .companyName(buyTradeRequest.getCompanyName())
+//                    .price(marketPrice)
+//                    .volume(canceledVolume)
+//                    .orderType(tradeRequest.getOrderType())
+//                    .matchStatus(MatchStatus.CANCELED_BY_BALANCE)
+//                    .build());
+//                buyTradeRequest.addExecutedVolume(canceledVolume);
+//                executedVolume = maxBuyVolume
+//            }
+//            if(executedVolume == 0) {
+//                buyQueue.remove(buyTradeRequest);
+//                buyTradeRequest = null;
+//                continue;
+//            }
+//             */
+//            sellTradeRequest.addExecutedVolume(executedVolume);
+//            executed.add(executedTradeRequestToProcessedOrderDto(sellTradeRequest, TradeType.SELL, executedVolume, marketPrice));
+//            buyTradeRequest.addExecutedVolume(executedVolume);
+//            executed.add(executedTradeRequestToProcessedOrderDto(buyTradeRequest, TradeType.BUY, executedVolume, marketPrice));
+//
+//            if (sellTradeRequest.getTotalOrderVolume().equals(sellTradeRequest.getExecutedVolume())) {
+//                sellQueue.remove(sellTradeRequest);
+//                sellTradeRequest = null;
+//            }
+//            if (buyTradeRequest.getTotalOrderVolume().equals(buyTradeRequest.getExecutedVolume())) {
+//                buyQueue.remove(buyTradeRequest);
+//                buyTradeRequest = null;
+//            }
+//        }
+//        return;
+//    }
+
     @Override
     public boolean order(SellTradeRequest tradeRequest) {
         return sellQueue.add(tradeRequest) != null;
@@ -100,7 +166,9 @@ public class ChickenStockManager implements StockManager {
     }
 
     @Override
-    public SellTradeRequest cancel(SellTradeRequest tradeRequest) { return sellQueue.remove(tradeRequest); }
+    public SellTradeRequest cancel(SellTradeRequest tradeRequest) {
+        return sellQueue.remove(tradeRequest);
+    }
 
     @Override
     public BuyTradeRequest cancel(BuyTradeRequest tradeRequest) {
@@ -129,7 +197,7 @@ public class ChickenStockManager implements StockManager {
             TradeType tradeType,
             MatchStatus matchStatus
     ) {
-        for(TradeRequest tradeRequest : tradeRequests) {
+        for (TradeRequest tradeRequest : tradeRequests) {
             list.add(canceledTradeRequestToProcessedOrderDto(tradeRequest, tradeType, matchStatus));
         }
         return;
