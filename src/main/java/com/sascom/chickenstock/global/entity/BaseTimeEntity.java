@@ -1,9 +1,7 @@
 package com.sascom.chickenstock.global.entity;
 
 
-import jakarta.persistence.EntityListeners;
-import jakarta.persistence.MappedSuperclass;
-import jakarta.persistence.PreRemove;
+import jakarta.persistence.*;
 import lombok.Getter;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
@@ -18,14 +16,24 @@ import java.time.ZoneId;
 @MappedSuperclass
 @EntityListeners(AuditingEntityListener.class)
 public abstract class BaseTimeEntity {
-    @CreatedDate
+//    @CreatedDate
     private LocalDateTime createdAt;
-    @LastModifiedDate
+//    @LastModifiedDate
     private LocalDateTime updatedAt;
     private LocalDateTime deletedAt;
 
+    @PrePersist
+    public void updateCreatedAt() {
+        this.createdAt = LocalDateTime.now().withNano(0);
+    }
+
+    @PreUpdate
+    public void updateUpdatedAt() {
+        this.updatedAt = LocalDateTime.now().withNano(0);
+    }
+
     @PreRemove
     protected void onDelete() {
-        deletedAt = LocalDateTime.now();
+        deletedAt = LocalDateTime.now().withNano(0);
     }
 }
