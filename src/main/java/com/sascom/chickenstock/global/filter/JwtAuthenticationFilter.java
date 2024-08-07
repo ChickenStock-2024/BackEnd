@@ -43,37 +43,37 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws IOException, ServletException {
-//        try {
-//            Cookie accesTokenCookie = WebUtils.getCookie(request, jwtProperties.accessToken().cookieName());
-//            if (accesTokenCookie == null) {
-//                ChickenStockException e = TokenNotFoundException.of(AuthErrorCode.TOKEN_NOT_FOUND);
-//                request.setAttribute("exception", e);
-//                throw e;
-//            }
-//
-//            String accessToken = accesTokenCookie.getValue();
-//
-//            if (!StringUtils.hasText(accessToken)) {
-//                ChickenStockException e = TokenNotFoundException.of(AuthErrorCode.TOKEN_NOT_FOUND);
-//                request.setAttribute("exception", e);
-//                throw e;
-//            }
-//
-//            if (!jwtResolver.isValidToken(accessToken)) {
-//                ChickenStockException e = AccessTokenExpireException.of(AuthErrorCode.ACCESS_TOKEN_EXPIRED);
-//                request.setAttribute("exception", e);
-//                throw e;
-//            }
-//
-//            Authentication authentication = jwtResolver.getAuthentication(accessToken);
-//            SecurityContextHolder.getContext().setAuthentication(authentication);
-//
-//        } catch (TokenNotFoundException | AccessTokenExpireException e) {
-//            log.error("exception class:{}, message: {}", e.getClass(), e.getMessage());
-//        }
+        try {
+            Cookie accesTokenCookie = WebUtils.getCookie(request, jwtProperties.accessToken().cookieName());
+            if (accesTokenCookie == null) {
+                ChickenStockException e = TokenNotFoundException.of(AuthErrorCode.TOKEN_NOT_FOUND);
+                request.setAttribute("exception", e);
+                throw e;
+            }
 
-        Authentication testAuthentication = jwtResolver.getTestAuthentication();
-        SecurityContextHolder.getContext().setAuthentication(testAuthentication);
+            String accessToken = accesTokenCookie.getValue();
+
+            if (!StringUtils.hasText(accessToken)) {
+                ChickenStockException e = TokenNotFoundException.of(AuthErrorCode.TOKEN_NOT_FOUND);
+                request.setAttribute("exception", e);
+                throw e;
+            }
+
+            if (!jwtResolver.isValidToken(accessToken)) {
+                ChickenStockException e = AccessTokenExpireException.of(AuthErrorCode.ACCESS_TOKEN_EXPIRED);
+                request.setAttribute("exception", e);
+                throw e;
+            }
+
+            Authentication authentication = jwtResolver.getAuthentication(accessToken);
+            SecurityContextHolder.getContext().setAuthentication(authentication);
+
+        } catch (TokenNotFoundException | AccessTokenExpireException e) {
+            log.error("exception class:{}, message: {}", e.getClass(), e.getMessage());
+        }
+
+//        Authentication testAuthentication = jwtResolver.getTestAuthentication();
+//        SecurityContextHolder.getContext().setAuthentication(testAuthentication);
 
 
 

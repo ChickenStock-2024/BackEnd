@@ -43,9 +43,17 @@ class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
         String refreshToken = jwtProvider.createToken(authentication, refreshTokenExpirationDate);
 
         ResponseCookie accessTokenCookie = ResponseCookie.from(jwtProperties.accessToken().cookieName(), accessToken)
-                .path("/").httpOnly(true).build();
+                .httpOnly(true)
+                .domain("localhost")
+                .sameSite("None")
+                .secure(true)
+                .build();
         ResponseCookie refreshTokenCookie = ResponseCookie.from(jwtProperties.refreshToken().cookieName(), refreshToken)
-                .path("/").httpOnly(true).build();
+                .httpOnly(true)
+                .domain("localhost")
+                .sameSite("None")
+                .secure(true)
+                .build();
 
         response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
