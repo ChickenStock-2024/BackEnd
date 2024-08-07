@@ -7,6 +7,7 @@ import com.sascom.chickenstock.domain.history.entity.HistoryStatus;
 import com.sascom.chickenstock.domain.history.repository.HistoryRepository;
 import com.sascom.chickenstock.domain.trade.dto.OrderType;
 import com.sascom.chickenstock.domain.trade.dto.ProcessedOrderDto;
+import com.sascom.chickenstock.domain.trade.dto.RealStockTradeDto;
 import com.sascom.chickenstock.domain.trade.dto.TradeType;
 import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.SellTradeRequest;
@@ -156,6 +157,10 @@ public class TradeService {
                 .message("매수 요청 완료")
                 .tradeRequest(tradeRequest)
                 .build();
+    }
+
+    public void processRealStockTrade(RealStockTradeDto realStockTradeDto) {
+
     }
 
     private TradeResponse processSellRequest(SellTradeRequest tradeRequest) {
