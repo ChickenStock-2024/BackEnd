@@ -6,6 +6,7 @@ import com.sascom.chickenstock.domain.account.service.RedisService;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestLoginMember;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestSignupMember;
 import com.sascom.chickenstock.domain.auth.dto.token.TokenDto;
+import com.sascom.chickenstock.domain.member.entity.Image;
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.global.error.code.AuthErrorCode;
@@ -13,6 +14,8 @@ import com.sascom.chickenstock.global.error.exception.AuthException;
 import com.sascom.chickenstock.global.jwt.JwtProvider;
 import com.sascom.chickenstock.global.jwt.JwtResolver;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -38,6 +41,12 @@ public class AuthService {
     private final RedisService redisService;
     private final JwtResolver jwtResolver;
 
+    @Value("${image.default_img_path}")
+    private String default_img_path;
+
+    @Value("${image.default_img_name}")
+    private String default_img_name;
+
     @Transactional
     public void signup(RequestSignupMember requestSignupMember) {
         if (!requestSignupMember.password().equals(requestSignupMember.password_check())) {
@@ -51,16 +60,19 @@ public class AuthService {
         String validNickname = isAvailableNickname(requestSignupMember.nickname());
         String validEmail = isAvailableEmail(requestSignupMember.email());
 
+        Image defaultImage = new Image(null, default_img_name, default_img_path);
         Member member = new Member(
                 validNickname,
                 validEmail,
-                passwordEncoder.encode(requestSignupMember.password()));
+                passwordEncoder.encode(requestSignupMember.password()),
+                defaultImage);
 
         try {
             memberRepository.save(member);
         } catch (DataIntegrityViolationException e) {
             throw AccountDuplicateException.of(AccountErrorCode.DUPLICATED_VALUE);
         }
+
     }
     // 이메일 정규식 검사
     public boolean isValidEmail(String email) {
