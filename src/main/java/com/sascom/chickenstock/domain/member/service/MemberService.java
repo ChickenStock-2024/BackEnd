@@ -16,11 +16,13 @@ import com.sascom.chickenstock.domain.ranking.util.RatingCalculatorV1;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
+import javax.lang.model.SourceVersion;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
@@ -28,9 +30,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.time.LocalDateTime;
-import java.util.Date;
+import java.util.*;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 import org.imgscalr.Scalr;
 import com.sascom.chickenstock.domain.member.entity.Image;
@@ -41,6 +42,12 @@ public class MemberService {
     private final AccountRepository accountRepository;
     private final CompetitionRepository competitionRepository;
 
+    @Value("${image.default_img_path}")
+    private String default_img_path;
+
+    @Value("${image.default_img_name}")
+    private String default_img_name;
+    
     @Autowired
     public MemberService(MemberRepository memberRepository,
                          AccountRepository accountRepository,
@@ -50,7 +57,7 @@ public class MemberService {
         this.competitionRepository = competitionRepository;
     }
 
-    public MemberInfoResponse lookUpMemberInfo(Long userId) {
+    public MemberInfoResponse lookUpMemberInfo(Long userId) throws IOException{
         Member member = memberRepository.findById(userId)
                 .orElseThrow(() -> new IllegalStateException("invalid userId"));
 
@@ -84,23 +91,27 @@ public class MemberService {
         return new ChangeInfoResponse(savedMember.getNickname());
     }
 
-    public PrefixNicknameInfosResponse searchPrefixNicknameMemberInfos(String prefix) {
+    public PrefixNicknameInfosResponse searchPrefixNicknameMemberInfos(String prefix) throws IOException{
         List<Member> memberList = memberRepository.findFirst10ByNicknameStartingWithOrderByNickname(prefix);
 
-        List<MemberInfoResponse> result = memberList.stream()
-                .map(this::toMemberInfoResponse)
-                .collect(Collectors.toList());
+        // 이미지 파일(byte)는 예외 처리가 필요한데 stream에서는 따로 try catch해줘야 해서 for문으로 바꿨습니다.
+        List<MemberInfoResponse> result = new ArrayList<>();
+        for (Member member : memberList) {
+            MemberInfoResponse memberInfoResponse = toMemberInfoResponse(member);
+            result.add(memberInfoResponse);
+        }
 
         return new PrefixNicknameInfosResponse(result);
     }
 
     // Member -> MemberInfoResponse
-    private MemberInfoResponse toMemberInfoResponse(Member member) {
+    private MemberInfoResponse toMemberInfoResponse(Member member) throws IOException {
         return new MemberInfoResponse(
                 member.getId(),
                 member.getNickname(),
                 RatingCalculatorV1.calculateRating(member.getAccounts()),
-                member.getPoint());
+                member.getPoint()
+        );
     }
 
     // check that given new password is fit to safe password standard.
@@ -133,7 +144,7 @@ public class MemberService {
         File dest = new File(img_path);
 
         String format = file_name.substring(file_name.lastIndexOf(".")+1);
-        BufferedImage bufferedImage = Scalr.resize(ImageIO.read(file.getInputStream()), 1000, 1000, Scalr.OP_ANTIALIAS);
+        BufferedImage bufferedImage = Scalr.resize(ImageIO.read(file.getInputStream()), 50, 50, Scalr.OP_ANTIALIAS);
         ImageIO.write(bufferedImage, format, dest);
 
         Image image = new Image(img_link, file_name, "C:\\Users\\SSAFY\\Image\\");
@@ -153,5 +164,14 @@ public class MemberService {
         byte[] bytes = inputStream.readAllBytes();
         inputStream.close();
         return bytes;
+    }
+
+    public void deleteImage(Long memberId) {
+        // soft delete // 이미지 경로만 default로 바꿔줌
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(EntityNotFoundException::new);
+        Image defaultImage = new Image(null, default_img_name, default_img_path);
+        member.updateImage(defaultImage);
+        memberRepository.save(member);
     }
 }
