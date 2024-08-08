@@ -11,6 +11,7 @@ import com.sascom.chickenstock.domain.trade.dto.RealStockTradeDto;
 import com.sascom.chickenstock.domain.trade.dto.TradeType;
 import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.SellTradeRequest;
+import com.sascom.chickenstock.domain.trade.dto.request.TradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.response.CancelOrderResponse;
 import com.sascom.chickenstock.domain.trade.dto.response.TradeResponse;
 import com.sascom.chickenstock.domain.trade.error.code.TradeErrorCode;
@@ -31,8 +32,8 @@ import java.util.concurrent.ConcurrentHashMap;
 @Service
 public class TradeService {
 
-    private final Map<String, StockManager> stockManagerMap;
-    private final Map<String, Integer> marketPriceMap;
+    private final Map<Long, StockManager> stockManagerMap;
+    private final Map<Long, Integer> marketPriceMap;
     private final HistoryRepository historyRepository;
     private final AccountRepository accountRepository;
     private final CompanyRepository companyRepository;
@@ -51,8 +52,8 @@ public class TradeService {
 
     @PostConstruct
     public void init() {
-        stockManagerMap.put("삼성전자", new ChickenStockManager());
-        marketPriceMap.put("삼성전자", 75700);
+        stockManagerMap.put(11L, new ChickenStockManager());
+        marketPriceMap.put(11L, 72800);
     }
 
     public TradeResponse addLimitBuyRequest(BuyTradeRequest tradeRequest) {
@@ -84,7 +85,7 @@ public class TradeService {
     }
 
     public CancelOrderResponse cancelOrderRequest(SellTradeRequest tradeRequest) {
-        StockManager stockManager = getStockManagerByCompanyName(tradeRequest.getCompanyName())
+        StockManager stockManager = getStockManagerByCompanyId(tradeRequest.getCompanyId())
                 .orElseThrow(() -> TradeException.of(TradeErrorCode.COMPANY_NOT_FOUND));
         SellTradeRequest poppedRequest = stockManager.cancel(tradeRequest);
         if(poppedRequest == null) {
@@ -115,7 +116,7 @@ public class TradeService {
     }
 
     public CancelOrderResponse cancelOrderRequest(BuyTradeRequest tradeRequest) {
-        StockManager stockManager = getStockManagerByCompanyName(tradeRequest.getCompanyName())
+        StockManager stockManager = getStockManagerByCompanyId(tradeRequest.getCompanyId())
                 .orElseThrow(() -> TradeException.of(TradeErrorCode.COMPANY_NOT_FOUND));
         BuyTradeRequest poppedRequest = stockManager.cancel(tradeRequest);
         if(poppedRequest == null) {
@@ -146,35 +147,60 @@ public class TradeService {
     }
 
     private TradeResponse processBuyRequest(BuyTradeRequest tradeRequest) {
-        StockManager stockManager = getStockManagerByCompanyName(tradeRequest.getCompanyName())
+        StockManager stockManager = getStockManagerByCompanyId(tradeRequest.getCompanyId())
                 .orElseThrow(() -> TradeException.of(TradeErrorCode.COMPANY_NOT_FOUND));
         boolean result = stockManager.order(tradeRequest);
         if(!result) {
             throw TradeException.of(TradeErrorCode.INTERNAL_ERROR);
         }
-        matchAndSaveHistories(stockManager, marketPriceMap.get(tradeRequest.getCompanyName()));
+        matchAndSaveHistories(stockManager, marketPriceMap.get(tradeRequest.getCompanyId()));
         return TradeResponse.builder()
                 .message("매수 요청 완료")
                 .tradeRequest(tradeRequest)
                 .build();
     }
 
-    public void processRealStockTrade(RealStockTradeDto realStockTradeDto) {
-
-    }
-
     private TradeResponse processSellRequest(SellTradeRequest tradeRequest) {
-        StockManager stockManager = getStockManagerByCompanyName(tradeRequest.getCompanyName())
+        StockManager stockManager = getStockManagerByCompanyId(tradeRequest.getCompanyId())
                 .orElseThrow(() -> TradeException.of(TradeErrorCode.COMPANY_NOT_FOUND));
         boolean result = stockManager.order(tradeRequest);
         if(!result) {
             throw TradeException.of(TradeErrorCode.INTERNAL_ERROR);
         }
-        matchAndSaveHistories(stockManager, marketPriceMap.get(tradeRequest.getCompanyName()));
+        matchAndSaveHistories(stockManager, marketPriceMap.get(tradeRequest.getCompanyId()));
         return TradeResponse.builder()
                 .message("매도 요청 완료")
                 .tradeRequest(tradeRequest)
                 .build();
+    }
+
+    public void processRealStockTrade(RealStockTradeDto realStockTradeDto) {
+        marketPriceMap.put(realStockTradeDto.companyId(),
+                TradeType.BUY.equals(realStockTradeDto.tradeType())?
+                        buyHokaToMarketPrice(realStockTradeDto.currentPrice()) : realStockTradeDto.currentPrice());
+        StockManager stockManager = getStockManagerByCompanyId(realStockTradeDto.companyId())
+                .orElseThrow(() -> TradeException.of(TradeErrorCode.COMPANY_NOT_FOUND));
+        List<ProcessedOrderDto> canceled = new ArrayList<>(), executed = new ArrayList<>();
+        stockManager.processRealStockTrade(realStockTradeDto, canceled, executed);
+        historyRepository.saveAll(canceled.stream().map(order ->
+                        History.builder()
+                                .account(accountRepository.getReferenceById(order.accountId()))
+                                .company(companyRepository.getReferenceById(order.companyId()))
+                                .price(order.price())
+                                .volume(order.volume())
+                                .status(toCanceledHistoryStatus(order.tradeType(), order.orderType()))
+                                .build())
+                .toList());
+        historyRepository.saveAll(executed.stream().map(order ->
+                        History.builder()
+                                .account(accountRepository.getReferenceById(order.accountId()))
+                                .company(companyRepository.getReferenceById(order.companyId()))
+                                .price(order.price())
+                                .volume(order.volume())
+                                .status(toExecutedHistoryStatus(order.tradeType(), order.orderType()))
+                                .build())
+                .toList());
+        return;
     }
 
     private void matchAndSaveHistories(StockManager stockManager, int marketPrice) {
@@ -201,8 +227,8 @@ public class TradeService {
         return;
     }
 
-    private Optional<StockManager> getStockManagerByCompanyName(String companyName) {
-        return Optional.of(stockManagerMap.get(companyName));
+    private Optional<StockManager> getStockManagerByCompanyId(Long companyId) {
+        return Optional.of(stockManagerMap.get(companyId));
     }
 
     private HistoryStatus toCanceledHistoryStatus(TradeType tradeType, OrderType orderType) {
@@ -227,4 +253,22 @@ public class TradeService {
         }
     }
 
+    private int buyHokaToMarketPrice(int price) {
+        if(price <= 2_000) {
+            return price - 1;
+        }
+        if(price <= 5_000) {
+            return price - 5;
+        }
+        if(price <= 20_000) {
+            return price - 10;
+        }
+        if(price <= 50_000) {
+            return price - 50;
+        }
+        if(price <= 200_000) {
+            return price - 100;
+        }
+        return price - 1_000;
+    }
 }

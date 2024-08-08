@@ -4,6 +4,9 @@ package com.sascom.chickenstock.domain.socket;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sascom.chickenstock.domain.company.error.code.CompanyErrorCode;
+import com.sascom.chickenstock.domain.company.error.exception.CompanyNotFoundException;
+import com.sascom.chickenstock.domain.company.repository.CompanyRepository;
 import com.sascom.chickenstock.domain.trade.dto.RealStockTradeDto;
 import com.sascom.chickenstock.domain.trade.dto.TradeType;
 import com.sascom.chickenstock.domain.trade.service.TradeService;
@@ -20,11 +23,13 @@ public class MyStompSessionHandler extends StompSessionHandlerAdapter {
     private static final Logger logger = Logger.getLogger(MyStompSessionHandler.class.getName());
     private final ObjectMapper objectMapper;
     private final TradeService tradeService;
+    private final CompanyRepository companyRepository;
 
     @Autowired
-    public MyStompSessionHandler(TradeService tradeService) {
+    public MyStompSessionHandler(TradeService tradeService, CompanyRepository companyRepository) {
         objectMapper = new ObjectMapper();
         this.tradeService = tradeService;
+        this.companyRepository = companyRepository;
     }
 
     @Override
@@ -39,6 +44,7 @@ public class MyStompSessionHandler extends StompSessionHandlerAdapter {
         // Handle the received payload here
         try {
             RealStockTradeDto realStockTradeDto = parseMessage(payload.toString());
+            System.out.println(realStockTradeDto);
             tradeService.processRealStockTrade(realStockTradeDto);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
@@ -59,7 +65,9 @@ public class MyStompSessionHandler extends StompSessionHandlerAdapter {
     private RealStockTradeDto parseMessage(String message) throws JsonProcessingException {
         JsonNode jsonNode = objectMapper.readTree(message);
         return new RealStockTradeDto(
-                jsonNode.get("stockCode").asText(),
+                companyRepository.findByCode(jsonNode.get("stockCode").asText())
+                        .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND))
+                        .getId(),
                 jsonNode.get("currentPrice").asInt(),
                 jsonNode.get("transactionVolume").asInt(),
                 switch(jsonNode.get("transactionType").asInt()) {

@@ -1,7 +1,7 @@
 package com.sascom.chickenstock.domain.trade.dto;
 
 public record RealStockTradeDto(
-        String code,
+        Long companyId,
         Integer currentPrice,
         Integer transactionVolume,
         TradeType tradeType
