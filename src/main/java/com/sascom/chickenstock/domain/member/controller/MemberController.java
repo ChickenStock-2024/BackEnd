@@ -51,9 +51,10 @@ public class MemberController {
         return ResponseEntity.ok().body(prefixNicknameInfosResponse);
     }
 
-    @PatchMapping("/nickname")
+    @PostMapping("/nickname")
     public ResponseEntity<Map<String, String>> patchNickname(@RequestBody ChangeNicknameRequest changeNicknameRequest) {
-        return null;
+        String changedNickname = memberService.changeNickname(changeNicknameRequest.nickname());
+        return ResponseEntity.ok().body(Map.of("nickname", changedNickname));
     }
 
     @PostMapping(value = "/img", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

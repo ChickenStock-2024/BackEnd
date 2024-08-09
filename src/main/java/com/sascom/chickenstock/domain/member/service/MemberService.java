@@ -14,6 +14,7 @@ import com.sascom.chickenstock.domain.member.error.code.MemberErrorCode;
 import com.sascom.chickenstock.domain.member.error.exception.MemberNotFoundException;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.domain.ranking.util.RatingCalculatorV1;
+import com.sascom.chickenstock.global.util.SecurityUtil;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -92,6 +93,17 @@ public class MemberService {
         member.updatePassword(hashedNewPassword);
         Member savedMember = memberRepository.save(member);
         return new ChangeInfoResponse(savedMember.getNickname());
+    }
+
+    public String changeNickname(String nickname) {
+        Long memberId = SecurityUtil.getCurrentMemberId();
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+        // validate nickname
+
+        member.updateNickname(nickname);
+        memberRepository.save(member);
+        return nickname;
     }
 
     public PrefixNicknameInfosResponse searchPrefixNicknameMemberInfos(String prefix) throws IOException{

@@ -95,6 +95,10 @@ public class Member extends BaseTimeEntity {
         return this.password = password;
     }
 
+    public String updateNickname(String nickname) {
+        return this.nickname = nickname;
+    }
+
     public void updateImage(Image image){
         this.image = image;
     }
@@ -102,4 +106,5 @@ public class Member extends BaseTimeEntity {
     public void updateImageUuid(String ImageUuid) {
         this.ImageUuid = ImageUuid;
     }
+
 }
