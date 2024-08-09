@@ -19,6 +19,9 @@ spring:
       mode: always
       show_sql: true
 
+websocket:
+  url: ${SOCKET_URL}
+
 redis:
   config:
     import: classpath:privacy.yml

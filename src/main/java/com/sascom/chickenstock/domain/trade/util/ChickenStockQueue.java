@@ -5,8 +5,10 @@ import com.sascom.chickenstock.domain.trade.dto.request.TradeRequest;
 import java.util.List;
 
 public interface ChickenStockQueue<T extends TradeRequest> {
-    public T add(T tradeRequest);
-    public T remove(T tradeRequest);
-    public List<T> remove(int marketPrice);
-    public T first(int marketPrice);
+    T add(T tradeRequest);
+    T remove(T tradeRequest);
+    List<T> remove(int marketPrice);
+    T first(int marketPrice);
+    void clear();
+    boolean isEmpty();
 }

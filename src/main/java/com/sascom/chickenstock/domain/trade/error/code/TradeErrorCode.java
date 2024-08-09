@@ -6,8 +6,11 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 public enum TradeErrorCode implements ChickenStockErrorCode {
-    NOT_FOUND(HttpStatus.NOT_FOUND, "001", "존재하지 않는 상장 회사입니다."),
-    INVALID_VALUE(HttpStatus.BAD_REQUEST, "002", "올바르지 않은 값입니다.");
+    COMPANY_NOT_FOUND(HttpStatus.NOT_FOUND, "001", "존재하지 않는 상장 회사입니다."),
+    ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "002", "이미 처리되었거나 존재하지 않는 주문입니다."),
+    INVALID_VALUE(HttpStatus.BAD_REQUEST, "003", "올바르지 않은 값입니다."),
+    INVALID_ORDER(HttpStatus.BAD_REQUEST, "004", "올바르지 않은 주문입니다."),
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "005", "주문이 누락되었습니다.");
 
     TradeErrorCode(HttpStatus status, String code, String message) {
         this.status = status;
