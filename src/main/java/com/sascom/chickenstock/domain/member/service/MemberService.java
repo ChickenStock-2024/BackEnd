@@ -134,6 +134,8 @@ public class MemberService {
                 .orElseThrow(EntityNotFoundException::new);
     }
 
+
+
 //    public void setImage(Member member, MultipartFile file) throws IOException {
 //        if(file.isEmpty()){
 //            //return new ResponseEntity<>(HttpStatus.BAD_REQUEST);

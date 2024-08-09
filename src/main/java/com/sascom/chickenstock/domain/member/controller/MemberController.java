@@ -2,6 +2,7 @@ package com.sascom.chickenstock.domain.member.controller;
 
 import ch.qos.logback.core.util.FileUtil;
 import com.sascom.chickenstock.domain.member.dto.request.ChangeInfoRequest;
+import com.sascom.chickenstock.domain.member.dto.request.ChangeNicknameRequest;
 import com.sascom.chickenstock.domain.member.dto.response.ChangeInfoResponse;
 import com.sascom.chickenstock.domain.member.dto.response.MemberInfoResponse;
 import com.sascom.chickenstock.domain.member.dto.response.PrefixNicknameInfosResponse;
@@ -48,6 +49,11 @@ public class MemberController {
             @RequestParam(name = "value") String prefix) throws IOException{
         PrefixNicknameInfosResponse prefixNicknameInfosResponse = memberService.searchPrefixNicknameMemberInfos(prefix);
         return ResponseEntity.ok().body(prefixNicknameInfosResponse);
+    }
+
+    @PatchMapping("/nickname")
+    public ResponseEntity<Map<String, String>> patchNickname(@RequestBody ChangeNicknameRequest changeNicknameRequest) {
+        return null;
     }
 
     @PostMapping(value = "/img", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
