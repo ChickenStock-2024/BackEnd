@@ -10,6 +10,7 @@ import com.sascom.chickenstock.domain.account.error.code.AccountErrorCode;
 import com.sascom.chickenstock.domain.account.error.exception.AccountNotEnoughException;
 import com.sascom.chickenstock.domain.account.error.exception.AccountNotFoundException;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
+import com.sascom.chickenstock.domain.auth.dto.response.AccountInfoForLogin;
 import com.sascom.chickenstock.domain.company.entity.Company;
 import com.sascom.chickenstock.domain.company.error.code.CompanyErrorCode;
 import com.sascom.chickenstock.domain.company.error.exception.CompanyNotFoundException;
@@ -31,13 +32,13 @@ import com.sascom.chickenstock.domain.trade.dto.response.TradeResponse;
 import com.sascom.chickenstock.domain.trade.service.TradeService;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.awt.print.Pageable;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Transactional(readOnly = true)
@@ -246,6 +247,27 @@ public class AccountService {
         // Competition 유효성 체크
         Competition competition = competitionRepository.findById(stockOrderRequest.companyId())
                 .orElseThrow(() -> CompetitionNotFoundException.of(CompetitionErrorCode.NOT_FOUND));
+    }
+
+    public AccountInfoForLogin getInfoForLogin(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+        Account account = accountRepository.findTopByMemberOrderByIdDesc(member);
+        // 최신 계좌 조회해서 거기에 있는 CompetitonId가 현재의 대회 pk랑 같은지 체크
+        Competition competition = competitionRepository.findTopByAccountsOrderByIdDesc(account);
+        LocalDateTime now = LocalDateTime.now();
+        boolean isCompParticipant = false;
+        if(competition.getStartAt().isBefore(now) && competition.getEndAt().isAfter(now)){ // 지금 열리고 있는 대회
+            isCompParticipant = true;
+        }
+        AccountInfoForLogin accountInfoForLogin;
+        if(isCompParticipant && Objects.equals(account.getCompetition().getId(), competition.getId())){
+            accountInfoForLogin = AccountInfoForLogin.create(isCompParticipant, account.getBalance(), account.getRanking());
+        }
+        else{
+            accountInfoForLogin = AccountInfoForLogin.create(isCompParticipant, 0L, 0);
+        }
+        return accountInfoForLogin;
     }
 }
 

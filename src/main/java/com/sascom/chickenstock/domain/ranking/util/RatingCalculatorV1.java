@@ -15,7 +15,7 @@ public class RatingCalculatorV1 {
 
     public static int calculateRating(List<Account> accounts) {
         if(accounts == null || accounts.isEmpty()){
-            return INITIAL_RATING;
+            return 0;
         }
         int rating = INITIAL_RATING;
         for (Account account : accounts) {

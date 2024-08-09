@@ -5,8 +5,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sascom.chickenstock.domain.account.error.code.AccountErrorCode;
 import com.sascom.chickenstock.domain.account.error.exception.AccountDuplicateException;
 import com.sascom.chickenstock.domain.account.error.exception.AccountNotEnoughException;
+import com.sascom.chickenstock.domain.account.service.AccountService;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestLoginMember;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestSignupMember;
+import com.sascom.chickenstock.domain.auth.dto.response.AccountInfoForLogin;
 import com.sascom.chickenstock.domain.auth.dto.response.ResponseLoginMember;
 import com.sascom.chickenstock.domain.auth.dto.token.TokenDto;
 import com.sascom.chickenstock.domain.auth.service.AuthService;
@@ -18,6 +20,7 @@ import com.sascom.chickenstock.global.jwt.JwtProperties;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -35,16 +38,18 @@ import java.util.Map;
 public class AuthController {
     private final AuthService authService;
     private final MemberService memberService;
+    private final AccountService accountService;
     private final JwtProperties jwtProperties;
     private final String BASE_URI;
 
     @Value("${oauth.redirect-uri}")
     private String oauthRedirectUri;
 
-
-    public AuthController(AuthService authService, MemberService memberService, JwtProperties jwtProperties, @Value("${oauth.base-uri}") String baseUri) {
+    @Autowired
+    public AuthController(AuthService authService, MemberService memberService, AccountService accountService, JwtProperties jwtProperties, @Value("${oauth.base-uri}") String baseUri) {
         this.authService = authService;
         this.memberService = memberService;
+        this.accountService = accountService;
         this.jwtProperties = jwtProperties;
         BASE_URI = baseUri;
     }
@@ -60,7 +65,10 @@ public class AuthController {
     public ResponseEntity<ResponseLoginMember> login(@RequestBody RequestLoginMember requestLoginMember, HttpServletResponse response) {
         TokenDto tokenDto = authService.login(requestLoginMember);
         Member member = memberService.findByEmail(requestLoginMember.email());
-        ResponseLoginMember responseLoginMember = new ResponseLoginMember(member);
+
+        AccountInfoForLogin accountInfoForLogin = accountService.getInfoForLogin(member.getId());
+        ResponseLoginMember responseLoginMember = new ResponseLoginMember(member, accountInfoForLogin);
+
 
         ResponseCookie accessTokenCookie = ResponseCookie.from(jwtProperties.accessToken().cookieName(), tokenDto.accessToken())
                 .path("/").httpOnly(true).build();
