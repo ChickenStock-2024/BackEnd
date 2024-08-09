@@ -4,9 +4,12 @@ import com.sascom.chickenstock.domain.member.entity.Member;
 
 public record ResponseLoginMember(
         Long memberId,
-        String nickName
+        String nickName,
+        Integer rating,
+        Long balance,
+        Boolean isCompParticipant
 ) {
-    public ResponseLoginMember(Member member){
-        this(member.getId(),member.getNickname());
+    public ResponseLoginMember(Member member, AccountInfoForLogin accountInfoForLogin){
+        this(member.getId(),member.getNickname(),  accountInfoForLogin.rating(), accountInfoForLogin.balance(), accountInfoForLogin.isCompParticipant());
     }
 }
