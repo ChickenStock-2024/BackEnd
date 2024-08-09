@@ -3,6 +3,7 @@ package com.sascom.chickenstock.domain.member.service;
 import com.sascom.chickenstock.domain.account.entity.Account;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
 import com.sascom.chickenstock.domain.competition.repository.CompetitionRepository;
+import com.sascom.chickenstock.domain.member.dto.MagicNumbers;
 import com.sascom.chickenstock.domain.member.dto.request.ChangeInfoRequest;
 import com.sascom.chickenstock.domain.member.dto.response.ChangeInfoResponse;
 import com.sascom.chickenstock.domain.member.dto.response.MemberInfoResponse;
@@ -25,11 +26,11 @@ import javax.imageio.ImageIO;
 import javax.lang.model.SourceVersion;
 import java.awt.*;
 import java.awt.image.BufferedImage;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -47,6 +48,8 @@ public class MemberService {
 
     @Value("${image.default_img_name}")
     private String default_img_name;
+
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
     
     @Autowired
     public MemberService(MemberRepository memberRepository,
@@ -131,26 +134,63 @@ public class MemberService {
                 .orElseThrow(EntityNotFoundException::new);
     }
 
-    public void setImage(Member member, MultipartFile file) throws IOException {
-        if(file.isEmpty()){
-            //return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+//    public void setImage(Member member, MultipartFile file) throws IOException {
+//        if(file.isEmpty()){
+//            //return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+//            throw MemberNotFoundException.of(MemberErrorCode.NO_FILE);
+//        }
+//
+//        String ImageUuid = UUID.randomUUID().toString();
+//        String file_name = ImageUuid + file.getOriginalFilename();
+//        String img_path = "C:\\Users\\SSAFY\\Image\\" + file_name;
+//        String img_link = "http://localhost:8080" + file_name;
+//        File dest = new File(img_path);
+//
+//        String format = file_name.substring(file_name.lastIndexOf(".")+1);
+//        BufferedImage bufferedImage = Scalr.resize(ImageIO.read(file.getInputStream()), 50, 50, Scalr.OP_ANTIALIAS);
+//        ImageIO.write(bufferedImage, format, dest);
+//
+//        Image image = new Image(img_link, file_name, "C:\\Users\\SSAFY\\Image\\");
+//        member.updateImage(image);
+//        member.updateImageUuid(ImageUuid);
+//        memberRepository.save(member);
+//    }
+
+    @Transactional
+    public void setImage(Long memberId, MultipartFile file) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+        if(file.isEmpty()) {
             throw MemberNotFoundException.of(MemberErrorCode.NO_FILE);
         }
-
-        String ImageUuid = UUID.randomUUID().toString();
-        String file_name = ImageUuid + file.getOriginalFilename();
-        String img_path = "C:\\Users\\SSAFY\\Image\\" + file_name;
-        String img_link = "http://localhost:8080" + file_name;
-        File dest = new File(img_path);
-
-        String format = file_name.substring(file_name.lastIndexOf(".")+1);
-        BufferedImage bufferedImage = Scalr.resize(ImageIO.read(file.getInputStream()), 50, 50, Scalr.OP_ANTIALIAS);
-        ImageIO.write(bufferedImage, format, dest);
-
-        Image image = new Image(img_link, file_name, "C:\\Users\\SSAFY\\Image\\");
-        member.updateImage(image);
-        member.updateImageUuid(ImageUuid);
+        String extension = null;
+        byte[] fileBytes = null;
+        try {
+            fileBytes = file.getBytes();
+            if (MagicNumbers.JPG.is(fileBytes)) {
+                extension = "jpg";
+            }
+            else if (MagicNumbers.PNG.is(fileBytes)) {
+                extension = "png";
+            }
+        } catch(IOException e) {
+            throw new IllegalStateException("file handle error");
+        }
+        if(extension == null) {
+            throw MemberNotFoundException.of(MemberErrorCode.NO_FILE);
+        }
+        String fileName = UUID.randomUUID().toString() + LocalDateTime.now().format(formatter)
+                + "." + extension;
+        member.updateImage(new Image(null, fileName, null));
         memberRepository.save(member);
+
+        File dest = new File(File.separator + "resource" + File.separator + fileName);
+        try {
+            BufferedImage bufferedImage = Scalr.resize(ImageIO.read(new ByteArrayInputStream(fileBytes)), 800, 600, Scalr.OP_ANTIALIAS);
+            ImageIO.write(bufferedImage, extension, dest);
+        } catch(IOException e) {
+            throw new IllegalStateException("resize handle error");
+        }
     }
 
     public byte[] getImage(Long id) throws IOException{
@@ -170,7 +210,7 @@ public class MemberService {
         // soft delete // 이미지 경로만 default로 바꿔줌
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(EntityNotFoundException::new);
-        Image defaultImage = new Image(null, default_img_name, default_img_path);
+        Image defaultImage = new Image(null, default_img_name, null);
         member.updateImage(defaultImage);
         memberRepository.save(member);
     }
