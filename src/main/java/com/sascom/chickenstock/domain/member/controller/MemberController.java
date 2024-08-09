@@ -68,7 +68,7 @@ public class MemberController {
     }
 
     @PostMapping(value = "/img/delete")
-    public ResponseEntity<?> deleteImage() {
+    public ResponseEntity<Void> deleteImage() {
         memberService.deleteImage(SecurityUtil.getCurrentMemberId());
         return ResponseEntity.ok().build();
     }

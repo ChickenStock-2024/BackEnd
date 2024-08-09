@@ -206,10 +206,11 @@ public class MemberService {
         return bytes;
     }
 
+    @Transactional
     public void deleteImage(Long memberId) {
         // soft delete // 이미지 경로만 default로 바꿔줌
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(EntityNotFoundException::new);
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
         Image defaultImage = new Image(null, default_img_name, null);
         member.updateImage(defaultImage);
         memberRepository.save(member);
