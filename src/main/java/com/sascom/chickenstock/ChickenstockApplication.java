@@ -1,11 +1,15 @@
 package com.sascom.chickenstock;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
+
+import java.io.File;
+import java.nio.file.Paths;
 
 @ConfigurationPropertiesScan
 @SpringBootApplication
@@ -28,4 +32,5 @@ public class ChickenstockApplication {
 			}
 		};
 	}
+
 }

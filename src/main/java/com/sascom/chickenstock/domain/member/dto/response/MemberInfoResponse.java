@@ -4,5 +4,6 @@ public record MemberInfoResponse(
         Long memberId,
         String nickname,
         Integer rating,
-        Integer point
+        Integer point,
+        String imgUrl
 ) { }

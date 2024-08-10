@@ -28,6 +28,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     @Query("SELECT new com.sascom.chickenstock.domain.ranking.dto.MemberRankingDto(" +
             "m.id, " +
             "m.nickname, " +
+            "m.imgName, " +
             "SUM(a.balance), " +
             "SUM(a.ratingChange), " +
             "COUNT(a.id)) " +
