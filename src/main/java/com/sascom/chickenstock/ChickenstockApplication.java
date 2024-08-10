@@ -33,12 +33,4 @@ public class ChickenstockApplication {
 		};
 	}
 
-	@PostConstruct
-	public void init() {
-		String uploadDirectory = File.separator + "resource";
-		File directory = new File(uploadDirectory);
-		if (!directory.exists()) {
-			directory.mkdirs(); // 디렉터리 생성
-		}
-	}
 }

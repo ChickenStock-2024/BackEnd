@@ -1,6 +1,5 @@
 package com.sascom.chickenstock.domain.member.service;
 
-import com.sascom.chickenstock.domain.account.entity.Account;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
 import com.sascom.chickenstock.domain.competition.repository.CompetitionRepository;
 import com.sascom.chickenstock.domain.member.dto.MagicNumbers;
@@ -9,34 +8,27 @@ import com.sascom.chickenstock.domain.member.dto.response.ChangeInfoResponse;
 import com.sascom.chickenstock.domain.member.dto.response.MemberInfoResponse;
 import com.sascom.chickenstock.domain.member.dto.response.PrefixNicknameInfosResponse;
 import com.sascom.chickenstock.domain.member.entity.Member;
-import com.sascom.chickenstock.domain.member.error.MemberExceptionHandler;
 import com.sascom.chickenstock.domain.member.error.code.MemberErrorCode;
 import com.sascom.chickenstock.domain.member.error.exception.MemberNotFoundException;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.domain.ranking.util.RatingCalculatorV1;
 import com.sascom.chickenstock.global.util.SecurityUtil;
+import jakarta.annotation.PostConstruct;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
-import javax.lang.model.SourceVersion;
-import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.*;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.List;
-import java.util.stream.Collectors;
+
 import org.imgscalr.Scalr;
-import com.sascom.chickenstock.domain.member.entity.Image;
 
 @Service
 public class MemberService {
@@ -44,11 +36,14 @@ public class MemberService {
     private final AccountRepository accountRepository;
     private final CompetitionRepository competitionRepository;
 
-    @Value("${image.default_img_path}")
-    private String default_img_path;
+    @Value("${image.url}")
+    private String imgUrl;
 
-    @Value("${image.default_img_name}")
-    private String default_img_name;
+    @Value("${image.directories}")
+    private String uploadPath;
+
+    @Value("${image.default-img-name}")
+    private String defaultImgName;
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
     
@@ -59,6 +54,15 @@ public class MemberService {
         this.memberRepository = memberRepository;
         this.accountRepository = accountRepository;
         this.competitionRepository = competitionRepository;
+    }
+
+    @PostConstruct
+    public void init() {
+        uploadPath = File.separator + String.join(File.separator, uploadPath.split(" "));
+        File uploadDirectory = new File(uploadPath);
+        if (!uploadDirectory.exists()) {
+            uploadDirectory.mkdirs(); // 디렉터리 생성
+        }
     }
 
     public MemberInfoResponse lookUpMemberInfo(Long userId) throws IOException{
@@ -95,6 +99,7 @@ public class MemberService {
         return new ChangeInfoResponse(savedMember.getNickname());
     }
 
+    @Transactional
     public String changeNickname(String nickname) {
         Long memberId = SecurityUtil.getCurrentMemberId();
         Member member = memberRepository.findById(memberId)
@@ -109,23 +114,21 @@ public class MemberService {
     public PrefixNicknameInfosResponse searchPrefixNicknameMemberInfos(String prefix) throws IOException{
         List<Member> memberList = memberRepository.findFirst10ByNicknameStartingWithOrderByNickname(prefix);
 
-        // 이미지 파일(byte)는 예외 처리가 필요한데 stream에서는 따로 try catch해줘야 해서 for문으로 바꿨습니다.
-        List<MemberInfoResponse> result = new ArrayList<>();
-        for (Member member : memberList) {
-            MemberInfoResponse memberInfoResponse = toMemberInfoResponse(member);
-            result.add(memberInfoResponse);
-        }
-
-        return new PrefixNicknameInfosResponse(result);
+        return new PrefixNicknameInfosResponse(
+                memberList.stream()
+                        .map(this::toMemberInfoResponse)
+                        .toList()
+        );
     }
 
     // Member -> MemberInfoResponse
-    private MemberInfoResponse toMemberInfoResponse(Member member) throws IOException {
+    private MemberInfoResponse toMemberInfoResponse(Member member) {
         return new MemberInfoResponse(
                 member.getId(),
                 member.getNickname(),
                 RatingCalculatorV1.calculateRating(member.getAccounts()),
-                member.getPoint()
+                member.getPoint(),
+                imgUrl + "/" + member.getImgName()
         );
     }
 
@@ -171,8 +174,8 @@ public class MemberService {
 //    }
 
     @Transactional
-    public void setImage(Long memberId, MultipartFile file) {
-        Member member = memberRepository.findById(memberId)
+    public void setImage(MultipartFile file) {
+        Member member = memberRepository.findById(SecurityUtil.getCurrentMemberId())
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
         if(file.isEmpty()) {
             throw MemberNotFoundException.of(MemberErrorCode.NO_FILE);
@@ -195,10 +198,10 @@ public class MemberService {
         }
         String fileName = UUID.randomUUID().toString() + LocalDateTime.now().format(formatter)
                 + "." + extension;
-        member.updateImage(new Image(null, fileName, null));
+        member.updateImgName(fileName);
         memberRepository.save(member);
 
-        File dest = new File(File.separator + "resource" + File.separator + fileName);
+        File dest = new File(uploadPath + File.separator + fileName);
         try {
             BufferedImage bufferedImage = Scalr.resize(ImageIO.read(new ByteArrayInputStream(fileBytes)), 800, 600, Scalr.OP_ANTIALIAS);
             ImageIO.write(bufferedImage, extension, dest);
@@ -210,9 +213,9 @@ public class MemberService {
     public byte[] getImage(Long id) throws IOException{
         Member member = memberRepository.findById(id)
                 .orElseThrow(EntityNotFoundException::new);
-        Image image = member.getImage();
+        String imgName = member.getImgName();
         // 이미지를 InputStream에 읽어오기
-        InputStream inputStream = new FileInputStream(image.getImg_path() + image.getImg_name());
+        InputStream inputStream = new FileInputStream(uploadPath + File.separator + imgName);
 
         // InputStream에 읽어 온 이미지를 byte 배열에 저장
         byte[] bytes = inputStream.readAllBytes();
@@ -221,12 +224,11 @@ public class MemberService {
     }
 
     @Transactional
-    public void deleteImage(Long memberId) {
+    public void deleteImage() {
         // soft delete // 이미지 경로만 default로 바꿔줌
-        Member member = memberRepository.findById(memberId)
+        Member member = memberRepository.findById(SecurityUtil.getCurrentMemberId())
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
-        Image defaultImage = new Image(null, default_img_name, null);
-        member.updateImage(defaultImage);
+        member.updateImgName(defaultImgName);
         memberRepository.save(member);
     }
 }

@@ -7,6 +7,7 @@ import lombok.Getter;
 public class MemberRankingDto {
     private Long memberId;
     private String nickname;
+    private String imgUrl;
     private long profit;
     private int rating;
     private int competitionCount;
@@ -17,11 +18,13 @@ public class MemberRankingDto {
     public MemberRankingDto(
             Long memberId,
             String nickname,
+            String imgUrl,
             Long profit,
             Long rating,
             Long competitionCount) {
         this.memberId = memberId;
         this.nickname = nickname;
+        this.imgUrl = imgUrl;
         this.profit = profit == null? 0L : profit;
         this.rating = rating == null? 0 : rating.intValue();
         this.competitionCount = competitionCount == null? 0 : competitionCount.intValue();
@@ -31,6 +34,7 @@ public class MemberRankingDto {
     public MemberRankingDto(
             Long memberId,
             String nickname,
+            String imgUrl,
             long profit,
             int rating,
             int competitionCount,
@@ -38,6 +42,7 @@ public class MemberRankingDto {
     ) {
         this.memberId = memberId;
         this.nickname = nickname;
+        this.imgUrl = imgUrl;
         this.profit = profit;
         this.rating = rating;
         this.competitionCount = competitionCount;

@@ -64,19 +64,19 @@ public class MemberController {
 //        return ResponseEntity.ok()
 //                .body("프로필 이미지 업로드 완료");
         // validate file
-        memberService.setImage(SecurityUtil.getCurrentMemberId(), file);
+        memberService.setImage(file);
         return ResponseEntity.ok().body(Map.of("msg", "프로필 이미지 업로드 완료"));
     }
 
     @GetMapping(value = "/img/{userId}", produces = MediaType.IMAGE_JPEG_VALUE)
     public ResponseEntity<byte[]> getImage(@PathVariable("userId") Long id) throws IOException {
         byte[] bytes = memberService.getImage(id);
-        return new ResponseEntity<byte[]>(bytes, HttpStatus.OK);
+        return new ResponseEntity<>(bytes, HttpStatus.OK);
     }
 
     @PostMapping(value = "/img/delete")
     public ResponseEntity<Void> deleteImage() {
-        memberService.deleteImage(SecurityUtil.getCurrentMemberId());
+        memberService.deleteImage();
         return ResponseEntity.ok().build();
     }
 }

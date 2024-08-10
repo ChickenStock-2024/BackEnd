@@ -38,3 +38,8 @@ jwt:
   refresh-token:
     expire-duration: ${REFRESH_TOKEN_EXPIRE_DURATION}
     cookie-name: ${REFRESH_TOKEN_NAME}
+
+image:
+  url: ${IMG_URL}
+  directories: ${IMG_UPLOAD_DIRECTORIES}
+  default-img-name: ${DEFAULT_IMG_NAME}
