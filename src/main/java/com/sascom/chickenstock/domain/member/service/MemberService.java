@@ -58,7 +58,8 @@ public class MemberService {
 
     @PostConstruct
     public void init() {
-        uploadPath = File.separator + String.join(File.separator, uploadPath.split(" "));
+        uploadPath = File.separator + String.join(File.separator, uploadPath.split(","));
+        System.out.println(uploadPath);
         File uploadDirectory = new File(uploadPath);
         if (!uploadDirectory.exists()) {
             uploadDirectory.mkdirs(); // 디렉터리 생성
