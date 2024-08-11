@@ -163,6 +163,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
 
 
+//        Authentication testAuthentication = jwtResolver.getTestAuthentication();
+//        SecurityContextHolder.getContext().setAuthentication(testAuthentication);
+
+
+
         filterChain.doFilter(request, response);
     }
 

@@ -1,15 +1,15 @@
 spring:
   config:
-    import: classpath:privacy.yml, optional:file:.env[.properties]
+    import: optional:file:.env[.properties]
   profiles.include: oauth
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://${db.host}:${db.port}/${db.databasename}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
-    username: ${db.username}
-    password: ${db.password}
+    url: jdbc:mysql://${MYSQL_HOST}:${MYSQL_PORT}/${MYSQL_DB}?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
+    username: ${MYSQL_USERNAME}
+    password: ${MYSQL_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
@@ -23,11 +23,9 @@ websocket:
   url: ${SOCKET_URL}
 
 redis:
-  config:
-    import: classpath:privacy.yml
-  host: ${redis.host}
-  port: ${redis.port}
-  nodes: ${redis.nodes}
+  host: ${REDIS_DEV_HOST}
+  port: ${REDIS_DEV_PORT}
+  nodes: ${REDIS_DEV_NODES[0]}, ${REDIS_DEV_NODES[1]}, ${REDIS_DEV_NODES[2]}, ${REDIS_DEV_NODES[3]}, ${REDIS_DEV_NODES[4]}, ${REDIS_DEV_NODES[5]}
 
 jwt:
   bearer-type: ${BEARER_TYPE}

@@ -1,5 +1,6 @@
 package com.sascom.chickenstock.global.config;
 
+import com.sascom.chickenstock.global.filter.LoggingFilter;
 import com.sascom.chickenstock.global.jwt.JwtAuthenticationEntryPoint;
 import jakarta.servlet.Filter;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -64,6 +65,7 @@ public class WebSecurityConfig {
                         request -> request.requestMatchers(
                                         new AntPathRequestMatcher("/error"),
                                         new AntPathRequestMatcher("/favicon.ico"),
+                                        new AntPathRequestMatcher("/actuator/prometheus"),
                                         new AntPathRequestMatcher("/"),
                                         new AntPathRequestMatcher("/auth/**")
                                 ).permitAll()
@@ -78,7 +80,8 @@ public class WebSecurityConfig {
                 );
 
         http
-                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(new LoggingFilter(), jwtAuthenticationFilter.getClass());
 
         http
                 .exceptionHandling(exception -> exception
