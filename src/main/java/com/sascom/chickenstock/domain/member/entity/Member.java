@@ -41,6 +41,9 @@ public class Member extends BaseTimeEntity {
     @Column(name = "point")
     private Integer point;
 
+    @Column(name = "img_name")
+    private String imgName;
+
     @OneToMany(mappedBy = "member")
     private List<Account> accounts;
 
@@ -62,6 +65,13 @@ public class Member extends BaseTimeEntity {
         this.password = password;
     }
 
+    public Member(String nickName, String email, String password, String imgName) {
+        this.nickname = nickName;
+        this.email = email;
+        this.password = password;
+        this.imgName = imgName;
+    }
+
     public static Member of(Long id, String nickname) {
         return new Member(id, nickname);
     }
@@ -81,4 +91,13 @@ public class Member extends BaseTimeEntity {
     public String updatePassword(String password) {
         return this.password = password;
     }
+
+    public String updateNickname(String nickname) {
+        return this.nickname = nickname;
+    }
+
+    public void updateImgName(String imgName){
+        this.imgName = imgName;
+    }
+
 }

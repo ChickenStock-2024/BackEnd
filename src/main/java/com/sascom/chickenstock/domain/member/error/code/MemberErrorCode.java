@@ -7,7 +7,8 @@ import org.springframework.http.HttpStatus;
 @Getter
 public enum MemberErrorCode implements ChickenStockErrorCode {
     NOT_FOUND(HttpStatus.NOT_FOUND, "001", "존재하지 않는 멤버입니다."),
-    INVALID_VALUE(HttpStatus.BAD_REQUEST, "002", "올바르지 않은 값입니다.");
+    INVALID_VALUE(HttpStatus.BAD_REQUEST, "002", "올바르지 않은 값입니다."),
+    NO_FILE(HttpStatus.BAD_REQUEST,"003","이미지 파일이 존재하지 않습니다.");
 
 
     MemberErrorCode(HttpStatus status, String code, String message) {

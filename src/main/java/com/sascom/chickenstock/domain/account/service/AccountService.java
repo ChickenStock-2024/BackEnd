@@ -1,5 +1,6 @@
 package com.sascom.chickenstock.domain.account.service;
 
+import com.sascom.chickenstock.domain.account.dto.request.CancelOrderRequest;
 import com.sascom.chickenstock.domain.account.dto.request.StockOrderRequest;
 import com.sascom.chickenstock.domain.account.dto.response.AccountInfoResponse;
 import com.sascom.chickenstock.domain.account.dto.response.ExecutionContentResponse;
@@ -10,6 +11,7 @@ import com.sascom.chickenstock.domain.account.error.code.AccountErrorCode;
 import com.sascom.chickenstock.domain.account.error.exception.AccountNotEnoughException;
 import com.sascom.chickenstock.domain.account.error.exception.AccountNotFoundException;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
+import com.sascom.chickenstock.domain.auth.dto.response.AccountInfoForLogin;
 import com.sascom.chickenstock.domain.company.entity.Company;
 import com.sascom.chickenstock.domain.company.error.code.CompanyErrorCode;
 import com.sascom.chickenstock.domain.company.error.exception.CompanyNotFoundException;
@@ -20,25 +22,32 @@ import com.sascom.chickenstock.domain.competition.error.exception.CompetitionNot
 import com.sascom.chickenstock.domain.competition.repository.CompetitionRepository;
 import com.sascom.chickenstock.domain.history.entity.History;
 import com.sascom.chickenstock.domain.history.entity.HistoryStatus;
+import com.sascom.chickenstock.domain.history.error.code.HistoryErrorCode;
+import com.sascom.chickenstock.domain.history.error.exception.HistoryNotFoundException;
 import com.sascom.chickenstock.domain.history.repository.HistoryRepository;
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.error.code.MemberErrorCode;
 import com.sascom.chickenstock.domain.member.error.exception.MemberNotFoundException;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
+import com.sascom.chickenstock.domain.trade.dto.OrderType;
 import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.SellTradeRequest;
+import com.sascom.chickenstock.domain.trade.dto.response.CancelOrderResponse;
 import com.sascom.chickenstock.domain.trade.dto.response.TradeResponse;
 import com.sascom.chickenstock.domain.trade.service.TradeService;
+import com.sascom.chickenstock.global.util.SecurityUtil;
 import jakarta.persistence.EntityNotFoundException;
+
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.StringTokenizer;
+import java.time.LocalDateTime;
+import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.sascom.chickenstock.domain.history.entity.HistoryStatus.시장가매도체결;
 
 @Transactional(readOnly = true)
 @RequiredArgsConstructor
@@ -135,11 +144,11 @@ public class AccountService {
                 .status(HistoryStatus.지정가매수요청)
                 .build()
         );
-        history.getId(); // historyId를 요청 객체(TradeRequest)에 포함시킬 것임
+        Long historyId = history.getId(); // historyId를 요청 객체(TradeRequest)에 포함시킬 것임
 
         // 구매요청
         return tradeService.addLimitBuyRequest(
-                stockOrderRequest.toBuyTradeRequestEntity()
+                stockOrderRequest.toBuyTradeRequestEntity(historyId, history.getCreatedAt(), OrderType.LIMIT)
         );
 
     }
@@ -157,7 +166,7 @@ public class AccountService {
         // 주식 매도하려고 하는데 사용자가 해당 주식을 매도하려는만큼 가지고있는지 확인
 
         // History Table에 기록 Write
-        historyRepository.save(History.builder()
+        History history = historyRepository.save(History.builder()
                 .account(account)
                 .price(stockOrderRequest.unitCost())
                 .company(company)
@@ -166,9 +175,11 @@ public class AccountService {
                 .build()
         );
 
+        Long historyId = history.getId();
+
         // 구매요청
         return tradeService.addLimitSellRequest(
-                stockOrderRequest.toSellTradeRequestEntity()
+                stockOrderRequest.toSellTradeRequestEntity(historyId, history.getCreatedAt(), OrderType.LIMIT)
         );
     }
 
@@ -187,7 +198,7 @@ public class AccountService {
         }
 
         // History Table에 기록 Write
-        historyRepository.save(History.builder()
+        History history = historyRepository.save(History.builder()
                 .account(account)
                 .price(stockOrderRequest.unitCost())
                 .company(company)
@@ -195,10 +206,11 @@ public class AccountService {
                 .status(HistoryStatus.시장가매수요청)
                 .build()
         );
+        Long historyId = history.getId();
 
         // 구매요청
         return tradeService.addMarketBuyRequest(
-                stockOrderRequest.toBuyTradeRequestEntity()
+                stockOrderRequest.toBuyTradeRequestEntity(historyId, history.getCreatedAt(), OrderType.MARKET)
         );
 
     }
@@ -215,7 +227,7 @@ public class AccountService {
         // 주식 매도하려고 하는데 사용자가 해당 주식을 매도하려는만큼 가지고있는지 확인
 
         // History Table에 기록 Write
-        historyRepository.save(History.builder()
+        History history = historyRepository.save(History.builder()
                 .account(account)
                 .price(stockOrderRequest.unitCost())
                 .company(company)
@@ -224,28 +236,141 @@ public class AccountService {
                 .build()
         );
 
+        Long historyId = history.getId();
+
         // 구매요청
         return tradeService.addMarketSellRequest(
-                stockOrderRequest.toSellTradeRequestEntity()
+                stockOrderRequest.toSellTradeRequestEntity(historyId, history.getCreatedAt(), OrderType.MARKET)
         );
+    }
+
+    @Transactional
+    public CancelOrderResponse cancelStockOrder(CancelOrderRequest cancelOrderRequest) {
+        // validate member
+        Member member = validateMember(cancelOrderRequest.memberId());
+
+        // validate account
+        Account account = validateAccount(member, cancelOrderRequest.accountId());
+
+        // validate history
+        History history = validateHistory(account, cancelOrderRequest.historyId());
+
+        CancelOrderResponse response = null;
+        if(HistoryStatus.지정가매도요청.equals(history.getStatus()) ||
+                HistoryStatus.시장가매도요청.equals(history.getStatus())) {
+            SellTradeRequest sellTradeRequest = SellTradeRequest.builder()
+                    .orderType(HistoryStatus.지정가매도요청.equals(history.getStatus())?
+                            OrderType.LIMIT :
+                            OrderType.MARKET)
+                    .accountId(cancelOrderRequest.accountId())
+                    .memberId(cancelOrderRequest.memberId())
+                    .companyId(history.getCompany().getId())
+                    .competitionId(account.getCompetition().getId())
+                    .historyId(history.getId())
+                    .companyName(history.getCompany().getName())
+                    .unitCost(history.getPrice())
+                    .totalOrderVolume(history.getVolume())
+                    .orderTime(history.getCreatedAt())
+                    .build();
+            response = tradeService.cancelOrderRequest(sellTradeRequest);
+        }
+        if(HistoryStatus.지정가매수요청.equals(history.getStatus()) ||
+                HistoryStatus.시장가매수요청.equals(history.getStatus())) {
+            BuyTradeRequest buyTradeRequest = BuyTradeRequest.builder()
+                    .orderType(HistoryStatus.지정가매수요청.equals(history.getStatus())?
+                            OrderType.LIMIT :
+                            OrderType.MARKET)
+                    .accountId(cancelOrderRequest.accountId())
+                    .memberId(cancelOrderRequest.memberId())
+                    .companyId(history.getCompany().getId())
+                    .competitionId(account.getCompetition().getId())
+                    .historyId(history.getId())
+                    .companyName(history.getCompany().getName())
+                    .unitCost(history.getPrice())
+                    .totalOrderVolume(history.getVolume())
+                    .orderTime(history.getCreatedAt())
+                    .build();
+            response = tradeService.cancelOrderRequest(buyTradeRequest);
+        }
+        if(response == null) {
+            throw new IllegalStateException("server error");
+        }
+        return response;
     }
 
     public void validateStockOrderRequest(StockOrderRequest stockOrderRequest) {
         // Member 유효성 체크
-        Member member = memberRepository.findById(stockOrderRequest.memberId())
-                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+        Member member = validateMember(stockOrderRequest.memberId());
 
         // Account 유효성 체크
-        Account account = accountRepository.findById(stockOrderRequest.accountId())
-                .orElseThrow(() -> AccountNotFoundException.of(AccountErrorCode.NOT_FOUND));
+        Account account = validateAccount(member, stockOrderRequest.accountId());
 
         // Company 유효성 체크
         Company company = companyRepository.findById(stockOrderRequest.companyId())
                 .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
 
         // Competition 유효성 체크
-        Competition competition = competitionRepository.findById(stockOrderRequest.companyId())
+        Competition competition = competitionRepository.findById(stockOrderRequest.competitionId())
                 .orElseThrow(() -> CompetitionNotFoundException.of(CompetitionErrorCode.NOT_FOUND));
+    }
+
+
+    public AccountInfoForLogin getInfoForLogin(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+        Account account = accountRepository.findTopByMemberOrderByIdDesc(member);
+        // 최신 계좌 조회해서 거기에 있는 CompetitonId가 현재의 대회 pk랑 같은지 체크
+        Competition competition = competitionRepository.findTopByAccountsOrderByIdDesc(account);
+        LocalDateTime now = LocalDateTime.now();
+        boolean isCompParticipant = false;
+        if (competition.getStartAt().isBefore(now) && competition.getEndAt().isAfter(now)) { // 지금 열리고 있는 대회
+            isCompParticipant = true;
+        }
+        AccountInfoForLogin accountInfoForLogin;
+        if (isCompParticipant && Objects.equals(account.getCompetition().getId(), competition.getId())) {
+            accountInfoForLogin = AccountInfoForLogin.create(isCompParticipant, account.getBalance(), account.getRanking());
+        } else {
+            accountInfoForLogin = AccountInfoForLogin.create(isCompParticipant, 0L, 0);
+        }
+        return accountInfoForLogin;
+    }
+
+    private Member validateMember(Long memberId) {
+        Long loginMemberId = SecurityUtil.getCurrentMemberId();
+        if(!loginMemberId.equals(memberId)) {
+            throw MemberNotFoundException.of(MemberErrorCode.INVALID_VALUE);
+        }
+        return memberRepository.findById(memberId)
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+    }
+
+    private Account validateAccount(Member member, Long accountId) {
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> AccountNotFoundException.of(AccountErrorCode.NOT_FOUND));
+        if(account.getMember() != member) {
+            throw AccountNotFoundException.of(AccountErrorCode.INVALID_VALUE);
+        }
+        return account;
+    }
+
+    private History validateHistory(Account account, Long historyId) {
+        History history = historyRepository.findById(historyId)
+                .orElseThrow(() -> HistoryNotFoundException.of(HistoryErrorCode.NOT_FOUND));
+        if(!history.getAccount().equals(account)) {
+            throw AccountNotFoundException.of(AccountErrorCode.INVALID_VALUE);
+        }
+
+        final HistoryStatus[] validStatus = new HistoryStatus[]{
+                HistoryStatus.지정가매수요청,
+                HistoryStatus.지정가매도요청,
+                HistoryStatus.시장가매수요청,
+                HistoryStatus.시장가매도요청
+        };
+        if(!Arrays.asList(validStatus).contains(history.getStatus())) {
+            throw HistoryNotFoundException.of(HistoryErrorCode.INVALID_VALUE);
+        }
+        return history;
+
     }
 }
 

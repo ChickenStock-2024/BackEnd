@@ -17,7 +17,10 @@ spring:
   sql:
     init:
       mode: always
-#        show_sql: true
+      show_sql: true
+
+websocket:
+  url: ${SOCKET_URL}
 
 redis:
   host: ${REDIS_DEV_HOST}
@@ -33,3 +36,8 @@ jwt:
   refresh-token:
     expire-duration: ${REFRESH_TOKEN_EXPIRE_DURATION}
     cookie-name: ${REFRESH_TOKEN_NAME}
+
+image:
+  url: ${IMG_URL}
+  directories: ${IMG_UPLOAD_DIRECTORIES}
+  default-img-name: ${DEFAULT_IMG_NAME}

@@ -7,9 +7,10 @@ import lombok.Getter;
 public record ProcessedOrderDto(
         Long accountId,
         Long requestHistoryId,
-        String companyName,
+        Long companyId,
         Integer price,
         Integer volume,
+        TradeType tradeType,
         OrderType orderType,
         MatchStatus matchStatus
 ) {
