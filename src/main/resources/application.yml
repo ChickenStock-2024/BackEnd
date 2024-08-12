@@ -14,10 +14,10 @@ spring:
       hibernate:
         format_sql: true
     defer-datasource-initialization: true
-  sql:
-    init:
-      mode: always
-      show_sql: true
+#  sql:
+#    init:
+#      mode: always
+#      show_sql: true
 
 websocket:
   url: ${SOCKET_URL}
