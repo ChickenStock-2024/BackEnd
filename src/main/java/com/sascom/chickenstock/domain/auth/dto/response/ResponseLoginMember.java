@@ -7,9 +7,15 @@ public record ResponseLoginMember(
         String nickName,
         Integer rating,
         Long balance,
-        Boolean isCompParticipant
+        Boolean isCompParticipant,
+        boolean webNoti,
+        boolean kakaotalkNoti
 ) {
     public ResponseLoginMember(Member member, AccountInfoForLogin accountInfoForLogin){
-        this(member.getId(),member.getNickname(),  accountInfoForLogin.rating(), accountInfoForLogin.balance(), accountInfoForLogin.isCompParticipant());
+        this(
+                member.getId(), member.getNickname(),
+                accountInfoForLogin.rating(), accountInfoForLogin.balance(), accountInfoForLogin.isCompParticipant(),
+                member.isWebNoti(), member.isKakaotalkNoti()
+        );
     }
 }
