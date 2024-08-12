@@ -80,4 +80,5 @@ public class MemberController {
         memberService.deleteImage();
         return ResponseEntity.ok().build();
     }
+
 }
