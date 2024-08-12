@@ -44,6 +44,12 @@ public class Member extends BaseTimeEntity {
     @Column(name = "img_name")
     private String imgName;
 
+    @Column(name = "web_noti", columnDefinition = "TINYINT(1)")
+    private boolean webNoti;
+
+    @Column(name = "kakaotalk_noti", columnDefinition = "TINYINT(1)")
+    private boolean kakaotalkNoti;
+
     @OneToMany(mappedBy = "member")
     private List<Account> accounts;
 
