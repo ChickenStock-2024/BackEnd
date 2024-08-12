@@ -319,20 +319,17 @@ public class AccountService {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
         Account account = accountRepository.findTopByMemberOrderByIdDesc(member);
+
         // 최신 계좌 조회해서 거기에 있는 CompetitonId가 현재의 대회 pk랑 같은지 체크
         Competition competition = competitionRepository.findTopByAccountsOrderByIdDesc(account);
         LocalDateTime now = LocalDateTime.now();
-        boolean isCompParticipant = false;
-        if (competition.getStartAt().isBefore(now) && competition.getEndAt().isAfter(now)) { // 지금 열리고 있는 대회
-            isCompParticipant = true;
+
+        if (competition != null &&
+                competition.getStartAt().isBefore(now) && competition.getEndAt().isAfter(now)) { // 지금 열리고 있는 대회
+            return AccountInfoForLogin.create(true, account.getBalance(), account.getRanking());
         }
-        AccountInfoForLogin accountInfoForLogin;
-        if (isCompParticipant && Objects.equals(account.getCompetition().getId(), competition.getId())) {
-            accountInfoForLogin = AccountInfoForLogin.create(isCompParticipant, account.getBalance(), account.getRanking());
-        } else {
-            accountInfoForLogin = AccountInfoForLogin.create(isCompParticipant, 0L, 0);
-        }
-        return accountInfoForLogin;
+
+        return AccountInfoForLogin.create(false, 0L, 0);
     }
 
     private Member validateMember(Long memberId) {
