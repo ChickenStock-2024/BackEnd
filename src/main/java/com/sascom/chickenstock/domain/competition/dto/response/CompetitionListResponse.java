@@ -12,6 +12,7 @@ public record CompetitionListResponse(
         LocalDateTime endAt,
         Integer rank,
         Integer ratingChange,
-        Long balance
+        Long balance,
+        Long accountId
 ) {
 }
