@@ -106,4 +106,11 @@ public class Member extends BaseTimeEntity {
         this.imgName = imgName;
     }
 
+    public boolean toggleWebNoti() {
+        return this.webNoti ^= true;
+    }
+
+    public boolean toggleKakaotalkNoti() {
+        return this.kakaotalkNoti ^= true;
+    }
 }

@@ -31,7 +31,7 @@ public class MemberController {
         return ResponseEntity.ok().body(response);
     }
 
-    @PostMapping("/")
+    @PostMapping
     public ResponseEntity<String> patchPassword(
             @RequestBody ChangePasswordRequest changePasswordRequest) {
         memberService.changePassword(changePasswordRequest);
@@ -49,6 +49,18 @@ public class MemberController {
     public ResponseEntity<Map<String, String>> patchNickname(@RequestBody ChangeNicknameRequest changeNicknameRequest) {
         String changedNickname = memberService.changeNickname(changeNicknameRequest.nickname());
         return ResponseEntity.ok().body(Map.of("nickname", changedNickname));
+    }
+
+    @PostMapping("/noti/web")
+    public ResponseEntity<Map<String, Boolean>> patchWebNotification() {
+        boolean changedState = memberService.toggleWebNotification();
+        return ResponseEntity.ok().body(Map.of("webNoti", changedState));
+    }
+
+    @PostMapping("/noti/kakaotalk")
+    public ResponseEntity<Map<String, Boolean>> patchKakaotalkNotification() {
+        boolean changedState = memberService.toggleKakaotalkNotification();
+        return ResponseEntity.ok().body(Map.of("kakaotalkNoti", changedState));
     }
 
     @PostMapping(value = "/img", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

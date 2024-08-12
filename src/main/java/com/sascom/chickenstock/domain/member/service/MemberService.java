@@ -129,6 +129,24 @@ public class MemberService {
         );
     }
 
+    @Transactional
+    public boolean toggleWebNotification() {
+        Member member = memberRepository.findById(SecurityUtil.getCurrentMemberId())
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+        boolean result = member.toggleWebNoti();
+        memberRepository.save(member);
+        return result;
+    }
+
+    @Transactional
+    public boolean toggleKakaotalkNotification() {
+        Member member = memberRepository.findById(SecurityUtil.getCurrentMemberId())
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+        boolean result = member.toggleKakaotalkNoti();
+        memberRepository.save(member);
+        return result;
+    }
+
     // Member -> MemberInfoResponse
     private MemberInfoResponse toMemberInfoResponse(Member member) {
         return new MemberInfoResponse(
