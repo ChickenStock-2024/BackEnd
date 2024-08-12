@@ -54,6 +54,7 @@ public class CompetitionService {
                     .rank(account.getRanking())
                     .ratingChange(account.getRatingChange())
                     .balance(account.getBalance())
+                    .accountId(account.getId())
                     .build()
             );
         }

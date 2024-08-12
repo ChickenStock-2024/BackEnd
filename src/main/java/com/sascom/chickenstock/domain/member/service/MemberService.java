@@ -3,21 +3,24 @@ package com.sascom.chickenstock.domain.member.service;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
 import com.sascom.chickenstock.domain.competition.repository.CompetitionRepository;
 import com.sascom.chickenstock.domain.member.dto.MagicNumbers;
-import com.sascom.chickenstock.domain.member.dto.request.ChangeInfoRequest;
-import com.sascom.chickenstock.domain.member.dto.response.ChangeInfoResponse;
+import com.sascom.chickenstock.domain.member.dto.request.ChangePasswordRequest;
 import com.sascom.chickenstock.domain.member.dto.response.MemberInfoResponse;
 import com.sascom.chickenstock.domain.member.dto.response.PrefixNicknameInfosResponse;
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.error.code.MemberErrorCode;
+import com.sascom.chickenstock.domain.member.error.exception.MemberImageException;
 import com.sascom.chickenstock.domain.member.error.exception.MemberNotFoundException;
+import com.sascom.chickenstock.domain.member.error.exception.MemberInfoChangeException;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.domain.ranking.util.RatingCalculatorV1;
+import com.sascom.chickenstock.global.error.code.AuthErrorCode;
+import com.sascom.chickenstock.global.error.exception.AuthException;
 import com.sascom.chickenstock.global.util.SecurityUtil;
 import jakarta.annotation.PostConstruct;
-import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import javax.imageio.ImageIO;
@@ -35,6 +38,7 @@ public class MemberService {
     private final MemberRepository memberRepository;
     private final AccountRepository accountRepository;
     private final CompetitionRepository competitionRepository;
+    private final PasswordEncoder passwordEncoder;
 
     @Value("${image.url}")
     private String imgUrl;
@@ -50,10 +54,12 @@ public class MemberService {
     @Autowired
     public MemberService(MemberRepository memberRepository,
                          AccountRepository accountRepository,
-                         CompetitionRepository competitionRepository) {
+                         CompetitionRepository competitionRepository,
+                         PasswordEncoder passwordEncoder) {
         this.memberRepository = memberRepository;
         this.accountRepository = accountRepository;
         this.competitionRepository = competitionRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @PostConstruct
@@ -66,38 +72,35 @@ public class MemberService {
         }
     }
 
-    public MemberInfoResponse lookUpMemberInfo(Long userId) throws IOException{
+    public MemberInfoResponse lookUpMemberInfo(Long userId) {
         Member member = memberRepository.findById(userId)
-                .orElseThrow(() -> new IllegalStateException("invalid userId"));
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
 
         return toMemberInfoResponse(member);
     }
 
     @Transactional
-    public ChangeInfoResponse changeMemberInfo(
-            Long userId,
-            ChangeInfoRequest changeInfoRequest) {
-        Member member = memberRepository.findById(userId)
-                .orElseThrow(() -> new IllegalStateException("invalid userId"));
-        // hash given password or use spring security
+    public void changePassword(ChangePasswordRequest changePasswordRequest) {
+        Member member = memberRepository.findById(SecurityUtil.getCurrentMemberId())
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
 
-        if(!changeInfoRequest.oldPassword().equals(member.getPassword())) {
-            throw new IllegalStateException("incorrect Old Password");
+
+        if(changePasswordRequest.newPassword() == null ||
+                !passwordEncoder.encode(changePasswordRequest.newPassword()).equals(
+                        changePasswordRequest.newPasswordCheck())) {
+            throw MemberInfoChangeException.of(MemberErrorCode.PASSWORD_CONFIRMATION_ERROR);
         }
-        if(changeInfoRequest.newPassword() == null ||
-                !changeInfoRequest.newPassword().equals(
-                changeInfoRequest.newPasswordCheck())) {
-            throw new IllegalStateException("New Password and New Password Check are not equal");
+        if(changePasswordRequest.oldPassword() == null ||
+                !changePasswordRequest.oldPassword().equals(member.getPassword())) {
+            throw MemberInfoChangeException.of(MemberErrorCode.INCORRECT_PASSWORD);
         }
-        if(!isSafePassword(changeInfoRequest.newPassword())){
+        if(!isSafePassword(changePasswordRequest.newPassword())){
             throw new IllegalStateException("New Password is not safe.");
         }
 
-        // hash new password, also. need to edit below code.
-        String hashedNewPassword = changeInfoRequest.newPassword();
+        String hashedNewPassword = passwordEncoder.encode(changePasswordRequest.newPassword());
         member.updatePassword(hashedNewPassword);
         Member savedMember = memberRepository.save(member);
-        return new ChangeInfoResponse(savedMember.getNickname());
     }
 
     @Transactional
@@ -105,14 +108,18 @@ public class MemberService {
         Long memberId = SecurityUtil.getCurrentMemberId();
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
-        // validate nickname
-
+        if(memberRepository.existsByNickname(nickname)) {
+            throw AuthException.of(AuthErrorCode.NICKNAME_CONFLICT);
+        }
+        if(!isAvailableNickname(nickname)) {
+            throw MemberInfoChangeException.of(MemberErrorCode.UNAVAILABLE_NICKNAME);
+        }
         member.updateNickname(nickname);
         memberRepository.save(member);
         return nickname;
     }
 
-    public PrefixNicknameInfosResponse searchPrefixNicknameMemberInfos(String prefix) throws IOException{
+    public PrefixNicknameInfosResponse searchPrefixNicknameMemberInfos(String prefix) {
         List<Member> memberList = memberRepository.findFirst10ByNicknameStartingWithOrderByNickname(prefix);
 
         return new PrefixNicknameInfosResponse(
@@ -122,6 +129,24 @@ public class MemberService {
         );
     }
 
+    @Transactional
+    public boolean toggleWebNotification() {
+        Member member = memberRepository.findById(SecurityUtil.getCurrentMemberId())
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+        boolean result = member.toggleWebNoti();
+        memberRepository.save(member);
+        return result;
+    }
+
+    @Transactional
+    public boolean toggleKakaotalkNotification() {
+        Member member = memberRepository.findById(SecurityUtil.getCurrentMemberId())
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+        boolean result = member.toggleKakaotalkNoti();
+        memberRepository.save(member);
+        return result;
+    }
+
     // Member -> MemberInfoResponse
     private MemberInfoResponse toMemberInfoResponse(Member member) {
         return new MemberInfoResponse(
@@ -129,7 +154,7 @@ public class MemberService {
                 member.getNickname(),
                 RatingCalculatorV1.calculateRating(member.getAccounts()),
                 member.getPoint(),
-                imgUrl + "/" + member.getImgName()
+                imgUrl + member.getImgName()
         );
     }
 
@@ -140,39 +165,15 @@ public class MemberService {
         return true;
     }
 
+    private boolean isAvailableNickname(String nickname) {
+        // TODO: implementation
+        return true;
+    }
+
     public Member findByEmail(String email) {
         return memberRepository.findByEmail(email)
-                .orElseThrow(EntityNotFoundException::new);
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
     }
-
-    public Member findById(Long userId){
-        return memberRepository.findById(userId)
-                .orElseThrow(EntityNotFoundException::new);
-    }
-
-
-
-//    public void setImage(Member member, MultipartFile file) throws IOException {
-//        if(file.isEmpty()){
-//            //return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-//            throw MemberNotFoundException.of(MemberErrorCode.NO_FILE);
-//        }
-//
-//        String ImageUuid = UUID.randomUUID().toString();
-//        String file_name = ImageUuid + file.getOriginalFilename();
-//        String img_path = "C:\\Users\\SSAFY\\Image\\" + file_name;
-//        String img_link = "http://localhost:8080" + file_name;
-//        File dest = new File(img_path);
-//
-//        String format = file_name.substring(file_name.lastIndexOf(".")+1);
-//        BufferedImage bufferedImage = Scalr.resize(ImageIO.read(file.getInputStream()), 50, 50, Scalr.OP_ANTIALIAS);
-//        ImageIO.write(bufferedImage, format, dest);
-//
-//        Image image = new Image(img_link, file_name, "C:\\Users\\SSAFY\\Image\\");
-//        member.updateImage(image);
-//        member.updateImageUuid(ImageUuid);
-//        memberRepository.save(member);
-//    }
 
     @Transactional
     public void setImage(MultipartFile file) {
@@ -181,47 +182,42 @@ public class MemberService {
         if(file.isEmpty()) {
             throw MemberNotFoundException.of(MemberErrorCode.NO_FILE);
         }
-        String extension = null;
+
         byte[] fileBytes = null;
+        String extension = null;
         try {
-            fileBytes = file.getBytes();
-            if (MagicNumbers.JPG.is(fileBytes)) {
-                extension = "jpg";
-            }
-            else if (MagicNumbers.PNG.is(fileBytes)) {
-                extension = "png";
-            }
+            extension = getFileExtension(file, fileBytes);
         } catch(IOException e) {
-            throw new IllegalStateException("file handle error");
+            throw MemberImageException.of(MemberErrorCode.IO_ERROR);
         }
+
         if(extension == null) {
-            throw MemberNotFoundException.of(MemberErrorCode.NO_FILE);
+            throw MemberNotFoundException.of(MemberErrorCode.INVALID_FILE);
         }
+
         String fileName = UUID.randomUUID().toString() + LocalDateTime.now().format(formatter)
                 + "." + extension;
         member.updateImgName(fileName);
         memberRepository.save(member);
 
-        File dest = new File(uploadPath + File.separator + fileName);
         try {
-            BufferedImage bufferedImage = Scalr.resize(ImageIO.read(new ByteArrayInputStream(fileBytes)), 800, 600, Scalr.OP_ANTIALIAS);
-            ImageIO.write(bufferedImage, extension, dest);
+            saveFile(fileBytes, fileName, extension);
         } catch(IOException e) {
-            throw new IllegalStateException("resize handle error");
+            throw MemberImageException.of(MemberErrorCode.IO_ERROR);
         }
     }
 
-    public byte[] getImage(Long id) throws IOException{
+    public byte[] getImage(Long id) {
         Member member = memberRepository.findById(id)
-                .orElseThrow(EntityNotFoundException::new);
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
         String imgName = member.getImgName();
         // 이미지를 InputStream에 읽어오기
-        InputStream inputStream = new FileInputStream(uploadPath + File.separator + imgName);
-
-        // InputStream에 읽어 온 이미지를 byte 배열에 저장
-        byte[] bytes = inputStream.readAllBytes();
-        inputStream.close();
-        return bytes;
+        try(InputStream inputStream = new FileInputStream(uploadPath + File.separator + imgName)) {
+            byte[] bytes = inputStream.readAllBytes();
+            return bytes;
+        } catch(IOException e) {
+            throw MemberImageException.of(MemberErrorCode.IO_ERROR);
+        }
     }
 
     @Transactional
@@ -231,5 +227,30 @@ public class MemberService {
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
         member.updateImgName(defaultImgName);
         memberRepository.save(member);
+    }
+
+    private String getFileExtension(MultipartFile file, byte[] fileBytes) throws IOException {
+        String extension = null;
+        fileBytes = file.getBytes();
+        if (MagicNumbers.JPG.is(fileBytes)) {
+            extension = "jpg";
+        }
+        else if (MagicNumbers.PNG.is(fileBytes)) {
+            extension = "png";
+        }
+        return extension;
+    }
+
+    private void saveFile(byte[] fileBytes, String fileName, String extension) throws IOException {
+        int TARGET_IMAGE_WIDTH = 200, TARGET_IMAGE_HEIGHT = 200;
+
+        File dest = new File(uploadPath + File.separator + fileName);
+        BufferedImage bufferedImage = Scalr.resize(
+                ImageIO.read(new ByteArrayInputStream(fileBytes)),
+                TARGET_IMAGE_WIDTH,
+                TARGET_IMAGE_HEIGHT,
+                Scalr.OP_ANTIALIAS
+        );
+        ImageIO.write(bufferedImage, extension, dest);
     }
 }
