@@ -158,6 +158,7 @@ public class AuthService {
                 .atZone(ZoneId.systemDefault())  // 시스템 기본 시간대 사용
                 .toLocalDateTime();
         redisService.setValues(accessToken, "logout", expirationLocalDateTime);
+
         return "로그아웃 되었습니다.";
     }
 }
