@@ -20,6 +20,7 @@ import com.sascom.chickenstock.domain.competition.entity.Competition;
 import com.sascom.chickenstock.domain.competition.error.code.CompetitionErrorCode;
 import com.sascom.chickenstock.domain.competition.error.exception.CompetitionNotFoundException;
 import com.sascom.chickenstock.domain.competition.repository.CompetitionRepository;
+import com.sascom.chickenstock.domain.competition.service.CompetitionService;
 import com.sascom.chickenstock.domain.history.entity.History;
 import com.sascom.chickenstock.domain.history.entity.HistoryStatus;
 import com.sascom.chickenstock.domain.history.error.code.HistoryErrorCode;
@@ -61,6 +62,7 @@ public class AccountService {
     private final CompanyRepository companyRepository;
     private final RedisService redisService;
     private final TradeService tradeService;
+    private final CompetitionService competitionService;
 
     @Transactional
     public Long createAccount(Long memberId, Long competitionId) {
@@ -322,10 +324,8 @@ public class AccountService {
 
         // 최신 계좌 조회해서 거기에 있는 CompetitonId가 현재의 대회 pk랑 같은지 체크
         Competition competition = competitionRepository.findTopByAccountsOrderByIdDesc(account);
-        LocalDateTime now = LocalDateTime.now();
 
-        if (competition != null &&
-                competition.getStartAt().isBefore(now) && competition.getEndAt().isAfter(now)) { // 지금 열리고 있는 대회
+        if (competition != null && competitionService.isActiveCompetition(competition)) { // 지금 열리고 있는 대회
             return AccountInfoForLogin.create(true, account.getBalance(), account.getRanking());
         }
 
