@@ -14,6 +14,8 @@ spring:
       hibernate:
         format_sql: true
     defer-datasource-initialization: true
+#  jackson:
+#    property-naming-strategy: SNAKE_CASE
 #  sql:
 #    init:
 #      mode: always
@@ -36,8 +38,12 @@ jwt:
   refresh-token:
     expire-duration: ${REFRESH_TOKEN_EXPIRE_DURATION}
     cookie-name: ${REFRESH_TOKEN_NAME}
+  cookie-path: ${COOKIE_PATH}
 
 image:
   url: ${IMG_URL}
   directories: ${IMG_UPLOAD_DIRECTORIES}
   default-img-name: ${DEFAULT_IMG_NAME}
+
+chicken-stock:
+  domain: ${CHICKENSTOCK_DOMAIN}
