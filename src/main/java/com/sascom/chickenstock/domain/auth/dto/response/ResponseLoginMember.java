@@ -16,6 +16,7 @@ public record ResponseLoginMember(
                 memberInfoForLogin.memberId(), memberInfoForLogin.nickName(),
                 memberInfoForLogin.webNoti(), memberInfoForLogin.kakaotalkNoti(),
                 accountInfoForLogin.rating(), accountInfoForLogin.balance(), accountInfoForLogin.isCompParticipant()
+
         );
     }
 }
