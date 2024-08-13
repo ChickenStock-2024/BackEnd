@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/daily-stock-price")
@@ -23,6 +24,12 @@ public class DailyStockPriceController {
         List<DailyStockPriceResponse> dailyStockPriceResponseList = dailyStockPriceService.getDailyStockPrices(companyId);
 
         return ResponseEntity.ok().body(dailyStockPriceResponseList);
+    }
+
+    @GetMapping("/test")
+    public ResponseEntity<?> test() {
+        ResponseEntity<?> response = dailyStockPriceService.automaticSaveDailyStockPrice();
+        return ResponseEntity.ok().body(response);
     }
 
 }
