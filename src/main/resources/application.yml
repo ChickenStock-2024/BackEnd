@@ -41,3 +41,6 @@ image:
   url: ${IMG_URL}
   directories: ${IMG_UPLOAD_DIRECTORIES}
   default-img-name: ${DEFAULT_IMG_NAME}
+
+chicken-stock:
+  domain: ${CHICKENSTOCK_DOMAIN}

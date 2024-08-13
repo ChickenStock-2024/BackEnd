@@ -3,6 +3,7 @@ package com.sascom.chickenstock.domain.member.service;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
 import com.sascom.chickenstock.domain.competition.repository.CompetitionRepository;
 import com.sascom.chickenstock.domain.member.dto.MagicNumbers;
+import com.sascom.chickenstock.domain.member.dto.MemberInfoForLogin;
 import com.sascom.chickenstock.domain.member.dto.request.ChangePasswordRequest;
 import com.sascom.chickenstock.domain.member.dto.response.MemberInfoResponse;
 import com.sascom.chickenstock.domain.member.dto.response.PrefixNicknameInfosResponse;
@@ -20,6 +21,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -50,7 +52,7 @@ public class MemberService {
     private String defaultImgName;
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-    
+
     @Autowired
     public MemberService(MemberRepository memberRepository,
                          AccountRepository accountRepository,
@@ -84,14 +86,12 @@ public class MemberService {
         Member member = memberRepository.findById(SecurityUtil.getCurrentMemberId())
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
 
-
         if(changePasswordRequest.newPassword() == null ||
-                !passwordEncoder.encode(changePasswordRequest.newPassword()).equals(
-                        changePasswordRequest.newPasswordCheck())) {
+                changePasswordRequest.newPassword().equals(changePasswordRequest.newPasswordCheck())) {
             throw MemberInfoChangeException.of(MemberErrorCode.PASSWORD_CONFIRMATION_ERROR);
         }
         if(changePasswordRequest.oldPassword() == null ||
-                !changePasswordRequest.oldPassword().equals(member.getPassword())) {
+                member.getPassword().equals(passwordEncoder.encode(changePasswordRequest.oldPassword()))) {
             throw MemberInfoChangeException.of(MemberErrorCode.INCORRECT_PASSWORD);
         }
         if(!isSafePassword(changePasswordRequest.newPassword())){
@@ -252,5 +252,14 @@ public class MemberService {
                 Scalr.OP_ANTIALIAS
         );
         ImageIO.write(bufferedImage, extension, dest);
+    }
+
+    public MemberInfoForLogin lookUpMemberInfoForLogin(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+        return new MemberInfoForLogin(
+                member.getId(), member.getNickname(),
+                member.isWebNoti(), member.isKakaotalkNoti()
+        );
     }
 }
