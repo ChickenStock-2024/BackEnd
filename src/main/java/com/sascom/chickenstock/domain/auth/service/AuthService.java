@@ -141,7 +141,7 @@ public class AuthService {
     }
 
     public String logout(String accessToken, String refreshToken) {
-        // Refresh Token 검증
+        // 1. Refresh Token 검증
         if (!jwtResolver.isValidToken(refreshToken)) {
             throw new RuntimeException("Refresh Token 이 유효하지 않습니다.");
         }
