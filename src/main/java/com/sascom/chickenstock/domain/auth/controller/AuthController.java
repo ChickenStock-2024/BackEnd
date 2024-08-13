@@ -1,18 +1,14 @@
 package com.sascom.chickenstock.domain.auth.controller;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sascom.chickenstock.domain.account.error.code.AccountErrorCode;
-import com.sascom.chickenstock.domain.account.error.exception.AccountDuplicateException;
-import com.sascom.chickenstock.domain.account.error.exception.AccountNotEnoughException;
 import com.sascom.chickenstock.domain.account.service.AccountService;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestLoginMember;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestSignupMember;
-import com.sascom.chickenstock.domain.auth.dto.response.AccountInfoForLogin;
+
 import com.sascom.chickenstock.domain.auth.dto.response.ResponseLoginMember;
 import com.sascom.chickenstock.domain.auth.dto.token.TokenDto;
 import com.sascom.chickenstock.domain.auth.service.AuthService;
-import com.sascom.chickenstock.domain.member.entity.Member;
+import com.sascom.chickenstock.domain.member.dto.MemberInfoForLogin;
+import com.sascom.chickenstock.domain.member.service.MemberFacade;
 import com.sascom.chickenstock.domain.member.service.MemberService;
 import com.sascom.chickenstock.global.error.code.AuthErrorCode;
 import com.sascom.chickenstock.global.error.exception.AuthException;
@@ -23,9 +19,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.util.WebUtils;
 
@@ -37,20 +34,26 @@ import java.util.Map;
 @RequestMapping("/auth")
 public class AuthController {
     private final AuthService authService;
-    private final MemberService memberService;
-    private final AccountService accountService;
     private final JwtProperties jwtProperties;
+    private final MemberFacade memberFacade;
+    private final AuthenticationManager authenticationManager;
     private final String BASE_URI;
 
     @Value("${oauth.redirect-uri}")
     private String oauthRedirectUri;
 
     @Autowired
-    public AuthController(AuthService authService, MemberService memberService, AccountService accountService, JwtProperties jwtProperties, @Value("${oauth.base-uri}") String baseUri) {
+    public AuthController(
+            AuthService authService,
+            MemberFacade memberFacade,
+            JwtProperties jwtProperties,
+            AuthenticationManager authenticationManager,
+            @Value("${oauth.base-uri}") String baseUri
+    ) {
         this.authService = authService;
-        this.memberService = memberService;
-        this.accountService = accountService;
         this.jwtProperties = jwtProperties;
+        this.memberFacade = memberFacade;
+        this.authenticationManager = authenticationManager;
         BASE_URI = baseUri;
     }
 
@@ -63,30 +66,13 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<ResponseLoginMember> login(@RequestBody RequestLoginMember requestLoginMember, HttpServletResponse response) {
-        TokenDto tokenDto = authService.login(requestLoginMember);
-        Member member = memberService.findByEmail(requestLoginMember.email());
 
-        AccountInfoForLogin accountInfoForLogin = accountService.getInfoForLogin(member.getId());
-        ResponseLoginMember responseLoginMember = new ResponseLoginMember(member, accountInfoForLogin);
-
-
-        ResponseCookie accessTokenCookie = ResponseCookie.from(jwtProperties.accessToken().cookieName(), tokenDto.accessToken())
-                .httpOnly(true)
-                .sameSite("None")
-                .secure(true)
-                .build();
-        ResponseCookie refreshTokenCookie = ResponseCookie.from(jwtProperties.refreshToken().cookieName(), tokenDto.refreshToken())
-                .httpOnly(true)
-                .sameSite("None")
-                .secure(true)
-                .build();
-
-
-        response.addHeader(HttpHeaders.SET_COOKIE, accessTokenCookie.toString());
-        response.addHeader(HttpHeaders.SET_COOKIE, refreshTokenCookie.toString());
-
-//        return ResponseEntity.status(HttpStatus.MOVED_PERMANENTLY).header(HttpHeaders.LOCATION, BASE_URI).body(responseLoginMember);
-        return ResponseEntity.ok(responseLoginMember);
+        Authentication authRequest =
+                UsernamePasswordAuthenticationToken.unauthenticated(
+                        requestLoginMember.email(), requestLoginMember.password());
+        Authentication authentication = authenticationManager.authenticate(authRequest);
+        ResponseLoginMember responseLoginMember = memberFacade.getLoginInfo(response, authentication);
+        return ResponseEntity.ok().body(responseLoginMember);
     }
 
     @GetMapping("/login/{socialId}")

@@ -12,11 +12,10 @@ import com.sascom.chickenstock.global.error.code.AuthErrorCode;
 import com.sascom.chickenstock.global.error.exception.AuthException;
 import com.sascom.chickenstock.global.jwt.JwtProvider;
 import com.sascom.chickenstock.global.jwt.JwtResolver;
+import com.sascom.chickenstock.global.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -134,5 +133,15 @@ public class AuthService {
         }
 
         return email;
+    }
+
+    public boolean validatePassword(String password) {
+        Member member = memberRepository.findById(SecurityUtil.getCurrentMemberId())
+                .orElseThrow(() -> AuthException.of(AuthErrorCode.AUTH_UNKNOWN));
+        return member.getPassword().equals(passwordEncoder.encode(password));
+    }
+
+    public String hashPassword(String password) {
+        return passwordEncoder.encode(password);
     }
 }
