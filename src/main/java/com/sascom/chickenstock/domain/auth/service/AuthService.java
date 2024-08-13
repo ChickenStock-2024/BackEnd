@@ -16,6 +16,8 @@ import com.sascom.chickenstock.global.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -24,8 +26,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 @Service
@@ -135,13 +140,25 @@ public class AuthService {
         return email;
     }
 
-    public boolean validatePassword(String password) {
-        Member member = memberRepository.findById(SecurityUtil.getCurrentMemberId())
-                .orElseThrow(() -> AuthException.of(AuthErrorCode.AUTH_UNKNOWN));
-        return member.getPassword().equals(passwordEncoder.encode(password));
-    }
+    public String logout(String accessToken, String refreshToken) {
+        // 1. Refresh Token 검증
+        if (!jwtResolver.isValidToken(refreshToken)) {
+            throw new RuntimeException("Refresh Token 이 유효하지 않습니다.");
+        }
 
-    public String hashPassword(String password) {
-        return passwordEncoder.encode(password);
+        // 2. Access Token 에서 memberId 추출
+        Authentication authentication = jwtResolver.getAuthentication(accessToken);
+        String storedRefreshToken = redisService.getValues(authentication.getName())
+                .orElseThrow(() -> new RuntimeException("이미 로그아웃된 사용자입니다."));
+        redisService.deleteValues(authentication.getName());
+
+        // 3. 해당 Access Token 유효시간 가지고 와서 BlackList 로 저장하기
+        Date expiration = jwtResolver.getExpirationDate(accessToken);
+        LocalDateTime expirationLocalDateTime = expiration.toInstant()
+                .atZone(ZoneId.systemDefault())  // 시스템 기본 시간대 사용
+                .toLocalDateTime();
+        redisService.setValues(accessToken, "logout", expirationLocalDateTime);
+
+        return "로그아웃 되었습니다.";
     }
 }

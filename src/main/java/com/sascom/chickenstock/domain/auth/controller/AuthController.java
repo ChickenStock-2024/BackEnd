@@ -122,4 +122,11 @@ public class AuthController {
         responseMap.put("email", validEmail);
         return ResponseEntity.accepted().body(responseMap);
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<String> logout(HttpServletRequest request, HttpServletResponse response) {
+        Cookie accesstokenCookie = WebUtils.getCookie(request, jwtProperties.accessToken().cookieName());
+        Cookie refreshtokenCookie = WebUtils.getCookie(request, jwtProperties.refreshToken().cookieName());
+        return ResponseEntity.ok(authService.logout(accesstokenCookie.getValue(), refreshtokenCookie.getValue()));
+    }
 }

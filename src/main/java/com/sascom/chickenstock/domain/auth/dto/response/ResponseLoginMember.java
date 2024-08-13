@@ -5,8 +5,8 @@ import com.sascom.chickenstock.domain.member.dto.MemberInfoForLogin;
 public record ResponseLoginMember(
         Long memberId,
         String nickName,
-        boolean webNoti,
-        boolean kakaotalkNoti,
+        Boolean webNoti,
+        Boolean kakaotalkNoti,
         Integer rating,
         Long balance,
         Boolean isCompParticipant
@@ -16,7 +16,6 @@ public record ResponseLoginMember(
                 memberInfoForLogin.memberId(), memberInfoForLogin.nickName(),
                 memberInfoForLogin.webNoti(), memberInfoForLogin.kakaotalkNoti(),
                 accountInfoForLogin.rating(), accountInfoForLogin.balance(), accountInfoForLogin.isCompParticipant()
-
         );
     }
 }

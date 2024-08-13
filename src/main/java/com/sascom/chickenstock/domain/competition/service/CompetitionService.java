@@ -3,19 +3,19 @@ package com.sascom.chickenstock.domain.competition.service;
 import com.sascom.chickenstock.domain.account.entity.Account;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
 import com.sascom.chickenstock.domain.competition.dto.request.CompetitionRequest;
+import com.sascom.chickenstock.domain.competition.dto.response.ActiveCompetitionResponse;
 import com.sascom.chickenstock.domain.competition.dto.response.CompetitionHistoryResponse;
 import com.sascom.chickenstock.domain.competition.dto.response.CompetitionListResponse;
 import com.sascom.chickenstock.domain.competition.entity.Competition;
-import com.sascom.chickenstock.domain.competition.error.code.CompetitionErrorCode;
-import com.sascom.chickenstock.domain.competition.error.exception.CompetitionNotFoundException;
 import com.sascom.chickenstock.domain.competition.repository.CompetitionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Transactional(readOnly = true)
@@ -76,6 +76,27 @@ public class CompetitionService {
                                 .createdAt(history.getCreatedAt())
                                 .build())
                 .toList();
+    }
+
+    public ActiveCompetitionResponse findLatestCompetition() {
+        Optional<Competition> competition = competitionRepository.findTopByOrderByIdDesc();
+
+        if (competition.isPresent() && isActiveCompetition(competition.get())) {
+            Competition activeCompetition = competition.get();
+            return new ActiveCompetitionResponse(
+                    true,
+                    activeCompetition.getTitle(),
+                    activeCompetition.getStartAt(),
+                    activeCompetition.getEndAt()
+            );
+        }
+
+        return new ActiveCompetitionResponse(false, null, null, null);
+    }
+
+    public boolean isActiveCompetition(Competition competition) {
+        LocalDateTime now = LocalDateTime.now();
+        return competition.getStartAt().isBefore(now) && competition.getEndAt().isAfter(now);
     }
 
 }
