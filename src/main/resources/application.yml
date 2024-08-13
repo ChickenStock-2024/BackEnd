@@ -38,6 +38,7 @@ jwt:
   refresh-token:
     expire-duration: ${REFRESH_TOKEN_EXPIRE_DURATION}
     cookie-name: ${REFRESH_TOKEN_NAME}
+  cookie-path: ${COOKIE_PATH}
 
 image:
   url: ${IMG_URL}

@@ -33,6 +33,8 @@ public class MemberFacade {
     private final boolean COOKIE_HTTP_ONLY = true;
     @Value("${chicken-stock.domain}")
     private String COOKIE_DOMAIN;
+    @Value("${jwt.cookie-path}")
+    private String COOKIE_PATH;
     private final String COOKIE_SAME_SITE = "NONE";
     private final boolean COOKIE_SECURE = true;
 
@@ -70,12 +72,14 @@ public class MemberFacade {
         ResponseCookie accessTokenCookie = ResponseCookie.from(jwtProperties.accessToken().cookieName(), accessToken)
                 .httpOnly(COOKIE_HTTP_ONLY)
                 .domain(COOKIE_DOMAIN)
+                .path(COOKIE_PATH)
                 .sameSite(COOKIE_SAME_SITE)
                 .secure(COOKIE_SECURE)
                 .build();
         ResponseCookie refreshTokenCookie = ResponseCookie.from(jwtProperties.refreshToken().cookieName(), refreshToken)
                 .httpOnly(COOKIE_HTTP_ONLY)
                 .domain(COOKIE_DOMAIN)
+                .path(COOKIE_PATH)
                 .sameSite(COOKIE_SAME_SITE)
                 .secure(COOKIE_SECURE)
                 .build();
