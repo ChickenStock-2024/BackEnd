@@ -176,7 +176,7 @@ public class MemberService {
     }
 
     @Transactional
-    public void setImage(MultipartFile file) {
+    public String setImage(MultipartFile file) {
         Member member = memberRepository.findById(SecurityUtil.getCurrentMemberId())
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
         if(file.isEmpty()) {
@@ -186,7 +186,13 @@ public class MemberService {
         byte[] fileBytes = null;
         String extension = null;
         try {
-            extension = getFileExtension(file, fileBytes);
+            fileBytes = file.getBytes();
+            if (MagicNumbers.JPG.is(fileBytes)) {
+                extension = "jpg";
+            }
+            else if (MagicNumbers.PNG.is(fileBytes)) {
+                extension = "png";
+            }
         } catch(IOException e) {
             throw MemberImageException.of(MemberErrorCode.IO_ERROR);
         }
@@ -205,6 +211,7 @@ public class MemberService {
         } catch(IOException e) {
             throw MemberImageException.of(MemberErrorCode.IO_ERROR);
         }
+        return imgUrl + fileName;
     }
 
     public byte[] getImage(Long id) {
@@ -227,18 +234,6 @@ public class MemberService {
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
         member.updateImgName(defaultImgName);
         memberRepository.save(member);
-    }
-
-    private String getFileExtension(MultipartFile file, byte[] fileBytes) throws IOException {
-        String extension = null;
-        fileBytes = file.getBytes();
-        if (MagicNumbers.JPG.is(fileBytes)) {
-            extension = "jpg";
-        }
-        else if (MagicNumbers.PNG.is(fileBytes)) {
-            extension = "png";
-        }
-        return extension;
     }
 
     private void saveFile(byte[] fileBytes, String fileName, String extension) throws IOException {
