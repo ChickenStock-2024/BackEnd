@@ -2,6 +2,7 @@ package com.sascom.chickenstock.domain.competition.controller;
 
 import com.sascom.chickenstock.domain.account.service.AccountService;
 import com.sascom.chickenstock.domain.competition.dto.request.CompetitionParticipationRequest;
+import com.sascom.chickenstock.domain.competition.dto.response.ActiveCompetitionResponse;
 import com.sascom.chickenstock.domain.competition.dto.response.CompetitionHistoryResponse;
 import com.sascom.chickenstock.domain.competition.dto.response.CompetitionListResponse;
 import com.sascom.chickenstock.domain.competition.service.CompetitionService;
@@ -22,6 +23,12 @@ public class CompetitionController {
     @PostMapping
     public void participateCompetition(@RequestBody CompetitionParticipationRequest request){
         accountService.createAccount(request.memberId(), request.competitionId());
+    }
+
+    @GetMapping
+    public ResponseEntity<ActiveCompetitionResponse> getCompetition() {
+        ActiveCompetitionResponse latestCompetition = competitionService.findLatestCompetition();
+        return ResponseEntity.ok(latestCompetition);
     }
 
     @GetMapping("/all/{memberId}")
