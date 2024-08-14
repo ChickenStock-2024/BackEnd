@@ -45,6 +45,7 @@ public class DailyStockPriceService {
                         .closingPrice(dailyStockPrice.getClosingPrice())
                         .highPrice(dailyStockPrice.getHighPrice())
                         .lowPrice(dailyStockPrice.getLowPrice())
+                        .volume(dailyStockPrice.getVolume())
                         .build())
                 .toList();
 
