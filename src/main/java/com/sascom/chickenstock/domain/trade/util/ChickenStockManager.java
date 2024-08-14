@@ -1,6 +1,8 @@
 package com.sascom.chickenstock.domain.trade.util;
 
 import com.fasterxml.jackson.databind.deser.DataFormatReaders;
+import com.sascom.chickenstock.domain.account.repository.AccountRepository;
+import com.sascom.chickenstock.domain.account.service.RedisService;
 import com.sascom.chickenstock.domain.trade.dto.MatchStatus;
 import com.sascom.chickenstock.domain.trade.dto.ProcessedOrderDto;
 import com.sascom.chickenstock.domain.trade.dto.RealStockTradeDto;
@@ -14,10 +16,14 @@ import java.util.List;
 public class ChickenStockManager implements StockManager {
     private ChickenStockQueue<SellTradeRequest> sellQueue;
     private ChickenStockQueue<BuyTradeRequest> buyQueue;
+    private RedisService redisService;
+    private AccountRepository accountRepository;
 
-    public ChickenStockManager() {
+    public ChickenStockManager(RedisService redisService, AccountRepository accountRepository) {
         sellQueue = new ChickenStockQueueImpl<>();
         buyQueue = new ChickenStockQueueImpl<>();
+        this.redisService = redisService;
+        this.accountRepository = accountRepository;
     }
 
     @Override
