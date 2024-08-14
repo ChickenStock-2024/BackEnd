@@ -91,7 +91,7 @@ public class MemberService {
             throw MemberInfoChangeException.of(MemberErrorCode.PASSWORD_CONFIRMATION_ERROR);
         }
         if(changePasswordRequest.oldPassword() == null ||
-                !member.getPassword().equals(passwordEncoder.encode(changePasswordRequest.oldPassword()))) {
+                !passwordEncoder.matches(changePasswordRequest.oldPassword(), member.getPassword())) {
             throw MemberInfoChangeException.of(MemberErrorCode.INCORRECT_PASSWORD);
         }
         if(!isSafePassword(changePasswordRequest.newPassword())){
