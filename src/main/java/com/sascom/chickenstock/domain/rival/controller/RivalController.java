@@ -21,17 +21,17 @@ public class RivalController {
     }
 
     @PostMapping("/{rival_id}")
-    public ResponseEntity<?> enroll(@PathVariable("rival_id") Long rivalId) {
+    public ResponseEntity<Boolean> enroll(@PathVariable("rival_id") Long rivalId) {
         rivalService.enroll(rivalId);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(true);
     }
 
     @DeleteMapping("/{rival_id}")
-    public ResponseEntity<?> delete(@PathVariable("rival_id") Long rivalId) {
+    public ResponseEntity<Boolean> delete(@PathVariable("rival_id") Long rivalId) {
         rivalService.delete(rivalId);
 
-        return ResponseEntity.ok().build();
+        return ResponseEntity.ok().body(false);
     }
 
     @GetMapping

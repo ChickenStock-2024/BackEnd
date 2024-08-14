@@ -109,9 +109,9 @@ public class RivalService {
 
         for(Rival rival : rivals) {
             if(rival.getEnemy().getId().equals(rivalId)) {
-                return new CheckRivalResponse("true");
+                return new CheckRivalResponse(true);
             }
         }
-        return new CheckRivalResponse("false");
+        return new CheckRivalResponse(false);
     }
 }
