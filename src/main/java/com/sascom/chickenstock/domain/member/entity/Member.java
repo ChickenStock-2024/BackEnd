@@ -65,14 +65,14 @@ public class Member extends BaseTimeEntity {
     @OneToMany(mappedBy = "member")
     private List<CompanyLike> companyLikes;
 
-    public Member(String nickName, String email, String password) {
-        this.nickname = nickName;
+    public Member(String nickname, String email, String password) {
+        this.nickname = nickname;
         this.email = email;
         this.password = password;
     }
 
-    public Member(String nickName, String email, String password, String imgName) {
-        this.nickname = nickName;
+    public Member(String nickname, String email, String password, String imgName) {
+        this.nickname = nickname;
         this.email = email;
         this.password = password;
         this.imgName = imgName;

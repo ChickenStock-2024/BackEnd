@@ -47,6 +47,7 @@ image:
 
 chicken-stock:
   domain: ${CHICKENSTOCK_DOMAIN}
+  admin-key: ${CHICKENSTOCK_KEY}
 
 kis:
   app-key: ${KIS_APPKEY}
