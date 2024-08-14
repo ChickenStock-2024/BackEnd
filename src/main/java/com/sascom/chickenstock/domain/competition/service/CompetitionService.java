@@ -2,6 +2,7 @@ package com.sascom.chickenstock.domain.competition.service;
 
 import com.sascom.chickenstock.domain.account.entity.Account;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
+import com.sascom.chickenstock.domain.company.entity.Company;
 import com.sascom.chickenstock.domain.competition.dto.request.CompetitionRequest;
 import com.sascom.chickenstock.domain.competition.dto.response.ActiveCompetitionResponse;
 import com.sascom.chickenstock.domain.competition.dto.response.CompetitionHistoryResponse;
