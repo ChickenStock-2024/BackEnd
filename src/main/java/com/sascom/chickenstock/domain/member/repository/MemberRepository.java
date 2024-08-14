@@ -15,8 +15,8 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     @Query(value = "SELECT " +
             "member.member_id AS memberId, " +
             "member.nickname AS nickname, " +
-            "SUM(account.balance) AS profit, " +
-            "SUM(account.rating_change) AS rating, " +
+            "COALESCE(SUM(account.balance), 0) AS profit, " +
+            "COALESCE(SUM(account.rating_change), 0) AS rating, " +
             "COUNT(account.account_id) AS competitionCount," +
             "RANK() OVER (ORDER BY SUM(account.rating_change) DESC) AS ranking " +
             "FROM member " +
