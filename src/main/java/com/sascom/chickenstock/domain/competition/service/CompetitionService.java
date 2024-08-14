@@ -3,7 +3,7 @@ package com.sascom.chickenstock.domain.competition.service;
 import com.sascom.chickenstock.domain.account.entity.Account;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
 import com.sascom.chickenstock.domain.competition.dto.request.CompetitionRequest;
-import com.sascom.chickenstock.domain.competition.dto.response.ActiveCompetitionResponse;
+import com.sascom.chickenstock.domain.competition.dto.response.CompetitionInfoResponse;
 import com.sascom.chickenstock.domain.competition.dto.response.CompetitionHistoryResponse;
 import com.sascom.chickenstock.domain.competition.dto.response.CompetitionListResponse;
 import com.sascom.chickenstock.domain.competition.entity.Competition;
@@ -78,20 +78,21 @@ public class CompetitionService {
                 .toList();
     }
 
-    public ActiveCompetitionResponse findLatestCompetition() {
+    public CompetitionInfoResponse findLatestCompetition() {
         Optional<Competition> competition = competitionRepository.findTopByOrderByIdDesc();
 
         if (competition.isPresent() && isActiveCompetition(competition.get())) {
             Competition activeCompetition = competition.get();
-            return new ActiveCompetitionResponse(
+            return new CompetitionInfoResponse(
                     true,
+                    activeCompetition.getId(),
                     activeCompetition.getTitle(),
                     activeCompetition.getStartAt(),
                     activeCompetition.getEndAt()
             );
         }
 
-        return new ActiveCompetitionResponse(false, null, null, null);
+        return CompetitionInfoResponse.createInactiveCompetitionResponse();
     }
 
     public boolean isActiveCompetition(Competition competition) {

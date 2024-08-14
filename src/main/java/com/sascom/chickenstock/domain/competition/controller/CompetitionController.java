@@ -2,7 +2,7 @@ package com.sascom.chickenstock.domain.competition.controller;
 
 import com.sascom.chickenstock.domain.account.service.AccountService;
 import com.sascom.chickenstock.domain.competition.dto.request.CompetitionParticipationRequest;
-import com.sascom.chickenstock.domain.competition.dto.response.ActiveCompetitionResponse;
+import com.sascom.chickenstock.domain.competition.dto.response.CompetitionInfoResponse;
 import com.sascom.chickenstock.domain.competition.dto.response.CompetitionHistoryResponse;
 import com.sascom.chickenstock.domain.competition.dto.response.CompetitionListResponse;
 import com.sascom.chickenstock.domain.competition.service.CompetitionService;
@@ -21,25 +21,25 @@ public class CompetitionController {
     private final AccountService accountService;
 
     @PostMapping
-    public void participateCompetition(@RequestBody CompetitionParticipationRequest request){
+    public void participateCompetition(@RequestBody CompetitionParticipationRequest request) {
         accountService.createAccount(request.memberId(), request.competitionId());
     }
 
     @GetMapping
-    public ResponseEntity<ActiveCompetitionResponse> getCompetition() {
-        ActiveCompetitionResponse latestCompetition = competitionService.findLatestCompetition();
+    public ResponseEntity<CompetitionInfoResponse> getCompetition() {
+        CompetitionInfoResponse latestCompetition = competitionService.findLatestCompetition();
         return ResponseEntity.ok(latestCompetition);
     }
 
     @GetMapping("/all/{memberId}")
-    public ResponseEntity<List<CompetitionListResponse>> getAllCompetition(@PathVariable("memberId") Long memberId){
+    public ResponseEntity<List<CompetitionListResponse>> getAllCompetition(@PathVariable("memberId") Long memberId) {
         List<CompetitionListResponse> competitionListResponses = competitionService.findAllCompetitionByMember(memberId);
 
         return ResponseEntity.ok().body(competitionListResponses);
     }
 
     @GetMapping("/history/{account_id}")
-    public ResponseEntity<List<CompetitionHistoryResponse>> getAllHistoryByCompetitionId(@PathVariable("account_id") Long accountId){
+    public ResponseEntity<List<CompetitionHistoryResponse>> getAllHistoryByCompetitionId(@PathVariable("account_id") Long accountId) {
         List<CompetitionHistoryResponse> competitionHistoryResponseList = competitionService.findAllHistoryByCompetition(accountId);
 
         return ResponseEntity.ok().body(competitionHistoryResponseList);
