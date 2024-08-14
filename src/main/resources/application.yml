@@ -9,17 +9,17 @@ spring:
     password: ${MYSQL_PASSWORD}
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     properties:
       hibernate:
         format_sql: true
     defer-datasource-initialization: true
 #  jackson:
 #    property-naming-strategy: SNAKE_CASE
-  sql:
-    init:
-      mode: always
-      show_sql: true
+#  sql:
+#    init:
+#      mode: always
+#      show_sql: true
 
 websocket:
   url: ${SOCKET_URL}
