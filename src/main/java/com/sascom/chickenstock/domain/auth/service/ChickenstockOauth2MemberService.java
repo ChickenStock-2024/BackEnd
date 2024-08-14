@@ -31,13 +31,16 @@ class ChickenstockOauth2MemberService extends DefaultOAuth2UserService {
         OAuth2MemberInfo oAuth2MemberInfo = OAuth2MemberInfo.of(registrationId, attributes);
 
         Member member = loginOrSignup(oAuth2MemberInfo);
-        rankingService.joinNewMember(member.getId());
         return new MemberPrincipalDetails(member, attributes, userNameAttributeName);
     }
 
     protected Member loginOrSignup(OAuth2MemberInfo oAuth2Member) {
         Member member = memberRepository.findByEmail(oAuth2Member.email())
-                .orElseGet(() -> memberRepository.save(oAuth2Member.toEntity()));
+                .orElseGet(() -> {
+                    Member savedMember = memberRepository.save(oAuth2Member.toEntity());
+                    rankingService.joinNewMember(savedMember.getId());
+                    return savedMember;
+                });
         log.debug("logined member: {} {}", member.getId(), member.getNickname());
         return member;
     }
