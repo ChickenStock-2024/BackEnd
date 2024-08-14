@@ -4,7 +4,7 @@ import com.sascom.chickenstock.domain.member.dto.MemberInfoForLogin;
 
 public record ResponseLoginMember(
         Long memberId,
-        String nickName,
+        String nickname,
         Boolean webNoti,
         Boolean kakaotalkNoti,
         Integer rating,
@@ -13,7 +13,7 @@ public record ResponseLoginMember(
 ) {
     public ResponseLoginMember(MemberInfoForLogin memberInfoForLogin, AccountInfoForLogin accountInfoForLogin){
         this(
-                memberInfoForLogin.memberId(), memberInfoForLogin.nickName(),
+                memberInfoForLogin.memberId(), memberInfoForLogin.nickname(),
                 memberInfoForLogin.webNoti(), memberInfoForLogin.kakaotalkNoti(),
                 accountInfoForLogin.rating(), accountInfoForLogin.balance(), accountInfoForLogin.isCompParticipant()
 

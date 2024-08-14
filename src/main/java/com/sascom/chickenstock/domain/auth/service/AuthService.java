@@ -49,7 +49,7 @@ public class AuthService {
 
     @Transactional
     public void signup(RequestSignupMember requestSignupMember) {
-        if (!requestSignupMember.password().equals(requestSignupMember.password_check())) {
+        if (!requestSignupMember.password().equals(requestSignupMember.passwordCheck())) {
             throw new IllegalArgumentException(AuthErrorCode.SIGNUP_PASSWORD_MISMATCH.getMessage());
         }
 
