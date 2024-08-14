@@ -15,7 +15,7 @@ public record StockOrderRequest (
         Long competitionId,
         String companyName,
         Integer unitCost,
-        Integer amount
+        Integer volume
 ) {
         public BuyTradeRequest toBuyTradeRequestEntity(
                 Long historyId,
@@ -30,7 +30,7 @@ public record StockOrderRequest (
                         .companyName(companyName)
                         .competitionId(competitionId)
                         .unitCost(orderType == OrderType.LIMIT? unitCost : 0)
-                        .totalOrderVolume(amount)
+                        .totalOrderVolume(volume)
                         .orderTime(orderTime)
                         .build();
         }
@@ -48,7 +48,7 @@ public record StockOrderRequest (
                         .companyName(companyName)
                         .competitionId(competitionId)
                         .unitCost(orderType == OrderType.LIMIT? unitCost : 0)
-                        .totalOrderVolume(amount)
+                        .totalOrderVolume(volume)
                         .orderTime(orderTime)
                         .build();
         }

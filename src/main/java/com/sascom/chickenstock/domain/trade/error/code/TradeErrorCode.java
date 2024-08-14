@@ -10,7 +10,8 @@ public enum TradeErrorCode implements ChickenStockErrorCode {
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "002", "이미 처리되었거나 존재하지 않는 주문입니다."),
     INVALID_VALUE(HttpStatus.BAD_REQUEST, "003", "올바르지 않은 값입니다."),
     INVALID_ORDER(HttpStatus.BAD_REQUEST, "004", "올바르지 않은 주문입니다."),
-    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "005", "주문이 누락되었습니다.");
+    INTERNAL_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "005", "주문이 누락되었습니다."),
+    SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "006", "서버 로직 에러");
 
     TradeErrorCode(HttpStatus status, String code, String message) {
         this.status = status;

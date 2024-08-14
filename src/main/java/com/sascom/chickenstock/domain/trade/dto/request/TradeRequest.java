@@ -52,9 +52,9 @@ public abstract class TradeRequest {
     /**
      * compareByVolumeTime - 수량우선의 원칙
      * @param other - TradeRequest that you want to compare volume with this.
-     * @return 0 if amount of this is  equal   to  that of other.
-     *         - if amount of this is greater than that of other.
-     *         + if amount of this is   less  than that of other.
+     * @return 0 if volume of this is  equal   to  that of other.
+     *         - if volume of this is greater than that of other.
+     *         + if volume of this is   less  than that of other.
      */
     public final int compareByVolume(TradeRequest other) {
         return -this.totalOrderVolume.compareTo(other.getTotalOrderVolume());
