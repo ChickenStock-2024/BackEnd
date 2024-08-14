@@ -3,6 +3,7 @@ package com.sascom.chickenstock.global.oauth.handler;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sascom.chickenstock.domain.auth.dto.response.ResponseLoginMember;
 import com.sascom.chickenstock.domain.member.service.MemberFacade;
+import com.sascom.chickenstock.global.jwt.JwtProvider;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -20,32 +21,22 @@ import java.nio.charset.StandardCharsets;
 @Component
 class OAuth2SuccessHandler implements AuthenticationSuccessHandler {
 
+    public static final String KAKAO_LOGIN = "/kakaoLogin";
     private final String BASE_URI;
     private final MemberFacade memberFacade;
-    private final ObjectMapper objectMapper;
 
     @Autowired
     public OAuth2SuccessHandler(
             @Value("${oauth.base-uri}") String baseUri,
-            MemberFacade memberFacade,
-            ObjectMapper objectMapper
+            MemberFacade memberFacade
     ) {
         this.BASE_URI = baseUri;
         this.memberFacade = memberFacade;
-        this.objectMapper = objectMapper;
     }
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException {
-        response.addHeader(HttpHeaders.CONTENT_TYPE, "application/json");
-
-        response.setCharacterEncoding(StandardCharsets.UTF_8.name());
-        ResponseLoginMember memberInfoForLogin = memberFacade.getLoginInfo(response, authentication);
-        try(PrintWriter pw = response.getWriter()) {
-            String body = objectMapper.writeValueAsString(memberInfoForLogin);
-            pw.write(body);
-            pw.flush();
-        }
-        response.setStatus(HttpServletResponse.SC_OK);
+        memberFacade.getLoginInfo(response, authentication);
+        response.sendRedirect(BASE_URI + KAKAO_LOGIN);
     }
 }
