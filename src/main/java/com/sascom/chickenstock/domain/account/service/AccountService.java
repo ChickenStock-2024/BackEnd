@@ -2,10 +2,7 @@ package com.sascom.chickenstock.domain.account.service;
 
 import com.sascom.chickenstock.domain.account.dto.request.CancelOrderRequest;
 import com.sascom.chickenstock.domain.account.dto.request.StockOrderRequest;
-import com.sascom.chickenstock.domain.account.dto.response.AccountInfoResponse;
-import com.sascom.chickenstock.domain.account.dto.response.ExecutionContentResponse;
-import com.sascom.chickenstock.domain.account.dto.response.HistoryInfo;
-import com.sascom.chickenstock.domain.account.dto.response.StockInfo;
+import com.sascom.chickenstock.domain.account.dto.response.*;
 import com.sascom.chickenstock.domain.account.entity.Account;
 import com.sascom.chickenstock.domain.account.error.code.AccountErrorCode;
 import com.sascom.chickenstock.domain.account.error.exception.AccountNotEnoughException;
@@ -16,6 +13,7 @@ import com.sascom.chickenstock.domain.company.entity.Company;
 import com.sascom.chickenstock.domain.company.error.code.CompanyErrorCode;
 import com.sascom.chickenstock.domain.company.error.exception.CompanyNotFoundException;
 import com.sascom.chickenstock.domain.company.repository.CompanyRepository;
+import com.sascom.chickenstock.domain.company.service.CompanyService;
 import com.sascom.chickenstock.domain.competition.entity.Competition;
 import com.sascom.chickenstock.domain.competition.error.code.CompetitionErrorCode;
 import com.sascom.chickenstock.domain.competition.error.exception.CompetitionNotFoundException;
@@ -31,6 +29,7 @@ import com.sascom.chickenstock.domain.member.error.code.MemberErrorCode;
 import com.sascom.chickenstock.domain.member.error.exception.MemberNotFoundException;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
 import com.sascom.chickenstock.domain.trade.dto.OrderType;
+import com.sascom.chickenstock.domain.trade.dto.TradeType;
 import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.SellTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.response.CancelOrderResponse;
@@ -55,10 +54,11 @@ public class AccountService {
     private final HistoryRepository historyRepository;
     private final MemberRepository memberRepository;
     private final CompetitionRepository competitionRepository;
-    private final CompanyRepository companyRepository;
     private final RedisService redisService;
     private final TradeService tradeService;
     private final CompetitionService competitionService;
+    private final CompanyService companyService;
+    private final CompanyRepository companyRepository;
 
     @Transactional
     public Long createAccount(Long memberId, Long competitionId) {
@@ -88,8 +88,10 @@ public class AccountService {
             st.nextToken();
             st.nextToken();
             st.nextToken();
+            Long companyId = Long.valueOf(st.nextToken());
+            Company company = companyService.findById(companyId);
 
-            stocks.add(new StockInfo(st.nextToken(),
+            stocks.add(new StockInfo(company.getName(),
                     Integer.valueOf(stockData.get("price")),
                     Integer.valueOf(stockData.get("volume")))
             );
@@ -181,6 +183,7 @@ public class AccountService {
                 stockOrderRequest.toSellTradeRequestEntity(historyId, history.getCreatedAt(), OrderType.LIMIT)
         );
     }
+
 
     @Transactional
     public TradeResponse buyMarketStocks(StockOrderRequest stockOrderRequest) {
@@ -366,7 +369,22 @@ public class AccountService {
             throw HistoryNotFoundException.of(HistoryErrorCode.INVALID_VALUE);
         }
         return history;
+    }
 
+    public UnexecutionContentResponse getUnexecutionContent(Long accountId) {
+        Map<String,Map<String,String>> Unexcuted = redisService.getUnexcutionContent(accountId);
+        List<UnexcutedStockInfo> unexcutedStockInfos = new ArrayList<>();
+
+        for (Map.Entry<String, Map<String, String>> entry : Unexcuted.entrySet()) {
+            Map<String, String> stockData = entry.getValue();
+
+            unexcutedStockInfos.add(new UnexcutedStockInfo(Long.valueOf("companyId"),
+                    Integer.valueOf(stockData.get("price")),
+                    Integer.valueOf(stockData.get("volume")),
+                    TradeType.valueOf(stockData.get("tradeType")))
+            );
+        }
+        return new UnexecutionContentResponse(unexcutedStockInfos);
     }
 }
 

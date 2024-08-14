@@ -1,0 +1,35 @@
+package com.sascom.chickenstock.domain.dailystockprice.dto.response.kis;
+
+public record TodayStockInfo (
+        String prdy_vrss,
+        String prdy_vrss_sign,
+        String prdy_ctrt,
+        String stck_prdy_clpr,
+        String acml_vol,
+        String acml_tr_pbmn,
+        String hts_kor_isnm,
+        String stck_prpr,
+        String stck_shrn_iscd,
+        String prdy_vol,
+        String stck_mxpr,
+        String stck_llam,
+        String stck_oprc,
+        String stck_hgpr,
+        String stck_lwpr,
+        String stck_prdy_oprc,
+        String stck_prdy_hgpr,
+        String stck_prdy_lwpr,
+        String askp,
+        String bidp,
+        String prdy_vrss_vol,
+        String vol_tnrt,
+        String stck_fcam,
+        String lstn_stcn,
+        String cpfn,
+        String hts_avls,
+        String per,
+        String eps,
+        String pbr,
+        String itewhol_loan_rmnd_ratem_name
+) {
+}

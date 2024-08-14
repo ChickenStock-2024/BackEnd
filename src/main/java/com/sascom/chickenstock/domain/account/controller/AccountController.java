@@ -5,6 +5,7 @@ import com.sascom.chickenstock.domain.account.dto.request.CancelOrderRequest;
 import com.sascom.chickenstock.domain.account.dto.request.StockOrderRequest;
 import com.sascom.chickenstock.domain.account.dto.response.AccountInfoResponse;
 import com.sascom.chickenstock.domain.account.dto.response.ExecutionContentResponse;
+import com.sascom.chickenstock.domain.account.dto.response.UnexecutionContentResponse;
 import com.sascom.chickenstock.domain.account.service.AccountService;
 import com.sascom.chickenstock.domain.trade.dto.response.CancelOrderResponse;
 import com.sascom.chickenstock.domain.trade.dto.response.TradeResponse;
@@ -12,6 +13,8 @@ import org.apache.coyote.Response;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/account")
@@ -39,6 +42,11 @@ public class AccountController {
     @GetMapping("/{accountId}/execution")
     public ExecutionContentResponse getExecutionContent(@PathVariable("accountId") Long accountId){
         return accountService.getExecutionContent(accountId);
+    }
+
+    @GetMapping("/{accountId}/unexecution")
+    public UnexecutionContentResponse getUnexecutionContent(@PathVariable("accountId") Long accountId){
+        return accountService.getUnexecutionContent(accountId);
     }
 
     @PostMapping("/buy/limit")

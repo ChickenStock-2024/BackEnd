@@ -48,4 +48,9 @@ public class CompanyService {
                                 .name(company.getName()).status(company.getStatus()).build())
                 .toList();
     }
+
+    public Company findById(Long companyId) {
+        return companyRepository.findById(companyId)
+                .orElseThrow(() ->  CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
+    }
 }

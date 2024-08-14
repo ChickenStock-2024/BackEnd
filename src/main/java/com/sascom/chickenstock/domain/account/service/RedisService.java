@@ -1,6 +1,8 @@
 package com.sascom.chickenstock.domain.account.service;
 
 import com.sascom.chickenstock.domain.account.dto.response.StockInfo;
+import com.sascom.chickenstock.domain.account.dto.response.UnexecutionContentResponse;
+import com.sascom.chickenstock.domain.trade.dto.TradeType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.HashOperations;
@@ -78,16 +80,16 @@ public class RedisService {
 //
 //    }
 
-    public void setStockInfo(Long accountId, String companyName, Integer price, Integer volume) {
-        String key = "account:" + accountId +":companyName:" + companyName;
-        Map<String, String> stockData = new HashMap<>();
-        stockData.put("price", price.toString());
-        stockData.put("volume", volume.toString());
-        setHashOps(key, stockData);
-    }
+//    public void setStockInfo(Long accountId, Long companyId, Integer price, Integer volume) {
+//        String key = "accountId:" + accountId +":companyId:" + companyId;
+//        Map<String, String> stockData = new HashMap<>();
+//        stockData.put("price", price.toString());
+//        stockData.put("volume", volume.toString());
+//        setHashOps(key, stockData);
+//    }
 
     public Map<String, Map<String, String>> getStockInfo(Long accountId) {
-        String pattern = "accountId:" + accountId + ":companyName:*";
+        String pattern = "accountId:" + accountId + ":companyId:*";
         Set<String> keys = redisTemplate.keys(pattern);
 
         Map<String, Map<String, String>> StockInfo = new HashMap<>();
@@ -107,8 +109,9 @@ public class RedisService {
         return StockInfo;
     }
 
-    public void updateStockInfo(Long accountId, String companyName, int newAmount, double newPrice) {
-        String pattern = "accountId:" + accountId + ":companyName:" + companyName;
+    // 보유 주식(Redis)에 update(== set)
+    public void updateStockInfo(Long accountId, Long companyId, int newVolume, double newPrice) {
+        String pattern = "accountId:" + accountId + ":companyId:" + companyId;
         Set<String> keys = redisTemplate.keys(pattern);
 
         if (keys != null && !keys.isEmpty()) {
@@ -119,19 +122,74 @@ public class RedisService {
                 Map<Object, Object> entries = hashOps.entries(key);
 
                 // 필요한 필드만 삭제합니다.
-                if (entries.containsKey("amount")) {
-                    hashOps.delete(key, "amount");
+                if (entries.containsKey("volume")) {
+                    hashOps.delete(key, "volume");
                 }
                 if (entries.containsKey("price")) {
                     hashOps.delete(key, "price");
                 }
 
                 // 새로운 값을 추가합니다.
-                hashOps.put(key, "amount", String.valueOf(newAmount));
+                hashOps.put(key, "volume", String.valueOf(newVolume));
                 hashOps.put(key, "price", String.valueOf(newPrice));
             }
         }
     }
 
+    // 미체결내역 redis에 저장 (historyId + accountId)를 key로 해서
+    public void updateUnexecution(Long historyId, Long accountId, Long companyId,
+                                  TradeType tradeType, int volume, int price) {
+        // 정확한 키를 사용하여 접근
+        String key = "historyId:" + historyId + ":accountId:" + accountId;
+        HashOperations<String, Object, Object> hashOps = redisTemplate.opsForHash();
+
+        // Redis에 해당 키가 존재하는지 체크 후 값 추가
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+            hashOps.put(key, "companyId", String.valueOf(companyId));
+            hashOps.put(key, "tradeType", String.valueOf(tradeType));
+            hashOps.put(key, "volume", String.valueOf(volume));
+            hashOps.put(key, "price", String.valueOf(price));
+        } else {
+            // 키가 없을 때의 처리 (필요시)
+        }
+    }
+
+    // 매매 취소 -> 미체결내역 취소
+    public void deleteUnexecution(Long historyId, Long accountId) {
+        String pattern = "historyId:" + historyId + ":accountId:" + accountId;
+        Set<String> keys = redisTemplate.keys(pattern);
+
+        if (keys != null && !keys.isEmpty()) {
+            // 첫 번째 키만 사용
+            String key = keys.iterator().next();
+            HashOperations<String, Object, Object> hashOps = redisTemplate.opsForHash();
+
+            hashOps.delete(key, "tradeType");
+            hashOps.delete(key, "volume");
+            hashOps.delete(key, "price");
+        }
+    }
+
+    // 해당 사용자의 미체결내역 모두 보여주기 (by memberId)
+    public Map<String, Map<String, String>> getUnexcutionContent(Long accountId) {
+        String pattern = "historyId:*" + ":accountId:" + accountId;
+        Set<String> keys = redisTemplate.keys(pattern);
+
+        Map<String, Map<String, String>> StockInfo = new HashMap<>();
+
+        if (keys != null && !keys.isEmpty()) {
+            HashOperations<String, Object, Object> hashOps = redisTemplate.opsForHash();
+
+            for (String key : keys) {
+                Map<Object, Object> entries = hashOps.entries(key);
+                Map<String, String> stockData = new HashMap<>();
+                for (Map.Entry<Object, Object> entry : entries.entrySet()) {
+                    stockData.put(entry.getKey().toString(), entry.getValue().toString());
+                }
+                StockInfo.put(key, stockData);
+            }
+        }
+        return StockInfo;
+    }
 
 }

@@ -2,6 +2,7 @@ package com.sascom.chickenstock.domain.auth.service;
 
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
+import com.sascom.chickenstock.domain.ranking.service.RankingService;
 import com.sascom.chickenstock.global.oauth.dto.MemberPrincipalDetails;
 import com.sascom.chickenstock.global.oauth.dto.OAuth2MemberInfo;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +19,7 @@ import java.util.Map;
 @RequiredArgsConstructor
 @Service
 class ChickenstockOauth2MemberService extends DefaultOAuth2UserService {
+    private final RankingService rankingService;
     private final MemberRepository memberRepository;
 
     @Override
@@ -29,7 +31,7 @@ class ChickenstockOauth2MemberService extends DefaultOAuth2UserService {
         OAuth2MemberInfo oAuth2MemberInfo = OAuth2MemberInfo.of(registrationId, attributes);
 
         Member member = loginOrSignup(oAuth2MemberInfo);
-
+        rankingService.joinNewMember(member.getId());
         return new MemberPrincipalDetails(member, attributes, userNameAttributeName);
     }
 

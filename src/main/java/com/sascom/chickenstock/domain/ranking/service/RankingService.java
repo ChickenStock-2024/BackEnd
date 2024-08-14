@@ -1,11 +1,15 @@
 package com.sascom.chickenstock.domain.ranking.service;
 
 import com.sascom.chickenstock.domain.member.entity.Member;
+import com.sascom.chickenstock.domain.member.error.code.MemberErrorCode;
+import com.sascom.chickenstock.domain.member.error.exception.MemberNotFoundException;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
+import com.sascom.chickenstock.domain.ranking.dto.CompetitionResultDto;
 import com.sascom.chickenstock.domain.ranking.dto.MemberRankingDto;
 import com.sascom.chickenstock.domain.ranking.dto.response.RankingListResponse;
 import com.sascom.chickenstock.domain.ranking.util.RatingCalculatorV1;
 import com.sascom.chickenstock.domain.rival.repository.RivalRepository;
+import com.sascom.chickenstock.global.util.SecurityUtil;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -13,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.stream.Collectors;
 
 @Service
@@ -20,6 +25,8 @@ public class RankingService {
     private final MemberRepository memberRepository;
     private final RivalRepository rivalRepository;
     private List<MemberRankingDto> cachedTotalRankingList;
+
+    private final int PAGE_SIZE = 10;
 
     @Autowired
     public RankingService(MemberRepository memberRepository, RivalRepository rivalRepository) {
@@ -29,19 +36,13 @@ public class RankingService {
 
     @PostConstruct
     public void init() {
-        cachedTotalRankingList = memberRepository.findAllMemberInfos();
-        for(int i = 0; i < cachedTotalRankingList.size(); i++) {
-            if(cachedTotalRankingList.get(i).getCompetitionCount() > 0) {
+        cachedTotalRankingList = new CopyOnWriteArrayList<>(memberRepository.findAllMemberInfos());
+        for (int i = 0; i < cachedTotalRankingList.size(); i++) {
+            if (cachedTotalRankingList.get(i).getCompetitionCount() > 0) {
                 cachedTotalRankingList.get(i).addRating(RatingCalculatorV1.INITIAL_RATING);
             }
         }
-        cachedTotalRankingList.sort((lhs, rhs) -> -Integer.compare(lhs.getRating(), rhs.getRating()));
-        for(int i = 0, j = 0; i < cachedTotalRankingList.size(); i = j) {
-            while(j < cachedTotalRankingList.size() &&
-                    cachedTotalRankingList.get(i).getRating() == cachedTotalRankingList.get(j).getRating()) {
-                cachedTotalRankingList.get(j++).updateRanking(i + 1);
-            }
-        }
+        updateRankingBoard();
     }
 
 //    @Transactional(readOnly = true)
@@ -53,35 +54,32 @@ public class RankingService {
 //    }
 
     public RankingListResponse lookUpPaginationTotalRanking(int offset) {
-        if(cachedTotalRankingList == null) {
+        if (cachedTotalRankingList == null) {
             // TODO: change into ranking exception
             throw new IllegalStateException("server logic error");
         }
 
         // later, pageSize can be parameter passed from request.
-        int pageSize = 10;
 
         // invalid offset error
-        if(cachedTotalRankingList.isEmpty()) {
-            if(offset != 1){
+        if (cachedTotalRankingList.isEmpty()) {
+            if (offset != 1) {
                 // TODO: change into ranking exception
                 throw new IllegalArgumentException("not found");
             }
-        }
-        else {
-            if(offset <= 0 || (long)pageSize * (offset - 1) > (long) cachedTotalRankingList.size()) {
+        } else {
+            if (offset <= 0 || (long) PAGE_SIZE * (offset - 1) > (long) cachedTotalRankingList.size()) {
                 // TODO: change into ranking exception
                 throw new IllegalArgumentException("not found");
             }
         }
 
-        return getRankingListResponse(cachedTotalRankingList, pageSize, offset);
+        return getRankingListResponse(cachedTotalRankingList, offset);
     }
 
     public RankingListResponse lookUpPaginationRivalRanking(int offset) {
-        // TODO: context holder에서 member 조회해오는 걸로 수정
-        Member member = memberRepository.findById(1L)
-                .orElseThrow(() -> new IllegalStateException("Authorization error"));
+        Member member = memberRepository.findById(SecurityUtil.getCurrentMemberId())
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
 
         Set<Long> rivals = rivalRepository.findByMemberId(member.getId())
                 .stream()
@@ -103,26 +101,81 @@ public class RankingService {
                         .build()
                 )
                 .toList();
-        if(rivalRankingList.isEmpty()) {
+        if (rivalRankingList.isEmpty()) {
             // TODO: change into ranking exception
             throw new IllegalStateException("server logic error");
         }
 
-        int pageSize = 10;
-        if(offset <= 0 || (long)pageSize * (offset - 1) > (long) rivalRankingList.size()) {
+        if (offset <= 0 || (long) PAGE_SIZE * (offset - 1) > (long) rivalRankingList.size()) {
             // TODO: change into ranking exception
             throw new IllegalArgumentException("not found");
         }
-        return getRankingListResponse(rivalRankingList, pageSize, offset);
+        return getRankingListResponse(rivalRankingList, offset);
     }
 
-    private RankingListResponse getRankingListResponse(List<MemberRankingDto> RankingList, int pageSize, int offset) {
+    public void joinNewMember(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+        int nowRanking =
+                cachedTotalRankingList.isEmpty() ?
+                        1 :
+                        (cachedTotalRankingList.get(cachedTotalRankingList.size() - 1).getRating() == 0 ?
+                                cachedTotalRankingList.get(cachedTotalRankingList.size() - 1).getRanking() :
+                                cachedTotalRankingList.get(cachedTotalRankingList.size() - 1).getRanking() + 1);
+        MemberRankingDto memberRankingDto = MemberRankingDto.builder()
+                .memberId(memberId)
+                .nickname(member.getNickname())
+                .imgUrl(member.getImgName())
+                .profit(0L)
+                .rating(0)
+                .competitionCount(0)
+                .ranking(nowRanking)
+                .build();
+        cachedTotalRankingList.add(memberRankingDto);
+    }
+
+    public MemberRankingDto getMyRanking() {
+        Long memberId = SecurityUtil.getCurrentMemberId();
+        return cachedTotalRankingList.stream()
+                .filter(rankingDto -> rankingDto.getMemberId() == memberId)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("cachedTotalRanking Error"));
+    }
+
+    public void updateRankingBoardByCompetitionResult(List<CompetitionResultDto> results) {
+        for (CompetitionResultDto result : results) {
+            MemberRankingDto memberRankingDto = cachedTotalRankingList
+                    .stream()
+                    .filter(rankingDto -> rankingDto.getMemberId() == result.memberId())
+                    .findFirst()
+                    .orElseThrow(() -> new IllegalStateException("cachedTotalRakingList Error"));
+            memberRankingDto.addRating(result.ratingChange());
+            if (memberRankingDto.addCompetitionCount()) {
+                memberRankingDto.addRating(RatingCalculatorV1.INITIAL_RATING);
+            }
+        }
+        updateRankingBoard();
+    }
+
+    private void updateRankingBoard() {
+        cachedTotalRankingList.sort((lhs, rhs) -> -Integer.compare(lhs.getRating(), rhs.getRating()));
+        for (int i = 0, j = 0; i < cachedTotalRankingList.size(); i = j) {
+            while (j < cachedTotalRankingList.size() &&
+                    cachedTotalRankingList.get(i).getRating() == cachedTotalRankingList.get(j).getRating()) {
+                cachedTotalRankingList.get(j++).updateRanking(i + 1);
+            }
+        }
+    }
+
+    private RankingListResponse getRankingListResponse(List<MemberRankingDto> rankingList, int offset) {
         return RankingListResponse.builder()
+                .totalCount(rankingList.size())
+                .myRanking(getMyRanking())
                 .memberList(
-                        RankingList
+                        rankingList
                                 .subList(
-                                        pageSize * (offset - 1),
-                                        Math.min(RankingList.size(), pageSize * offset)
+                                        PAGE_SIZE * (offset - 1),
+                                        Math.min(rankingList.size(), PAGE_SIZE * offset)
                                 )
                                 .stream()
                                 .map(memberRankingDto -> MemberRankingDto.builder()
