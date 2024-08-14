@@ -28,7 +28,7 @@ public class CompetitionController {
 
     @GetMapping
     public ResponseEntity<CompetitionInfoResponse> getCompetition() {
-        CompetitionInfoResponse latestCompetition = competitionService.findLatestCompetition();
+        CompetitionInfoResponse latestCompetition = competitionService.findActiveCompetition();
         return ResponseEntity.ok(latestCompetition);
     }
 

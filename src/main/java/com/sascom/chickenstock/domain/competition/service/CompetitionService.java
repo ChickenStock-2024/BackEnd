@@ -2,7 +2,6 @@ package com.sascom.chickenstock.domain.competition.service;
 
 import com.sascom.chickenstock.domain.account.entity.Account;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
-import com.sascom.chickenstock.domain.competition.dto.request.CompetitionRegistRequest;
 import com.sascom.chickenstock.domain.competition.dto.request.CompetitionRequest;
 import com.sascom.chickenstock.domain.competition.dto.response.CompetitionInfoResponse;
 import com.sascom.chickenstock.domain.competition.dto.response.CompetitionHistoryResponse;
@@ -11,7 +10,6 @@ import com.sascom.chickenstock.domain.competition.entity.Competition;
 import com.sascom.chickenstock.domain.competition.error.code.CompetitionErrorCode;
 import com.sascom.chickenstock.domain.competition.error.exception.CompetitionCreateException;
 import com.sascom.chickenstock.domain.competition.repository.CompetitionRepository;
-import org.apache.coyote.BadRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -90,8 +88,9 @@ public class CompetitionService {
                 .toList();
     }
 
-    public CompetitionInfoResponse findLatestCompetition() {
-        Optional<Competition> competition = competitionRepository.findTopByOrderByIdDesc();
+    public CompetitionInfoResponse findActiveCompetition() {
+        LocalDateTime now = LocalDateTime.now();
+        Optional<Competition> competition = competitionRepository.findByStartAtBeforeAndEndAtAfter(now, now);
 
         if (competition.isPresent() && isActiveCompetition(competition.get())) {
             Competition activeCompetition = competition.get();
