@@ -3,6 +3,7 @@ package com.sascom.chickenstock.domain.member.service;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
 import com.sascom.chickenstock.domain.competition.repository.CompetitionRepository;
 import com.sascom.chickenstock.domain.member.dto.MagicNumbers;
+import com.sascom.chickenstock.domain.member.dto.MemberInfoForLogin;
 import com.sascom.chickenstock.domain.member.dto.request.ChangePasswordRequest;
 import com.sascom.chickenstock.domain.member.dto.response.MemberInfoResponse;
 import com.sascom.chickenstock.domain.member.dto.response.PrefixNicknameInfosResponse;
@@ -20,6 +21,7 @@ import jakarta.annotation.PostConstruct;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.DependsOn;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -50,7 +52,7 @@ public class MemberService {
     private String defaultImgName;
 
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-    
+
     @Autowired
     public MemberService(MemberRepository memberRepository,
                          AccountRepository accountRepository,
@@ -84,14 +86,12 @@ public class MemberService {
         Member member = memberRepository.findById(SecurityUtil.getCurrentMemberId())
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
 
-
         if(changePasswordRequest.newPassword() == null ||
-                !passwordEncoder.encode(changePasswordRequest.newPassword()).equals(
-                        changePasswordRequest.newPasswordCheck())) {
+                !changePasswordRequest.newPassword().equals(changePasswordRequest.newPasswordCheck())) {
             throw MemberInfoChangeException.of(MemberErrorCode.PASSWORD_CONFIRMATION_ERROR);
         }
         if(changePasswordRequest.oldPassword() == null ||
-                !changePasswordRequest.oldPassword().equals(member.getPassword())) {
+                !member.getPassword().equals(passwordEncoder.encode(changePasswordRequest.oldPassword()))) {
             throw MemberInfoChangeException.of(MemberErrorCode.INCORRECT_PASSWORD);
         }
         if(!isSafePassword(changePasswordRequest.newPassword())){
@@ -176,7 +176,7 @@ public class MemberService {
     }
 
     @Transactional
-    public void setImage(MultipartFile file) {
+    public String setImage(MultipartFile file) {
         Member member = memberRepository.findById(SecurityUtil.getCurrentMemberId())
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
         if(file.isEmpty()) {
@@ -186,7 +186,13 @@ public class MemberService {
         byte[] fileBytes = null;
         String extension = null;
         try {
-            extension = getFileExtension(file, fileBytes);
+            fileBytes = file.getBytes();
+            if (MagicNumbers.JPG.is(fileBytes)) {
+                extension = "jpg";
+            }
+            else if (MagicNumbers.PNG.is(fileBytes)) {
+                extension = "png";
+            }
         } catch(IOException e) {
             throw MemberImageException.of(MemberErrorCode.IO_ERROR);
         }
@@ -205,6 +211,7 @@ public class MemberService {
         } catch(IOException e) {
             throw MemberImageException.of(MemberErrorCode.IO_ERROR);
         }
+        return imgUrl + fileName;
     }
 
     public byte[] getImage(Long id) {
@@ -229,18 +236,6 @@ public class MemberService {
         memberRepository.save(member);
     }
 
-    private String getFileExtension(MultipartFile file, byte[] fileBytes) throws IOException {
-        String extension = null;
-        fileBytes = file.getBytes();
-        if (MagicNumbers.JPG.is(fileBytes)) {
-            extension = "jpg";
-        }
-        else if (MagicNumbers.PNG.is(fileBytes)) {
-            extension = "png";
-        }
-        return extension;
-    }
-
     private void saveFile(byte[] fileBytes, String fileName, String extension) throws IOException {
         int TARGET_IMAGE_WIDTH = 200, TARGET_IMAGE_HEIGHT = 200;
 
@@ -252,5 +247,14 @@ public class MemberService {
                 Scalr.OP_ANTIALIAS
         );
         ImageIO.write(bufferedImage, extension, dest);
+    }
+
+    public MemberInfoForLogin lookUpMemberInfoForLogin(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+        return new MemberInfoForLogin(
+                member.getId(), member.getNickname(),
+                member.isWebNoti(), member.isKakaotalkNoti()
+        );
     }
 }

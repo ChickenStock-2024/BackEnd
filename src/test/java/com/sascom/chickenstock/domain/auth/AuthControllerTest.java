@@ -9,7 +9,6 @@ import com.sascom.chickenstock.domain.auth.controller.AuthController;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestLoginMember;
 import com.sascom.chickenstock.domain.auth.dto.request.RequestSignupMember;
 import com.sascom.chickenstock.domain.auth.dto.response.AccountInfoForLogin;
-import com.sascom.chickenstock.domain.auth.dto.response.ResponseLoginMember;
 import com.sascom.chickenstock.domain.auth.dto.token.TokenDto;
 import com.sascom.chickenstock.domain.auth.service.AuthService;
 import com.sascom.chickenstock.domain.competition.entity.Competition;
@@ -102,7 +101,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.isCompParticipant").value(true))
                 .andExpect(jsonPath("$.balance").value(50000000L))
                 .andExpect(jsonPath("$.rating").value(1200))
-                .andExpect(jsonPath("$.nickName").value("TestUser"));
+                .andExpect(jsonPath("$.nickname").value("TestUser"));
     }
 
 

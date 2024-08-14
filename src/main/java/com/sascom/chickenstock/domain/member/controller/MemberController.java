@@ -64,9 +64,9 @@ public class MemberController {
     }
 
     @PostMapping(value = "/img", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<String> postImage(@RequestParam("file") MultipartFile file) {
-        memberService.setImage(file);
-        return ResponseEntity.ok().body("프로필 이미지 업로드 완료");
+    public ResponseEntity<Map<String, String>> postImage(@RequestParam("file") MultipartFile file) {
+        String changedUrl = memberService.setImage(file);
+        return ResponseEntity.ok().body(Map.of("imgUrl", changedUrl));
     }
 
     @GetMapping(value = "/img/{userId}", produces = {MediaType.IMAGE_JPEG_VALUE, MediaType.IMAGE_PNG_VALUE})

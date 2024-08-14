@@ -7,4 +7,4 @@ import lombok.Getter;
 import java.util.List;
 
 @Builder
-public record RankingListResponse(List<MemberRankingDto> memberList) { }
+public record RankingListResponse(int totalCount, MemberRankingDto myRanking, List<MemberRankingDto> memberList) { }

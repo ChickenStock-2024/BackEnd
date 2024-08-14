@@ -8,13 +8,14 @@ import com.sascom.chickenstock.domain.auth.dto.request.RequestSignupMember;
 import com.sascom.chickenstock.domain.auth.dto.token.TokenDto;
 import com.sascom.chickenstock.domain.member.entity.Member;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
+import com.sascom.chickenstock.domain.ranking.service.RankingService;
 import com.sascom.chickenstock.global.error.code.AuthErrorCode;
 import com.sascom.chickenstock.global.error.exception.AuthException;
 import com.sascom.chickenstock.global.jwt.JwtProvider;
 import com.sascom.chickenstock.global.jwt.JwtResolver;
+import com.sascom.chickenstock.global.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -36,6 +37,7 @@ import java.util.regex.Pattern;
 @Service
 @RequiredArgsConstructor
 public class AuthService {
+    private final RankingService rankingService;
     private final MemberRepository memberRepository;
     private final AuthenticationManager authenticationManager;
     private final PasswordEncoder passwordEncoder;
@@ -49,7 +51,7 @@ public class AuthService {
 
     @Transactional
     public void signup(RequestSignupMember requestSignupMember) {
-        if (!requestSignupMember.password().equals(requestSignupMember.password_check())) {
+        if (!requestSignupMember.password().equals(requestSignupMember.passwordCheck())) {
             throw new IllegalArgumentException(AuthErrorCode.SIGNUP_PASSWORD_MISMATCH.getMessage());
         }
 
@@ -71,7 +73,7 @@ public class AuthService {
         } catch (DataIntegrityViolationException e) {
             throw AccountDuplicateException.of(AccountErrorCode.DUPLICATED_VALUE);
         }
-
+        rankingService.joinNewMember(member.getId());
     }
     // 이메일 정규식 검사
     public boolean isValidEmail(String email) {
