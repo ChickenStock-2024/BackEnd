@@ -53,6 +53,8 @@ public class MemberRankingDto {
         rating += value;
     }
 
+    public boolean addCompetitionCount() { return this.competitionCount++ == 0; }
+
     public void updateRanking(int ranking) {
         this.ranking = ranking;
     }
