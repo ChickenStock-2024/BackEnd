@@ -9,5 +9,5 @@ import java.util.Optional;
 
 public interface DailyStockPriceRepository extends JpaRepository<DailyStockPrice, Long> {
     List<DailyStockPrice> findDailyStockPriceByCompanyId(Long companyId);
-    Optional<DailyStockPrice> findDailyStockPriceByDateTime(LocalDate localDate);
+    Optional<DailyStockPrice> findDailyStockPriceByDateTimeAndCompanyId(LocalDate localDate, Long companyId);
 }

@@ -2,6 +2,7 @@ package com.sascom.chickenstock.domain.dailystockprice.entity;
 
 import jakarta.persistence.*;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -30,4 +31,14 @@ public class DailyStockPrice {
     private Long lowPrice; // 저가
     private Long volume; // 거래량
 
+    @Builder
+    public DailyStockPrice(Long companyId, LocalDate dateTime, Long openingPrice, Long closingPrice, Long highPrice, Long lowPrice, Long volume) {
+        this.companyId = companyId;
+        this.dateTime = dateTime;
+        this.openingPrice = openingPrice;
+        this.closingPrice = closingPrice;
+        this.highPrice = highPrice;
+        this.lowPrice = lowPrice;
+        this.volume = volume;
+    }
 }

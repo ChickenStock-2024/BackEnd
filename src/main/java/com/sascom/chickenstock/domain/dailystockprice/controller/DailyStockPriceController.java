@@ -1,6 +1,7 @@
 package com.sascom.chickenstock.domain.dailystockprice.controller;
 
 import com.sascom.chickenstock.domain.dailystockprice.dto.response.DailyStockPriceResponse;
+import com.sascom.chickenstock.domain.dailystockprice.entity.DailyStockPrice;
 import com.sascom.chickenstock.domain.dailystockprice.service.DailyStockPriceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -27,8 +28,8 @@ public class DailyStockPriceController {
     }
 
     @GetMapping("/test")
-    public ResponseEntity<?> test() {
-        ResponseEntity<?> response = dailyStockPriceService.automaticSaveDailyStockPrice();
+    public ResponseEntity<List<DailyStockPrice>> test() {
+        List<DailyStockPrice> response = dailyStockPriceService.automaticSaveDailyStockPrice();
         return ResponseEntity.ok().body(response);
     }
 
