@@ -1,6 +1,8 @@
 package com.sascom.chickenstock.domain.trade.service;
 
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
+import com.sascom.chickenstock.domain.account.service.RedisService;
+import com.sascom.chickenstock.domain.company.entity.Company;
 import com.sascom.chickenstock.domain.company.repository.CompanyRepository;
 import com.sascom.chickenstock.domain.history.entity.History;
 import com.sascom.chickenstock.domain.history.entity.HistoryStatus;
@@ -34,17 +36,20 @@ public class TradeService {
 
     private final Map<Long, StockManager> stockManagerMap;
     private final Map<Long, Integer> marketPriceMap;
+    private final RedisService redisService;
     private final HistoryRepository historyRepository;
     private final AccountRepository accountRepository;
     private final CompanyRepository companyRepository;
 
     @Autowired
     public TradeService(
+            RedisService redisService,
             HistoryRepository historyRepository,
             AccountRepository accountRepository,
             CompanyRepository companyRepository) {
         stockManagerMap = new ConcurrentHashMap<>();
         marketPriceMap = new ConcurrentHashMap<>();
+        this.redisService = redisService;
         this.historyRepository = historyRepository;
         this.accountRepository = accountRepository;
         this.companyRepository = companyRepository;
@@ -52,8 +57,10 @@ public class TradeService {
 
     @PostConstruct
     public void init() {
-        stockManagerMap.put(11L, new ChickenStockManager());
-        marketPriceMap.put(11L, 72800);
+        List<Company> companyList = companyRepository.findAll();
+        for(Company company : companyList) {
+            stockManagerMap.put(company.getId(), new ChickenStockManager(redisService, accountRepository));
+        }
     }
 
     public TradeResponse addLimitBuyRequest(BuyTradeRequest tradeRequest) {
@@ -89,8 +96,7 @@ public class TradeService {
                 .orElseThrow(() -> TradeException.of(TradeErrorCode.COMPANY_NOT_FOUND));
         SellTradeRequest poppedRequest = stockManager.cancel(tradeRequest);
         if(poppedRequest == null) {
-            // 분명 확인하고 요청 넣었는데 무슨일일까? 동시성? 아니면 누락?
-            throw new IllegalStateException("there is no request in queue");
+            throw TradeException.of(TradeErrorCode.ORDER_NOT_FOUND);
         }
         History history = History.builder()
                 .account(accountRepository.getReferenceById(poppedRequest.getAccountId()))
@@ -120,8 +126,7 @@ public class TradeService {
                 .orElseThrow(() -> TradeException.of(TradeErrorCode.COMPANY_NOT_FOUND));
         BuyTradeRequest poppedRequest = stockManager.cancel(tradeRequest);
         if(poppedRequest == null) {
-            // 분명 확인하고 요청 넣었는데 무슨일일까? 동시성? 아니면 누락?
-            throw new IllegalStateException("there is no request in queue");
+            throw TradeException.of(TradeErrorCode.ORDER_NOT_FOUND);
         }
         History history = History.builder()
                 .account(accountRepository.getReferenceById(poppedRequest.getAccountId()))
@@ -153,6 +158,13 @@ public class TradeService {
         if(!result) {
             throw TradeException.of(TradeErrorCode.INTERNAL_ERROR);
         }
+        redisService.setUnexecution(
+                tradeRequest.getHistoryId(),
+                tradeRequest.getAccountId(),
+                tradeRequest.getCompanyId(),
+                TradeType.BUY,
+                tradeRequest.getTotalOrderVolume(),
+                tradeRequest.getUnitCost());
         matchAndSaveHistories(stockManager, marketPriceMap.get(tradeRequest.getCompanyId()));
         return TradeResponse.builder()
                 .message("매수 요청 완료")
@@ -167,6 +179,13 @@ public class TradeService {
         if(!result) {
             throw TradeException.of(TradeErrorCode.INTERNAL_ERROR);
         }
+        redisService.setUnexecution(
+                tradeRequest.getHistoryId(),
+                tradeRequest.getAccountId(),
+                tradeRequest.getCompanyId(),
+                TradeType.SELL,
+                tradeRequest.getTotalOrderVolume(),
+                tradeRequest.getUnitCost());
         matchAndSaveHistories(stockManager, marketPriceMap.get(tradeRequest.getCompanyId()));
         return TradeResponse.builder()
                 .message("매도 요청 완료")
@@ -182,6 +201,9 @@ public class TradeService {
                 .orElseThrow(() -> TradeException.of(TradeErrorCode.COMPANY_NOT_FOUND));
         List<ProcessedOrderDto> canceled = new ArrayList<>(), executed = new ArrayList<>();
         stockManager.processRealStockTrade(realStockTradeDto, canceled, executed);
+        for(ProcessedOrderDto processedOrderDto : canceled) {
+            redisService.deleteUnexecution(processedOrderDto.requestHistoryId(), processedOrderDto.accountId());;
+        }
         historyRepository.saveAll(canceled.stream().map(order ->
                         History.builder()
                                 .account(accountRepository.getReferenceById(order.accountId()))
@@ -191,6 +213,26 @@ public class TradeService {
                                 .status(toCanceledHistoryStatus(order.tradeType(), order.orderType()))
                                 .build())
                 .toList());
+        for(ProcessedOrderDto processedOrderDto : executed) {
+            switch(processedOrderDto.tradeType()) {
+                case BUY:
+                    redisService.updateStockInfo(
+                            processedOrderDto.accountId(),
+                            processedOrderDto.companyId(),
+                            processedOrderDto.volume(),
+                            processedOrderDto.price() * processedOrderDto.volume()
+                    );
+                    break;
+                case SELL:
+                    redisService.updateStockInfo(
+                            processedOrderDto.accountId(),
+                            processedOrderDto.companyId(),
+                            -processedOrderDto.volume(),
+                            -processedOrderDto.price() * processedOrderDto.volume()
+                    );
+                    break;
+            }
+        }
         historyRepository.saveAll(executed.stream().map(order ->
                         History.builder()
                                 .account(accountRepository.getReferenceById(order.accountId()))
@@ -206,6 +248,9 @@ public class TradeService {
     private void matchAndSaveHistories(StockManager stockManager, int marketPrice) {
         List<ProcessedOrderDto> canceled = new ArrayList<>(), executed = new ArrayList<>();
         stockManager.match(marketPrice, canceled, executed);
+        for(ProcessedOrderDto processedOrderDto : canceled) {
+            redisService.deleteUnexecution(processedOrderDto.requestHistoryId(), processedOrderDto.accountId());;
+        }
         historyRepository.saveAll(canceled.stream().map(order ->
                         History.builder()
                                 .account(accountRepository.getReferenceById(order.accountId()))
@@ -215,6 +260,26 @@ public class TradeService {
                                 .status(toCanceledHistoryStatus(order.tradeType(), order.orderType()))
                                 .build())
                 .toList());
+        for(ProcessedOrderDto processedOrderDto : executed) {
+            switch(processedOrderDto.tradeType()) {
+                case BUY:
+                    redisService.updateStockInfo(
+                            processedOrderDto.accountId(),
+                            processedOrderDto.companyId(),
+                            processedOrderDto.volume(),
+                            processedOrderDto.price() * processedOrderDto.volume()
+                    );
+                    break;
+                case SELL:
+                    redisService.updateStockInfo(
+                            processedOrderDto.accountId(),
+                            processedOrderDto.companyId(),
+                            -processedOrderDto.volume(),
+                            -processedOrderDto.price() * processedOrderDto.volume()
+                    );
+                    break;
+            }
+        }
         historyRepository.saveAll(executed.stream().map(order ->
                         History.builder()
                                 .account(accountRepository.getReferenceById(order.accountId()))
@@ -238,7 +303,7 @@ public class TradeService {
             case MARKET:
                 return tradeType == TradeType.SELL? HistoryStatus.시장가매도취소 : HistoryStatus.시장가매수취소;
             default:
-                throw new IllegalStateException("server logic error");
+                throw TradeException.of(TradeErrorCode.SERVER_ERROR);
         }
     }
 
@@ -249,7 +314,7 @@ public class TradeService {
             case MARKET:
                 return tradeType == TradeType.SELL? HistoryStatus.시장가매도체결 : HistoryStatus.시장가매수체결;
             default:
-                throw new IllegalStateException("server logic error");
+                throw TradeException.of(TradeErrorCode.SERVER_ERROR);
         }
     }
 
