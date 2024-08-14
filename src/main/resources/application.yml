@@ -47,3 +47,4 @@ image:
 
 chicken-stock:
   domain: ${CHICKENSTOCK_DOMAIN}
+  admin-key: ${CHICKENSTOCK_KEY}
