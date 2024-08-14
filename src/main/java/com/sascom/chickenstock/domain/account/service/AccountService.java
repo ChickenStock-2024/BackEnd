@@ -187,6 +187,7 @@ public class AccountService {
         );
     }
 
+
     @Transactional
     public TradeResponse buyMarketStocks(StockOrderRequest stockOrderRequest) {
         validateStockOrderRequest(stockOrderRequest);
