@@ -1,13 +1,18 @@
 package com.sascom.chickenstock.domain.member.controller;
 
+import com.sascom.chickenstock.domain.auth.dto.response.ResponseLoginMember;
 import com.sascom.chickenstock.domain.member.dto.request.ChangePasswordRequest;
 import com.sascom.chickenstock.domain.member.dto.request.ChangeNicknameRequest;
 import com.sascom.chickenstock.domain.member.dto.response.MemberInfoResponse;
 import com.sascom.chickenstock.domain.member.dto.response.PrefixNicknameInfosResponse;
+import com.sascom.chickenstock.domain.member.service.MemberFacade;
 import com.sascom.chickenstock.domain.member.service.MemberService;
+import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -19,16 +24,25 @@ import java.util.Map;
 public class MemberController {
 
     private final MemberService memberService;
+    private final MemberFacade memberFacade;
 
     @Autowired
-    public MemberController(MemberService memberService) {
+    public MemberController(MemberService memberService, MemberFacade memberFacade) {
         this.memberService = memberService;
+        this.memberFacade = memberFacade;
     }
 
     @GetMapping("/{userId}")
     public ResponseEntity<MemberInfoResponse> getMemberInfo(@PathVariable("userId") Long userId) {
         MemberInfoResponse response = memberService.lookUpMemberInfo(userId);
         return ResponseEntity.ok().body(response);
+    }
+
+    @GetMapping
+    public ResponseEntity<ResponseLoginMember> getMemberInfo(HttpServletResponse response) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        ResponseLoginMember loginInfo = memberFacade.getLoginInfo(response, authentication);
+        return ResponseEntity.ok(loginInfo);
     }
 
     @PostMapping
