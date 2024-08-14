@@ -321,11 +321,14 @@ public class AccountService {
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
         Account account = accountRepository.findTopByMemberOrderByIdDesc(member);
 
-        // 최신 계좌 조회해서 거기에 있는 CompetitonId가 현재의 대회 pk랑 같은지 체크
-        Competition competition = competitionRepository.findTopByAccountsOrderByIdDesc(account);
+        if (account != null) {
+            // 최신 계좌 조회해서 거기에 있는 CompetitonId가 현재의 대회 pk랑 같은지 체크
+            Competition accountCompetition = account.getCompetition();
+            Optional<Competition> competition = competitionRepository.findById(accountCompetition.getId());
 
-        if (competition != null && competitionService.isActiveCompetition(competition)) { // 지금 열리고 있는 대회
-            return AccountInfoForLogin.create(true, account.getBalance(), account.getRanking());
+            if (competition.isPresent() && competitionService.isActiveCompetition(competition.get())) { // 지금 열리고 있는 대회
+                return AccountInfoForLogin.create(true, account.getBalance(), account.getRanking());
+            }
         }
 
         return AccountInfoForLogin.create(false, 0L, 0);

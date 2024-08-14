@@ -11,7 +11,7 @@ import java.util.Optional;
 public interface CompetitionRepository extends JpaRepository<Competition, Long> {
 
     Competition findTopByAccountsOrderByIdDesc(Account account);
-
+    
     Optional<Competition> findTopByOrderByIdDesc();
 
     Optional<Competition> findByStartAtBeforeAndEndAtAfter(LocalDateTime now1, LocalDateTime now2);
