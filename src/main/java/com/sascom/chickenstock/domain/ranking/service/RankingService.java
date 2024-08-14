@@ -135,9 +135,12 @@ public class RankingService {
     }
 
     public MemberRankingDto getMyRanking() {
-        Long memberId = SecurityUtil.getCurrentMemberId();
+        return getRankingById(SecurityUtil.getCurrentMemberId());
+    }
+
+    public MemberRankingDto getRankingById(Long memberId) {
         return cachedTotalRankingList.stream()
-                .filter(rankingDto -> rankingDto.getMemberId() == memberId)
+                .filter(rankingDto -> rankingDto.getMemberId().equals(memberId))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("cachedTotalRanking Error"));
     }
@@ -146,7 +149,7 @@ public class RankingService {
         for (CompetitionResultDto result : results) {
             MemberRankingDto memberRankingDto = cachedTotalRankingList
                     .stream()
-                    .filter(rankingDto -> rankingDto.getMemberId() == result.memberId())
+                    .filter(rankingDto -> rankingDto.getMemberId().equals(result.memberId()))
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("cachedTotalRakingList Error"));
             memberRankingDto.addRating(result.ratingChange());

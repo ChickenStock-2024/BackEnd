@@ -13,6 +13,8 @@ import com.sascom.chickenstock.domain.member.error.exception.MemberImageExceptio
 import com.sascom.chickenstock.domain.member.error.exception.MemberNotFoundException;
 import com.sascom.chickenstock.domain.member.error.exception.MemberInfoChangeException;
 import com.sascom.chickenstock.domain.member.repository.MemberRepository;
+import com.sascom.chickenstock.domain.ranking.dto.MemberRankingDto;
+import com.sascom.chickenstock.domain.ranking.service.RankingService;
 import com.sascom.chickenstock.domain.ranking.util.RatingCalculatorV1;
 import com.sascom.chickenstock.global.error.code.AuthErrorCode;
 import com.sascom.chickenstock.global.error.exception.AuthException;
@@ -25,6 +27,7 @@ import org.springframework.context.annotation.DependsOn;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
@@ -37,6 +40,7 @@ import org.imgscalr.Scalr;
 
 @Service
 public class MemberService {
+    private final RankingService rankingService;
     private final MemberRepository memberRepository;
     private final AccountRepository accountRepository;
     private final CompetitionRepository competitionRepository;
@@ -54,10 +58,13 @@ public class MemberService {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     @Autowired
-    public MemberService(MemberRepository memberRepository,
-                         AccountRepository accountRepository,
-                         CompetitionRepository competitionRepository,
-                         PasswordEncoder passwordEncoder) {
+    public MemberService(
+            RankingService rankingService,
+            MemberRepository memberRepository,
+            AccountRepository accountRepository,
+            CompetitionRepository competitionRepository,
+            PasswordEncoder passwordEncoder) {
+        this.rankingService = rankingService;
         this.memberRepository = memberRepository;
         this.accountRepository = accountRepository;
         this.competitionRepository = competitionRepository;
@@ -86,15 +93,15 @@ public class MemberService {
         Member member = memberRepository.findById(SecurityUtil.getCurrentMemberId())
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
 
-        if(changePasswordRequest.newPassword() == null ||
+        if (changePasswordRequest.newPassword() == null ||
                 !changePasswordRequest.newPassword().equals(changePasswordRequest.newPasswordCheck())) {
             throw MemberInfoChangeException.of(MemberErrorCode.PASSWORD_CONFIRMATION_ERROR);
         }
-        if(changePasswordRequest.oldPassword() == null ||
+        if (changePasswordRequest.oldPassword() == null ||
                 !passwordEncoder.matches(changePasswordRequest.oldPassword(), member.getPassword())) {
             throw MemberInfoChangeException.of(MemberErrorCode.INCORRECT_PASSWORD);
         }
-        if(!isSafePassword(changePasswordRequest.newPassword())){
+        if (!isSafePassword(changePasswordRequest.newPassword())) {
             throw new IllegalStateException("New Password is not safe.");
         }
 
@@ -108,10 +115,10 @@ public class MemberService {
         Long memberId = SecurityUtil.getCurrentMemberId();
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
-        if(memberRepository.existsByNickname(nickname)) {
+        if (memberRepository.existsByNickname(nickname)) {
             throw AuthException.of(AuthErrorCode.NICKNAME_CONFLICT);
         }
-        if(!isAvailableNickname(nickname)) {
+        if (!isAvailableNickname(nickname)) {
             throw MemberInfoChangeException.of(MemberErrorCode.UNAVAILABLE_NICKNAME);
         }
         member.updateNickname(nickname);
@@ -149,10 +156,13 @@ public class MemberService {
 
     // Member -> MemberInfoResponse
     private MemberInfoResponse toMemberInfoResponse(Member member) {
+        MemberRankingDto rankingDto = rankingService.getRankingById(member.getId());
         return new MemberInfoResponse(
-                member.getId(),
-                member.getNickname(),
-                RatingCalculatorV1.calculateRating(member.getAccounts()),
+                rankingDto.getMemberId(),
+                rankingDto.getNickname(),
+                rankingDto.getRating(),
+                rankingDto.getProfit(),
+                rankingDto.getRanking(),
                 member.getPoint(),
                 imgUrl + member.getImgName()
         );
@@ -179,7 +189,7 @@ public class MemberService {
     public String setImage(MultipartFile file) {
         Member member = memberRepository.findById(SecurityUtil.getCurrentMemberId())
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
-        if(file.isEmpty()) {
+        if (file.isEmpty()) {
             throw MemberNotFoundException.of(MemberErrorCode.NO_FILE);
         }
 
@@ -189,15 +199,14 @@ public class MemberService {
             fileBytes = file.getBytes();
             if (MagicNumbers.JPG.is(fileBytes)) {
                 extension = "jpg";
-            }
-            else if (MagicNumbers.PNG.is(fileBytes)) {
+            } else if (MagicNumbers.PNG.is(fileBytes)) {
                 extension = "png";
             }
-        } catch(IOException e) {
+        } catch (IOException e) {
             throw MemberImageException.of(MemberErrorCode.IO_ERROR);
         }
 
-        if(extension == null) {
+        if (extension == null) {
             throw MemberNotFoundException.of(MemberErrorCode.INVALID_FILE);
         }
 
@@ -208,7 +217,7 @@ public class MemberService {
 
         try {
             saveFile(fileBytes, fileName, extension);
-        } catch(IOException e) {
+        } catch (IOException e) {
             throw MemberImageException.of(MemberErrorCode.IO_ERROR);
         }
         return imgUrl + fileName;
@@ -219,10 +228,10 @@ public class MemberService {
                 .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
         String imgName = member.getImgName();
         // 이미지를 InputStream에 읽어오기
-        try(InputStream inputStream = new FileInputStream(uploadPath + File.separator + imgName)) {
+        try (InputStream inputStream = new FileInputStream(uploadPath + File.separator + imgName)) {
             byte[] bytes = inputStream.readAllBytes();
             return bytes;
-        } catch(IOException e) {
+        } catch (IOException e) {
             throw MemberImageException.of(MemberErrorCode.IO_ERROR);
         }
     }

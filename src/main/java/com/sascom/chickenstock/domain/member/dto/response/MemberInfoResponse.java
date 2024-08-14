@@ -4,6 +4,8 @@ public record MemberInfoResponse(
         Long memberId,
         String nickname,
         Integer rating,
+        Long balance,
+        Integer ranking,
         Integer point,
         String imgUrl
 ) { }
