@@ -6,10 +6,13 @@ import com.sascom.chickenstock.domain.dailystockprice.dto.request.fis.AccessToke
 import com.sascom.chickenstock.domain.dailystockprice.dto.response.DailyStockPriceResponse;
 import com.sascom.chickenstock.domain.dailystockprice.dto.response.kis.TodayStockPriceResponse;
 import com.sascom.chickenstock.domain.dailystockprice.entity.DailyStockPrice;
+import com.sascom.chickenstock.domain.dailystockprice.error.code.DailyStockPriceErrorCode;
+import com.sascom.chickenstock.domain.dailystockprice.error.exception.KisTodayStockPriceException;
+import com.sascom.chickenstock.domain.dailystockprice.error.exception.KisTokenException;
 import com.sascom.chickenstock.domain.dailystockprice.repository.DailyStockPriceRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -55,7 +58,7 @@ public class DailyStockPriceService {
 
         // 한국투자증권 API 토큰 받기 (access_token)
         RestClient restClient = RestClient.create();
-        ResponseEntity<Map> response = restClient.post()
+        ResponseEntity<Map> kisTokenResponse = restClient.post()
                 .uri("https://openapivts.koreainvestment.com:29443/oauth2/tokenP")
                 .body(
                         AccessTokenReqeust.builder()
@@ -65,9 +68,12 @@ public class DailyStockPriceService {
                                 .build()
                 )
                 .retrieve()
+                .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
+                    throw KisTokenException.of(DailyStockPriceErrorCode.CANNOT_GET_KIS_TOKEN);
+                })
                 .toEntity(Map.class);
 
-        String token = response.getBody().get("access_token").toString();
+        String token = kisTokenResponse.getBody().get("access_token").toString();
 
         // 각 회사 조회해서 당일 주가시세 정보 DB에 저장하기
         // 주말, 공휴일 -> 응답에 데이터가 없음 -> 저장 안함
@@ -105,7 +111,7 @@ public class DailyStockPriceService {
                 e.printStackTrace();
             }
 
-            ResponseEntity<TodayStockPriceResponse> response2 = restClient.get()
+            ResponseEntity<TodayStockPriceResponse> todayPriceResponse = restClient.get()
                     .uri(uriBuilder -> uriBuilder.path("/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice")
                             .queryParam("FID_COND_MRKT_DIV_CODE", "J")
                             .queryParam("FID_INPUT_ISCD", company.getCode())
@@ -115,13 +121,16 @@ public class DailyStockPriceService {
                             .queryParam("FID_ORG_ADJ_PRC", "1")
                             .build())
                     .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
+                        throw KisTodayStockPriceException.of(DailyStockPriceErrorCode.CANNOT_GET_TODAY_STOCK_PRICE);
+                    })
                     .toEntity(TodayStockPriceResponse.class);
 
             // 저장
             dailyStockPriceRepository.save(
-                    Objects.requireNonNull(response2.getBody()).toDailyStockPrice(company.getId(), nowStr)
+                    Objects.requireNonNull(todayPriceResponse.getBody()).toDailyStockPrice(company.getId(), nowStr)
             );
-            results.add(response2.getBody().toDailyStockPrice(company.getId(), nowStr));
+            results.add(todayPriceResponse.getBody().toDailyStockPrice(company.getId(), nowStr));
         }
 
         return results;
