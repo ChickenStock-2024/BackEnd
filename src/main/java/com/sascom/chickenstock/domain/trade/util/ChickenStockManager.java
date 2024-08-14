@@ -1,6 +1,9 @@
 package com.sascom.chickenstock.domain.trade.util;
 
 import com.fasterxml.jackson.databind.deser.DataFormatReaders;
+import com.sascom.chickenstock.domain.account.entity.Account;
+import com.sascom.chickenstock.domain.account.error.code.AccountErrorCode;
+import com.sascom.chickenstock.domain.account.error.exception.AccountNotFoundException;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
 import com.sascom.chickenstock.domain.account.service.RedisService;
 import com.sascom.chickenstock.domain.trade.dto.MatchStatus;
@@ -52,7 +55,6 @@ public class ChickenStockManager implements StockManager {
                 break;
             }
 
-            int executedVolume = Math.min(sellTradeRequest.getRemainingVolume(), buyTradeRequest.getRemainingVolume());
             // TODO: validate balance. AccountRepository와 Redis에 있는 미체결 정보를 통해 최대한으로 살 수 있는 개수 확인.
             // 한 주도 살 수 없다면 continue.
             // 아래는 대충 pseudocode.
@@ -80,10 +82,31 @@ public class ChickenStockManager implements StockManager {
                 continue;
             }
              */
-            sellTradeRequest.addExecutedVolume(executedVolume);
-            executed.add(executedTradeRequestToProcessedOrderDto(sellTradeRequest, TradeType.SELL, executedVolume, marketPrice));
+            // buy 검증
+            Account buyAccount = accountRepository.findById(buyTradeRequest.getAccountId())
+                    .orElseThrow(() -> AccountNotFoundException.of(AccountErrorCode.NOT_FOUND));
+            int buyCount = (int)Math.min(buyAccount.getBalance() / marketPrice, buyTradeRequest.getRemainingVolume());
+            // sell 검증
+            Account sellAccount = accountRepository.findById(sellTradeRequest.getAccountId())
+                    .orElseThrow(() -> AccountNotFoundException.of(AccountErrorCode.NOT_FOUND));
+            if(buyCount == 0) {
+                canceled.add(canceledTradeRequestToProcessedOrderDto(buyTradeRequest, TradeType.BUY, MatchStatus.CANCELED_BY_BALANCE));
+                buyQueue.remove(buyTradeRequest);
+                buyTradeRequest = null;
+            }
+            if(sellTradeRequest == null || buyTradeRequest == null) {
+                continue;
+            }
+
+            int executedVolume = Math.min(sellTradeRequest.getRemainingVolume(), buyCount);
             buyTradeRequest.addExecutedVolume(executedVolume);
             executed.add(executedTradeRequestToProcessedOrderDto(buyTradeRequest, TradeType.BUY, executedVolume, marketPrice));
+            buyAccount.updateBalance(-(long)marketPrice * executedVolume);
+            accountRepository.save(buyAccount);
+            sellTradeRequest.addExecutedVolume(executedVolume);
+            executed.add(executedTradeRequestToProcessedOrderDto(sellTradeRequest, TradeType.SELL, executedVolume, marketPrice));
+            sellAccount.updateBalance(-(long)marketPrice * executedVolume);
+            accountRepository.save(sellAccount);
 
             if(sellTradeRequest.getTotalOrderVolume().equals(sellTradeRequest.getExecutedVolume())) {
                 sellQueue.remove(sellTradeRequest);
@@ -115,12 +138,17 @@ public class ChickenStockManager implements StockManager {
                         MatchStatus.CANCELED_BY_LOGIC
                 );
                 SellTradeRequest tradeRequest = sellQueue.first(price);
-                if(tradeRequest == null)
+                if(tradeRequest == null) {
                     break;
+                }
+                Account sellAccount = accountRepository.findById(tradeRequest.getAccountId())
+                        .orElseThrow(() -> AccountNotFoundException.of(AccountErrorCode.NOT_FOUND));
                 int executedVolume = Math.min(count, tradeRequest.getRemainingVolume());
                 count -= executedVolume;
                 tradeRequest.addExecutedVolume(executedVolume);
                 executed.add(executedTradeRequestToProcessedOrderDto(tradeRequest, TradeType.SELL, executedVolume, price));
+                sellAccount.updateBalance((long)price * executedVolume);
+                accountRepository.save(sellAccount);
                 if(tradeRequest.getRemainingVolume() == 0) {
                     sellQueue.remove(tradeRequest);
                 }
@@ -135,14 +163,24 @@ public class ChickenStockManager implements StockManager {
                         MatchStatus.CANCELED_BY_LOGIC
                 );
                 BuyTradeRequest tradeRequest = buyQueue.first(price);
-                if(tradeRequest == null)
+                if(tradeRequest == null) {
                     break;
-                // TODO: validate balance
-
-                int executedVolume = Math.min(count, tradeRequest.getRemainingVolume());
+                }
+                Account buyAccount = accountRepository.findById(tradeRequest.getAccountId())
+                        .orElseThrow(() -> AccountNotFoundException.of(AccountErrorCode.NOT_FOUND));
+                int buyCount = (int)Math.min(buyAccount.getBalance() / price, tradeRequest.getRemainingVolume());
+                if(buyCount == 0) {
+                    canceledTradeRequestToProcessedOrderDto(tradeRequest, TradeType.BUY, MatchStatus.CANCELED_BY_BALANCE);
+                    buyQueue.remove(tradeRequest);
+                    tradeRequest = null;
+                    continue;
+                }
+                int executedVolume = Math.min(count, buyCount);
                 count -= executedVolume;
                 tradeRequest.addExecutedVolume(executedVolume);
                 executed.add(executedTradeRequestToProcessedOrderDto(tradeRequest, TradeType.SELL, executedVolume, price));
+                buyAccount.updateBalance(-(long)price * executedVolume);
+                accountRepository.save(buyAccount);
                 if(tradeRequest.getRemainingVolume() == 0) {
                     buyQueue.remove(tradeRequest);
                 }

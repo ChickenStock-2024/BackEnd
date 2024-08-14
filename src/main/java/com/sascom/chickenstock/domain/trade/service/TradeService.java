@@ -158,6 +158,13 @@ public class TradeService {
         if(!result) {
             throw TradeException.of(TradeErrorCode.INTERNAL_ERROR);
         }
+        redisService.setUnexecution(
+                tradeRequest.getHistoryId(),
+                tradeRequest.getAccountId(),
+                tradeRequest.getCompanyId(),
+                TradeType.BUY,
+                tradeRequest.getTotalOrderVolume(),
+                tradeRequest.getUnitCost());
         matchAndSaveHistories(stockManager, marketPriceMap.get(tradeRequest.getCompanyId()));
         return TradeResponse.builder()
                 .message("매수 요청 완료")
@@ -172,6 +179,13 @@ public class TradeService {
         if(!result) {
             throw TradeException.of(TradeErrorCode.INTERNAL_ERROR);
         }
+        redisService.setUnexecution(
+                tradeRequest.getHistoryId(),
+                tradeRequest.getAccountId(),
+                tradeRequest.getCompanyId(),
+                TradeType.SELL,
+                tradeRequest.getTotalOrderVolume(),
+                tradeRequest.getUnitCost());
         matchAndSaveHistories(stockManager, marketPriceMap.get(tradeRequest.getCompanyId()));
         return TradeResponse.builder()
                 .message("매도 요청 완료")
@@ -187,6 +201,9 @@ public class TradeService {
                 .orElseThrow(() -> TradeException.of(TradeErrorCode.COMPANY_NOT_FOUND));
         List<ProcessedOrderDto> canceled = new ArrayList<>(), executed = new ArrayList<>();
         stockManager.processRealStockTrade(realStockTradeDto, canceled, executed);
+        for(ProcessedOrderDto processedOrderDto : canceled) {
+            redisService.deleteUnexecution(processedOrderDto.requestHistoryId(), processedOrderDto.accountId());;
+        }
         historyRepository.saveAll(canceled.stream().map(order ->
                         History.builder()
                                 .account(accountRepository.getReferenceById(order.accountId()))
@@ -196,6 +213,26 @@ public class TradeService {
                                 .status(toCanceledHistoryStatus(order.tradeType(), order.orderType()))
                                 .build())
                 .toList());
+        for(ProcessedOrderDto processedOrderDto : executed) {
+            switch(processedOrderDto.tradeType()) {
+                case BUY:
+                    redisService.updateStockInfo(
+                            processedOrderDto.accountId(),
+                            processedOrderDto.companyId(),
+                            processedOrderDto.volume(),
+                            processedOrderDto.price() * processedOrderDto.volume()
+                    );
+                    break;
+                case SELL:
+                    redisService.updateStockInfo(
+                            processedOrderDto.accountId(),
+                            processedOrderDto.companyId(),
+                            -processedOrderDto.volume(),
+                            -processedOrderDto.price() * processedOrderDto.volume()
+                    );
+                    break;
+            }
+        }
         historyRepository.saveAll(executed.stream().map(order ->
                         History.builder()
                                 .account(accountRepository.getReferenceById(order.accountId()))
@@ -211,6 +248,9 @@ public class TradeService {
     private void matchAndSaveHistories(StockManager stockManager, int marketPrice) {
         List<ProcessedOrderDto> canceled = new ArrayList<>(), executed = new ArrayList<>();
         stockManager.match(marketPrice, canceled, executed);
+        for(ProcessedOrderDto processedOrderDto : canceled) {
+            redisService.deleteUnexecution(processedOrderDto.requestHistoryId(), processedOrderDto.accountId());;
+        }
         historyRepository.saveAll(canceled.stream().map(order ->
                         History.builder()
                                 .account(accountRepository.getReferenceById(order.accountId()))
@@ -220,6 +260,26 @@ public class TradeService {
                                 .status(toCanceledHistoryStatus(order.tradeType(), order.orderType()))
                                 .build())
                 .toList());
+        for(ProcessedOrderDto processedOrderDto : executed) {
+            switch(processedOrderDto.tradeType()) {
+                case BUY:
+                    redisService.updateStockInfo(
+                            processedOrderDto.accountId(),
+                            processedOrderDto.companyId(),
+                            processedOrderDto.volume(),
+                            processedOrderDto.price() * processedOrderDto.volume()
+                    );
+                    break;
+                case SELL:
+                    redisService.updateStockInfo(
+                            processedOrderDto.accountId(),
+                            processedOrderDto.companyId(),
+                            -processedOrderDto.volume(),
+                            -processedOrderDto.price() * processedOrderDto.volume()
+                    );
+                    break;
+            }
+        }
         historyRepository.saveAll(executed.stream().map(order ->
                         History.builder()
                                 .account(accountRepository.getReferenceById(order.accountId()))

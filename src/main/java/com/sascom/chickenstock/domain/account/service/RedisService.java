@@ -109,8 +109,34 @@ public class RedisService {
         return StockInfo;
     }
 
-    // 보유 주식(Redis)에 update(== set)
-    public void updateStockInfo(Long accountId, Long companyId, int newVolume, double newPrice) {
+//    // 보유 주식(Redis)에 update(== set)
+//    public void updateStockInfo(Long accountId, Long companyId, int newVolume, int newPrice) {
+//        String pattern = "accountId:" + accountId + ":companyId:" + companyId;
+//        Set<String> keys = redisTemplate.keys(pattern);
+//
+//        if (keys != null && !keys.isEmpty()) {
+//            HashOperations<String, Object, Object> hashOps = redisTemplate.opsForHash();
+//
+//            for (String key : keys) {
+//                // 기존의 값을 가져옵니다.
+//                Map<Object, Object> entries = hashOps.entries(key);
+//
+//                // 필요한 필드만 삭제합니다.
+//                if (entries.containsKey("volume")) {
+//                    hashOps.delete(key, "volume");
+//                }
+//                if (entries.containsKey("price")) {
+//                    hashOps.delete(key, "price");
+//                }
+//
+//                // 새로운 값을 추가합니다.
+//                hashOps.put(key, "volume", String.valueOf(newVolume));
+//                hashOps.put(key, "price", String.valueOf(newPrice));
+//            }
+//        }
+//    }
+
+    public void updateStockInfo(Long accountId, Long companyId, int changeVolume, int changePrice) {
         String pattern = "accountId:" + accountId + ":companyId:" + companyId;
         Set<String> keys = redisTemplate.keys(pattern);
 
@@ -121,6 +147,9 @@ public class RedisService {
                 // 기존의 값을 가져옵니다.
                 Map<Object, Object> entries = hashOps.entries(key);
 
+                int updateVolume = Integer.valueOf(entries.get("volume").toString()) + changeVolume;
+                int updatePrice = Integer.valueOf(entries.get("price").toString()) + changePrice;
+
                 // 필요한 필드만 삭제합니다.
                 if (entries.containsKey("volume")) {
                     hashOps.delete(key, "volume");
@@ -130,14 +159,14 @@ public class RedisService {
                 }
 
                 // 새로운 값을 추가합니다.
-                hashOps.put(key, "volume", String.valueOf(newVolume));
-                hashOps.put(key, "price", String.valueOf(newPrice));
+                hashOps.put(key, "volume", String.valueOf(updateVolume));
+                hashOps.put(key, "price", String.valueOf(updatePrice));
             }
         }
     }
 
     // 미체결내역 redis에 저장 (historyId + accountId)를 key로 해서
-    public void updateUnexecution(Long historyId, Long accountId, Long companyId,
+    public void setUnexecution(Long historyId, Long accountId, Long companyId,
                                   TradeType tradeType, int volume, int price) {
         // 정확한 키를 사용하여 접근
         String key = "historyId:" + historyId + ":accountId:" + accountId;
