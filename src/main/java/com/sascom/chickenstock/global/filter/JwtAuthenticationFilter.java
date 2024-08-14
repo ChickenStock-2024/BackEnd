@@ -25,6 +25,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 import org.springframework.web.util.WebUtils;
 
 import java.io.IOException;
+import java.util.Optional;
 
 @Slf4j
 @Component
@@ -70,8 +71,8 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 //            }
 //
 //            // 블랙리스트에 올라간 Access Token 검증
-//            String isLogout = String.valueOf(redisService.getValues(accessToken));
-//            if(ObjectUtils.isEmpty(isLogout)) {
+//            Optional<String> blacklistToken = redisService.getValues(accessToken);
+//            if(blacklistToken.isEmpty()) {
 //                Authentication authentication = jwtResolver.getAuthentication(accessToken);
 //                SecurityContextHolder.getContext().setAuthentication(authentication);
 //            }
