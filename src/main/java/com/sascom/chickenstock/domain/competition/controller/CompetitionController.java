@@ -2,6 +2,7 @@ package com.sascom.chickenstock.domain.competition.controller;
 
 import com.sascom.chickenstock.domain.account.service.AccountService;
 import com.sascom.chickenstock.domain.competition.dto.request.CompetitionParticipationRequest;
+import com.sascom.chickenstock.domain.competition.dto.request.CompetitionRegistRequest;
 import com.sascom.chickenstock.domain.competition.dto.response.CompetitionInfoResponse;
 import com.sascom.chickenstock.domain.competition.dto.response.CompetitionHistoryResponse;
 import com.sascom.chickenstock.domain.competition.dto.response.CompetitionListResponse;
@@ -45,4 +46,15 @@ public class CompetitionController {
         return ResponseEntity.ok().body(competitionHistoryResponseList);
     }
 
+    @PostMapping("/new")
+    public ResponseEntity<CompetitionInfoResponse> registerCompetition(@RequestBody CompetitionRegistRequest competitionRegistRequest) {
+        CompetitionInfoResponse competitionInfoResponse = competitionService.addCompetition(
+                competitionRegistRequest.title(),
+                competitionRegistRequest.startDate(),
+                competitionRegistRequest.endDate(),
+                competitionRegistRequest.adminKey()
+        );
+
+        return ResponseEntity.ok(competitionInfoResponse);
+    }
 }
