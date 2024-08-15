@@ -1,6 +1,8 @@
 package com.sascom.chickenstock.domain.dailystockprice.service;
 
 import com.sascom.chickenstock.domain.company.entity.Company;
+import com.sascom.chickenstock.domain.company.error.code.CompanyErrorCode;
+import com.sascom.chickenstock.domain.company.error.exception.CompanyNotFoundException;
 import com.sascom.chickenstock.domain.company.repository.CompanyRepository;
 import com.sascom.chickenstock.domain.dailystockprice.dto.request.fis.AccessTokenReqeust;
 import com.sascom.chickenstock.domain.dailystockprice.dto.response.DailyStockPriceResponse;
@@ -50,6 +52,12 @@ public class DailyStockPriceService {
                 .toList();
 
         return dailyStockPriceResponseList;
+    }
+
+    public Long getLatestClosingPriceByCompanyId(Long companyId) {
+        DailyStockPrice dailyStockPrice = dailyStockPriceRepository.findFirstByCompanyIdOrderByDateTimeDesc(companyId)
+                .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND));
+        return dailyStockPrice.getClosingPrice();
     }
 
     // 매일 18시에 실행

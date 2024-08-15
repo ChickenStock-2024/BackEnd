@@ -13,7 +13,7 @@ public enum DailyStockPriceErrorCode implements ChickenStockErrorCode {
 
     DailyStockPriceErrorCode(HttpStatus status, String code, String message) {
         this.status = status;
-        this.code = "RIVAL"+code;
+        this.code = "STOCKPRICE"+code;
         this.message = message;
     }
 
