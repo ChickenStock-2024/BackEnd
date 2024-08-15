@@ -22,8 +22,9 @@ public class CompetitionController {
     private final AccountService accountService;
 
     @PostMapping
-    public void participateCompetition(@RequestBody CompetitionParticipationRequest request) {
-        accountService.createAccount(request.memberId(), request.competitionId());
+    public ResponseEntity<Long> participateCompetition(@RequestBody CompetitionParticipationRequest request) {
+        Long accountId = accountService.createAccount(request.memberId(), request.competitionId());
+        return ResponseEntity.ok(accountId);
     }
 
     @GetMapping
