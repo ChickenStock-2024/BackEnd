@@ -18,6 +18,13 @@ public class FcmTokenService {
 
     private final FcmTokenRepository fcmTokenRepository;
 
+    public String getFcmToken(Long memberId) {
+        FcmToken fcmToken = fcmTokenRepository.findByMemberId(memberId)
+                .orElseThrow(() -> new IllegalArgumentException("토큰이 없습니다."));
+
+        return fcmToken.getToken();
+    }
+
     public FcmTokenResponse storeFcmToken(Long memberId, String newToken) {
 
         Long loginMemberId = SecurityUtil.getCurrentMemberId();

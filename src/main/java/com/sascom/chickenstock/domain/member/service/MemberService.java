@@ -266,4 +266,10 @@ public class MemberService {
                 member.isWebNoti(), member.isKakaotalkNoti()
         );
     }
+
+    public String getMemberEmail(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND));
+        return member.getEmail();
+    }
 }
