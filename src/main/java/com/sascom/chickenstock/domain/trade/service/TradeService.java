@@ -3,16 +3,18 @@ package com.sascom.chickenstock.domain.trade.service;
 import com.sascom.chickenstock.domain.account.repository.AccountRepository;
 import com.sascom.chickenstock.domain.account.service.RedisService;
 import com.sascom.chickenstock.domain.company.entity.Company;
+import com.sascom.chickenstock.domain.company.error.code.CompanyErrorCode;
+import com.sascom.chickenstock.domain.company.error.exception.CompanyNotFoundException;
 import com.sascom.chickenstock.domain.company.repository.CompanyRepository;
 import com.sascom.chickenstock.domain.dailystockprice.repository.DailyStockPriceRepository;
 import com.sascom.chickenstock.domain.dailystockprice.service.DailyStockPriceService;
+import com.sascom.chickenstock.domain.fcmtoken.repository.FcmTokenRepository;
 import com.sascom.chickenstock.domain.history.entity.History;
 import com.sascom.chickenstock.domain.history.entity.HistoryStatus;
 import com.sascom.chickenstock.domain.history.repository.HistoryRepository;
-import com.sascom.chickenstock.domain.trade.dto.OrderType;
-import com.sascom.chickenstock.domain.trade.dto.ProcessedOrderDto;
-import com.sascom.chickenstock.domain.trade.dto.RealStockTradeDto;
-import com.sascom.chickenstock.domain.trade.dto.TradeType;
+import com.sascom.chickenstock.domain.member.error.code.MemberErrorCode;
+import com.sascom.chickenstock.domain.member.error.exception.MemberNotFoundException;
+import com.sascom.chickenstock.domain.trade.dto.*;
 import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.SellTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.response.CancelOrderResponse;
@@ -21,6 +23,8 @@ import com.sascom.chickenstock.domain.trade.error.code.TradeErrorCode;
 import com.sascom.chickenstock.domain.trade.error.exception.TradeException;
 import com.sascom.chickenstock.domain.trade.util.ChickenStockManager;
 import com.sascom.chickenstock.domain.trade.util.StockManager;
+import com.sascom.chickenstock.global.kafkaproducer.KafkaProducer;
+import com.sascom.chickenstock.global.kafkaproducer.dto.NotificationMessageDto;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -38,24 +42,30 @@ public class TradeService {
     private final Map<Long, Integer> marketPriceMap;
     private final RedisService redisService;
     private final DailyStockPriceService dailyStockPriceService;
+    private final KafkaProducer kafkaProducer;
     private final HistoryRepository historyRepository;
     private final AccountRepository accountRepository;
     private final CompanyRepository companyRepository;
+    private final FcmTokenRepository fcmTokenRepository;
 
     @Autowired
     public TradeService(
             RedisService redisService,
             DailyStockPriceService dailyStockPriceService,
+            KafkaProducer kafkaProducer,
             HistoryRepository historyRepository,
             AccountRepository accountRepository,
-            CompanyRepository companyRepository) {
+            CompanyRepository companyRepository,
+            FcmTokenRepository fcmTokenRepository) {
         stockManagerMap = new ConcurrentHashMap<>();
         marketPriceMap = new ConcurrentHashMap<>();
         this.redisService = redisService;
         this.dailyStockPriceService = dailyStockPriceService;
+        this.kafkaProducer = kafkaProducer;
         this.historyRepository = historyRepository;
         this.accountRepository = accountRepository;
         this.companyRepository = companyRepository;
+        this.fcmTokenRepository = fcmTokenRepository;
     }
 
     @PostConstruct
@@ -226,6 +236,17 @@ public class TradeService {
                             processedOrderDto.volume(),
                             processedOrderDto.price() * processedOrderDto.volume()
                     );
+                    kafkaProducer.sendAlarmMessageToKafka(
+                            new NotificationMessageDto(
+                                    fcmTokenRepository.findByMemberId(
+                                                    accountRepository.findById(processedOrderDto.accountId())
+                                                            .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND))
+                                                            .getId())
+                                            .orElseThrow(() -> new IllegalStateException("fcm error"))
+                                            .getToken(),
+                                    "요청이 취소되었습니다.",
+                                    "")
+                    );
                     break;
                 case SELL:
                     redisService.updateStockInfo(
@@ -233,6 +254,17 @@ public class TradeService {
                             processedOrderDto.companyId(),
                             -processedOrderDto.volume(),
                             -processedOrderDto.price() * processedOrderDto.volume()
+                    );
+                    kafkaProducer.sendAlarmMessageToKafka(
+                            new NotificationMessageDto(
+                                    fcmTokenRepository.findByMemberId(
+                                                    accountRepository.findById(processedOrderDto.accountId())
+                                                            .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND))
+                                                            .getId())
+                                            .orElseThrow(() -> new IllegalStateException("fcm error"))
+                                            .getToken(),
+                                    "요청이 취소되었습니다.",
+                                    "")
                     );
                     break;
             }
@@ -253,7 +285,18 @@ public class TradeService {
         List<ProcessedOrderDto> canceled = new ArrayList<>(), executed = new ArrayList<>();
         stockManager.match(marketPrice, canceled, executed);
         for(ProcessedOrderDto processedOrderDto : canceled) {
-            redisService.deleteUnexecution(processedOrderDto.requestHistoryId(), processedOrderDto.accountId());;
+            redisService.deleteUnexecution(processedOrderDto.requestHistoryId(), processedOrderDto.accountId());
+            kafkaProducer.sendAlarmMessageToKafka(
+                    new NotificationMessageDto(
+                            fcmTokenRepository.findByMemberId(
+                                accountRepository.findById(processedOrderDto.accountId())
+                                        .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND))
+                                        .getId())
+                                    .orElseThrow(() -> new IllegalStateException("fcm error"))
+                                    .getToken(),
+                            "요청이 취소되었습니다.",
+                            "")
+            );
         }
         historyRepository.saveAll(canceled.stream().map(order ->
                         History.builder()
@@ -273,6 +316,20 @@ public class TradeService {
                             processedOrderDto.volume(),
                             processedOrderDto.price() * processedOrderDto.volume()
                     );
+                    kafkaProducer.sendAlarmMessageToKafka(
+                            new NotificationMessageDto(
+                                    fcmTokenRepository.findByMemberId(
+                                                    accountRepository.findById(processedOrderDto.accountId())
+                                                            .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND))
+                                                            .getId())
+                                            .orElseThrow(() -> new IllegalStateException("fcm error"))
+                                            .getToken(),
+                                    "매도 요청이 체결되었습니다.",
+                                    companyRepository.findById(processedOrderDto.companyId())
+                                            .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND))
+                                            .getName() + " " + processedOrderDto.volume() + "주"
+                            )
+                    );
                     break;
                 case SELL:
                     redisService.updateStockInfo(
@@ -280,6 +337,21 @@ public class TradeService {
                             processedOrderDto.companyId(),
                             -processedOrderDto.volume(),
                             -processedOrderDto.price() * processedOrderDto.volume()
+                    );
+                    kafkaProducer.sendAlarmMessageToKafka(
+                            new NotificationMessageDto(
+                                    fcmTokenRepository.findByMemberId(
+                                                    accountRepository.findById(processedOrderDto.accountId())
+                                                            .orElseThrow(() -> MemberNotFoundException.of(MemberErrorCode.NOT_FOUND))
+                                                            .getId())
+                                            .orElseThrow(() -> new IllegalStateException("fcm error"))
+                                            .getToken(),
+                                    "매수 요청이 체결되었습니다.",
+                                    companyRepository.findById(processedOrderDto.companyId())
+                                            .orElseThrow(() -> CompanyNotFoundException.of(CompanyErrorCode.NOT_FOUND))
+                                            .getName() + " " +
+                                            processedOrderDto.volume() + "주 "
+                            )
                     );
                     break;
             }

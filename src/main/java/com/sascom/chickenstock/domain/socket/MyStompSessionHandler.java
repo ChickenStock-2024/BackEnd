@@ -4,6 +4,7 @@ package com.sascom.chickenstock.domain.socket;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sascom.chickenstock.domain.company.entity.Company;
 import com.sascom.chickenstock.domain.company.error.code.CompanyErrorCode;
 import com.sascom.chickenstock.domain.company.error.exception.CompanyNotFoundException;
 import com.sascom.chickenstock.domain.company.repository.CompanyRepository;
@@ -15,6 +16,7 @@ import org.springframework.messaging.simp.stomp.*;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.logging.Logger;
 
 @Component
@@ -34,8 +36,12 @@ public class MyStompSessionHandler extends StompSessionHandlerAdapter {
 
     @Override
     public void afterConnected(StompSession session, StompHeaders connectedHeaders) {
-        session.subscribe("/stock-purchase", this);
-        System.out.println("Connected and subscribed to /stock-purchase");
+        final String[] companyStockCodeList = {"005930", "009150", "000660", "299660", "042700",
+                "035420", "035720", "028300", "084650", "257720"};
+        for(String stockCode : companyStockCodeList) {
+            session.subscribe("/stock-purchase/" + stockCode, this);
+            System.out.println("Connected and subscribed to /stock-purchase/" + stockCode);
+        }
     }
 
     @Override
