@@ -58,3 +58,6 @@ kafka:
     bootstrap-servers: ${KAFKA_SERVER[0]}, ${KAFKA_SERVER[1]}, ${KAFKA_SERVER[2]}
     key-serializer: ${KAFKA_KEY_SERIALIZER}
     value-serializer: ${KAFKA_VALUE_SERIALIZER}
+    topic:
+      email: ${KAFKA_EMAIL_TOPIC}
+      fcm: ${KAFKA_FCM_TOPIC}
