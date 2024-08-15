@@ -4,6 +4,8 @@ import com.sascom.chickenstock.domain.account.repository.AccountRepository;
 import com.sascom.chickenstock.domain.account.service.RedisService;
 import com.sascom.chickenstock.domain.company.entity.Company;
 import com.sascom.chickenstock.domain.company.repository.CompanyRepository;
+import com.sascom.chickenstock.domain.dailystockprice.repository.DailyStockPriceRepository;
+import com.sascom.chickenstock.domain.dailystockprice.service.DailyStockPriceService;
 import com.sascom.chickenstock.domain.history.entity.History;
 import com.sascom.chickenstock.domain.history.entity.HistoryStatus;
 import com.sascom.chickenstock.domain.history.repository.HistoryRepository;
@@ -13,7 +15,6 @@ import com.sascom.chickenstock.domain.trade.dto.RealStockTradeDto;
 import com.sascom.chickenstock.domain.trade.dto.TradeType;
 import com.sascom.chickenstock.domain.trade.dto.request.BuyTradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.request.SellTradeRequest;
-import com.sascom.chickenstock.domain.trade.dto.request.TradeRequest;
 import com.sascom.chickenstock.domain.trade.dto.response.CancelOrderResponse;
 import com.sascom.chickenstock.domain.trade.dto.response.TradeResponse;
 import com.sascom.chickenstock.domain.trade.error.code.TradeErrorCode;
@@ -24,7 +25,6 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +37,7 @@ public class TradeService {
     private final Map<Long, StockManager> stockManagerMap;
     private final Map<Long, Integer> marketPriceMap;
     private final RedisService redisService;
+    private final DailyStockPriceService dailyStockPriceService;
     private final HistoryRepository historyRepository;
     private final AccountRepository accountRepository;
     private final CompanyRepository companyRepository;
@@ -44,12 +45,14 @@ public class TradeService {
     @Autowired
     public TradeService(
             RedisService redisService,
+            DailyStockPriceService dailyStockPriceService,
             HistoryRepository historyRepository,
             AccountRepository accountRepository,
             CompanyRepository companyRepository) {
         stockManagerMap = new ConcurrentHashMap<>();
         marketPriceMap = new ConcurrentHashMap<>();
         this.redisService = redisService;
+        this.dailyStockPriceService = dailyStockPriceService;
         this.historyRepository = historyRepository;
         this.accountRepository = accountRepository;
         this.companyRepository = companyRepository;
@@ -60,6 +63,7 @@ public class TradeService {
         List<Company> companyList = companyRepository.findAll();
         for(Company company : companyList) {
             stockManagerMap.put(company.getId(), new ChickenStockManager(redisService, accountRepository));
+            marketPriceMap.put(company.getId(), dailyStockPriceService.getLatestClosingPriceByCompanyId(company.getId()).intValue());
         }
     }
 
