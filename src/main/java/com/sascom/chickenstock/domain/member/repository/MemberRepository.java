@@ -33,7 +33,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
             "SUM(a.ratingChange), " +
             "COUNT(a.id)) " +
             "FROM Member m " +
-            "JOIN m.accounts a " +
+            "LEFT JOIN m.accounts a " +
             "GROUP BY m.id, m.nickname")
     List<MemberRankingDto> findAllMemberInfos();
 
