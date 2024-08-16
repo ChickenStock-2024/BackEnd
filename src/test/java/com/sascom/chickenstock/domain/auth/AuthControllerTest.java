@@ -89,8 +89,8 @@ class AuthControllerTest {
         when(authService.login(any(RequestLoginMember.class))).thenReturn(tokenDto);
         when(memberService.findByEmail(any(String.class))).thenReturn(member);
         // 여기서 올바른 값을 반환하도록 설정
-        AccountInfoForLogin accountInfoForLogin = AccountInfoForLogin.create(true, 50000000L, 1200);
-        when(accountService.getInfoForLogin(any(Long.class))).thenReturn(accountInfoForLogin);
+//        AccountInfoForLogin accountInfoForLogin = AccountInfoForLogin.create(true, 50000000L, 1200);
+//        when(accountService.getInfoForLogin(any(Long.class))).thenReturn(accountInfoForLogin);
 
         mockMvc.perform(post("/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -102,6 +102,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.balance").value(50000000L))
                 .andExpect(jsonPath("$.rating").value(1200))
                 .andExpect(jsonPath("$.nickname").value("TestUser"));
+
     }
 
 
