@@ -327,11 +327,11 @@ public class AccountService {
             Optional<Competition> competition = competitionRepository.findById(accountCompetition.getId());
 
             if (competition.isPresent() && competitionService.isActiveCompetition(competition.get())) { // 지금 열리고 있는 대회
-                return AccountInfoForLogin.create(true, account.getBalance(), account.getRanking());
+                return AccountInfoForLogin.create(true, account.getId(), account.getBalance(), account.getRanking());
             }
         }
 
-        return AccountInfoForLogin.create(false, 0L, 0);
+        return AccountInfoForLogin.create(false, null,0L, 0);
     }
 
     private Member validateMember(Long memberId) {
