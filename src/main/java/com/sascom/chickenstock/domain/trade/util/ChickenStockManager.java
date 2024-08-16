@@ -117,6 +117,7 @@ public class ChickenStockManager implements StockManager {
                 buyTradeRequest = null;
             }
         }
+        accountRepository.flush();
         return;
     }
 
@@ -186,6 +187,7 @@ public class ChickenStockManager implements StockManager {
                 }
             }
         }
+        accountRepository.flush();
         return;
     }
 
