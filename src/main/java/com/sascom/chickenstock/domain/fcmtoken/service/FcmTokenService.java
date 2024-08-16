@@ -38,6 +38,8 @@ public class FcmTokenService {
                 () -> saveFcmToken(memberId, newToken)
         );
 
+        fcmTokenRepository.flush();
+
         return FcmTokenResponse.builder()
                 .message("Success to Save FcmToken")
                 .fcmToken(newToken)
