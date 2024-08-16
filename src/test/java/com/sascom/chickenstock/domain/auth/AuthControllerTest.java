@@ -102,6 +102,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.balance").value(50000000L))
                 .andExpect(jsonPath("$.rating").value(1200))
                 .andExpect(jsonPath("$.nickname").value("TestUser"));
+
     }
 
 
