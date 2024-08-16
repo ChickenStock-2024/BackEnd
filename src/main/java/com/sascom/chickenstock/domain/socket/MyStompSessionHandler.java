@@ -17,6 +17,7 @@ import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Type;
 import java.util.List;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 @Component
@@ -40,7 +41,7 @@ public class MyStompSessionHandler extends StompSessionHandlerAdapter {
                 "035420", "035720", "028300", "084650", "257720"};
         for(String stockCode : companyStockCodeList) {
             session.subscribe("/stock-purchase/" + stockCode, this);
-            System.out.println("Connected and subscribed to /stock-purchase/" + stockCode);
+            logger.log(Level.INFO, "Connected and subscribed to /stock-purchase/{}", stockCode);
         }
     }
 
@@ -50,7 +51,6 @@ public class MyStompSessionHandler extends StompSessionHandlerAdapter {
         // Handle the received payload here
         try {
             RealStockTradeDto realStockTradeDto = parseMessage(payload.toString());
-            System.out.println(realStockTradeDto);
             tradeService.processRealStockTrade(realStockTradeDto);
         } catch (JsonProcessingException e) {
             throw new RuntimeException(e);
