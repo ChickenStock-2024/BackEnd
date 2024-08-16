@@ -33,7 +33,7 @@ public class AccountController {
         return accountId;
     }
 
-    @PostMapping("/{accountId}")
+    @GetMapping("/{accountId}")
     public AccountInfoResponse getAccountInfo(@PathVariable("accountId") Long accountId){
         return accountService.getAccountInfo(accountId);
     }
